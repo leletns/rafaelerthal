@@ -3,16 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dr. Rafael Erthal | Especialista em Lipedema e LipeDefinition</title>
-    <meta name="description" content="O Padrão Ouro no tratamento do Lipedema e contorno corporal. Cirurgia com a técnica exclusiva LipeDefinition e certificação R24R no Rio de Janeiro.">
+    <title>Dr. Rafael Erthal | Referência internacional em lipedema</title>
+    <meta name="description" content="Referência internacional em cirurgia de lipedema e contorno corporal no Rio de Janeiro. Cuidado integral e cirurgias combinadas.">
     
-    <meta property="og:title" content="Dr. Rafael Erthal | Cirurgia de Lipedema">
-    <meta property="og:description" content="A verdadeira técnica LipeDefinition. Agende sua avaliação e inicie sua jornada de transformação e alívio das dores.">
+    <link rel="icon" href="https://rafaelerthal.com/wp-content/uploads/2025/09/foto-sobre.webp" type="image/webp">
+    <link rel="shortcut icon" href="https://rafaelerthal.com/wp-content/uploads/2025/09/foto-sobre.webp" type="image/webp">
+
+    <meta property="og:title" content="Dr. Rafael Erthal | Cirurgia plástica e lipedema">
+    <meta property="og:description" content="Experiência blue: referência internacional em tratamento de lipedema no Rio de Janeiro.">
     <meta property="og:image" content="https://rafaelerthal.com/wp-content/uploads/2025/09/foto-sobre.webp">
-    <meta property="og:url" content="https://rafaelerthal.com">
     <meta property="og:type" content="website">
 
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 
     <script>
@@ -20,179 +26,186 @@
             theme: {
                 extend: {
                     colors: {
-                        blue: { 900: '#0A192F', 800: '#112240', 600: '#233554' },
-                        gold: { 500: '#D4AF37', 400: '#F3E5AB' }
+                        blue: { 900: '#0B132B', 800: '#14213D', 600: '#1F3A60' },
+                        slate: { 50: '#F8F9FA', 100: '#F1F3F5', 300: '#DEE2E6' }
                     },
-                    fontFamily: { sans: ['Inter', 'sans-serif'] }
+                    fontFamily: { sans: ['Montserrat', 'sans-serif'] }
                 }
             }
         }
     </script>
-
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "Physician",
-      "name": "Dr. Rafael Erthal",
-      "image": "https://rafaelerthal.com/wp-content/uploads/2025/09/foto-sobre.webp",
-      "medicalSpecialty": "Plastic Surgery",
-      "description": "Especialista em Lipedema, técnica LipeDefinition e R24R.",
-      "address": {
-        "@type": "PostalAddress",
-        "streetAddress": "Av. José Silva de Azevedo Neto, 200 - Salas 107 e 108",
-        "addressLocality": "Rio de Janeiro",
-        "addressRegion": "RJ",
-        "postalCode": "22775-056",
-        "addressCountry": "BR"
-      }
-    }
-    </script>
 </head>
-<body class="bg-gray-50 text-gray-800 antialiased selection:bg-gold-500 selection:text-white">
+<body class="bg-slate-50 text-gray-800 antialiased font-light tracking-wide selection:bg-blue-900 selection:text-white">
 
-    <nav class="fixed w-full z-50 bg-white/90 backdrop-blur-md border-b border-gray-100 shadow-sm transition-all">
-        <div class="max-w-7xl mx-auto px-6 lg:px-8 py-4 flex justify-between items-center">
-            <div class="text-2xl font-black text-blue-900 tracking-tighter">DR. RAFAEL ERTHAL</div>
-            <div class="hidden md:flex space-x-8 text-sm font-semibold text-blue-800">
-                <a href="#lipedefinition" class="hover:text-gold-500 transition">A Técnica</a>
-                <a href="#sobre" class="hover:text-gold-500 transition">Sobre</a>
-                <a href="#experiencia" class="hover:text-gold-500 transition">Experiência Blue</a>
+    <nav class="fixed w-full z-50 bg-white/80 backdrop-blur-md border-b border-gray-100 transition-all">
+        <div class="max-w-7xl mx-auto px-6 lg:px-8 py-5 flex justify-between items-center">
+            <div class="text-xl font-medium text-blue-900 tracking-widest uppercase">Dr. Rafael Erthal</div>
+            
+            <div class="hidden md:flex space-x-10 text-sm font-normal text-gray-600">
+                <a href="#abordagem" class="hover:text-blue-900 transition">A abordagem</a>
+                <a href="#experiencia" class="hover:text-blue-900 transition">Experiência blue</a>
+                <a href="#sobre" class="hover:text-blue-900 transition">O médico</a>
             </div>
-            <button onclick="dispararNeuroSniper('Header')" class="bg-blue-900 text-white px-6 py-2.5 rounded-full font-bold text-sm hover:bg-blue-800 transition shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
-                Agendar Avaliação
-            </button>
+
+            <div class="flex items-center space-x-6">
+                <div class="text-xs font-medium text-gray-400 flex space-x-2">
+                    <a href="#" class="text-blue-900 font-semibold">PT</a>
+                    <span>|</span>
+                    <a href="#" class="hover:text-blue-900 transition">EN</a>
+                    <span>|</span>
+                    <a href="#" class="hover:text-blue-900 transition">ES</a>
+                </div>
+                <button onclick="dispararWhatsApp()" class="hidden md:inline-block border border-blue-900 text-blue-900 px-6 py-2 rounded-sm font-medium text-sm hover:bg-blue-900 hover:text-white transition duration-300">
+                    Agendar consulta
+                </button>
+            </div>
         </div>
     </nav>
 
-    <section class="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden">
-        <div class="absolute inset-0 z-0">
-            <img src="https://rafaelerthal.com/wp-content/uploads/2025/09/capa-pc-scaled.webp" alt="Dr. Rafael Erthal" class="w-full h-full object-cover object-top opacity-90">
-            <div class="absolute inset-0 bg-gradient-to-r from-blue-900/90 via-blue-900/70 to-transparent"></div>
-        </div>
-        <div class="relative z-10 max-w-7xl mx-auto px-6 lg:px-8">
-            <div class="max-w-2xl">
-                <span class="inline-block py-1 px-3 rounded-full bg-gold-500/20 text-gold-400 text-sm font-bold tracking-wider mb-4 border border-gold-500/30">CRM 838039 • RQE 27466</span>
-                <h1 class="text-4xl lg:text-6xl font-extrabold text-white leading-tight mb-6">
-                    O Padrão Ouro no<br><span class="text-gold-500">Tratamento do Lipedema.</span>
+    <section class="relative pt-40 pb-24 lg:pt-56 lg:pb-40 overflow-hidden bg-slate-50">
+        <div class="max-w-7xl mx-auto px-6 lg:px-8 flex flex-col lg:flex-row items-center">
+            <div class="lg:w-1/2 z-10">
+                <span class="text-xs uppercase tracking-[0.2em] text-gray-500 mb-4 block">CRM 838039 • RQE 27466</span>
+                <h1 class="text-4xl lg:text-5xl font-medium text-blue-900 leading-tight mb-6">
+                    Referência internacional em tratamento de lipedema.
                 </h1>
-                <p class="text-lg text-gray-200 mb-10 leading-relaxed font-light">
-                    Mais do que corrigir contornos: é sobre aliviar dores, recuperar a confiança e devolver a liberdade com a técnica autoral LipeDefinition®.
+                <p class="text-lg text-gray-600 mb-10 leading-relaxed font-light max-w-lg">
+                    Mais do que corrigir contornos. É sobre aliviar dores, recuperar a confiança e devolver a liberdade a mulheres que por muito tempo não foram ouvidas.
                 </p>
-                <div class="flex flex-col sm:flex-row gap-4">
-                    <button onclick="dispararNeuroSniper('Hero')" class="flex items-center justify-center bg-gold-500 text-blue-900 px-8 py-4 rounded-full font-bold text-lg hover:bg-gold-400 transition shadow-[0_0_20px_rgba(212,175,55,0.4)] transform hover:scale-105">
-                        <i class="fab fa-whatsapp text-xl mr-2"></i> Falar com Especialista
-                    </button>
-                </div>
+                <button onclick="dispararWhatsApp()" class="bg-blue-900 text-white px-8 py-4 rounded-sm font-medium text-sm hover:bg-blue-800 transition duration-300 tracking-wide">
+                    Iniciar jornada
+                </button>
+            </div>
+            <div class="lg:w-1/2 mt-12 lg:mt-0 relative">
+                <img src="https://rafaelerthal.com/wp-content/uploads/2025/09/capa-pc-scaled.webp" alt="Cirurgia" class="w-full h-auto object-cover rounded-sm shadow-xl grayscale-[20%]">
             </div>
         </div>
     </section>
 
-    <section id="lipedefinition" class="py-24 bg-white">
-        <div class="max-w-7xl mx-auto px-6 lg:px-8 text-center">
-            <h2 class="text-3xl font-extrabold text-blue-900 mb-4">A Verdadeira LipeDefinition®</h2>
-            <p class="text-gray-600 max-w-2xl mx-auto mb-16 text-lg">Uma jornada completa para um resultado absoluto. A união entre alívio funcional e excelência estética.</p>
-            
-            <div class="grid md:grid-cols-3 gap-12">
-                <div class="p-8 rounded-2xl bg-gray-50 border border-gray-100 hover:shadow-2xl transition duration-300 group">
-                    <div class="w-16 h-16 bg-blue-900 rounded-full flex items-center justify-center text-gold-500 text-2xl mx-auto mb-6 group-hover:scale-110 transition">
-                        <i class="fas fa-stethoscope"></i>
-                    </div>
-                    <h3 class="text-xl font-bold text-blue-900 mb-3">Diagnóstico Preciso</h3>
-                    <p class="text-gray-600 leading-relaxed">Tempo e atenção para entender sua história, identificar o grau do lipedema e traçar a abordagem cirúrgica perfeita.</p>
-                </div>
-                <div class="p-8 rounded-2xl bg-gray-50 border border-gray-100 hover:shadow-2xl transition duration-300 group shadow-lg relative bottom-4">
-                    <div class="w-16 h-16 bg-gold-500 rounded-full flex items-center justify-center text-blue-900 text-2xl mx-auto mb-6 group-hover:scale-110 transition">
-                        <i class="fas fa-user-md"></i>
-                    </div>
-                    <h3 class="text-xl font-bold text-blue-900 mb-3">Técnica Autoral</h3>
-                    <p class="text-gray-600 leading-relaxed">Tratamento focado na preservação linfática e alta definição, devolvendo não apenas a forma, mas a liberdade de movimento.</p>
-                </div>
-                <div class="p-8 rounded-2xl bg-gray-50 border border-gray-100 hover:shadow-2xl transition duration-300 group">
-                    <div class="w-16 h-16 bg-blue-900 rounded-full flex items-center justify-center text-gold-500 text-2xl mx-auto mb-6 group-hover:scale-110 transition">
-                        <i class="fas fa-heartbeat"></i>
-                    </div>
-                    <h3 class="text-xl font-bold text-blue-900 mb-3">Acompanhamento R24R</h3>
-                    <p class="text-gray-600 leading-relaxed">Recuperação acelerada com suporte integrado em todas as fases da sua jornada, garantindo segurança e bem-estar.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section id="sobre" class="py-24 bg-blue-900 overflow-hidden">
-        <div class="max-w-7xl mx-auto px-6 lg:px-8 flex flex-col lg:flex-row items-center gap-16">
-            <div class="lg:w-1/2 relative">
-                <div class="absolute inset-0 bg-gold-500 rounded-2xl transform translate-x-4 translate-y-4 opacity-50"></div>
-                <img src="https://rafaelerthal.com/wp-content/uploads/2025/09/foto-sobre.webp" alt="Dr. Rafael Erthal" class="relative rounded-2xl shadow-2xl z-10 w-full object-cover">
-            </div>
-            <div class="lg:w-1/2">
-                <h2 class="text-sm font-bold text-gold-500 tracking-widest uppercase mb-2">A Mente por Trás da Técnica</h2>
-                <h3 class="text-3xl lg:text-4xl font-extrabold text-white mb-6">Dr. Rafael Erthal</h3>
-                <div class="text-gray-300 space-y-4 text-lg font-light leading-relaxed">
-                    <p>Formado em Medicina em 2007, construiu sua base técnica em Cirurgia Plástica focada em contorno corporal de altíssima exigência.</p>
-                    <p>Ao se deparar com o impacto silencioso do lipedema na vida das mulheres, buscou especialização na Alemanha — o maior centro de referência mundial na doença.</p>
-                    <p>Dessa vivência internacional, aliada à precisão da Lipo HD, nasceu a <strong class="text-gold-400 font-bold">LipeDefinition</strong>. Um protocolo cirúrgico que trata a patologia enquanto esculpe a beleza natural de cada paciente.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section id="experiencia" class="py-24 bg-gray-50">
+    <section id="abordagem" class="py-24 bg-white">
         <div class="max-w-7xl mx-auto px-6 lg:px-8">
-            <div class="bg-white rounded-3xl shadow-xl overflow-hidden flex flex-col lg:flex-row">
-                <div class="lg:w-1/2 bg-blue-50 p-12 lg:p-16 flex flex-col justify-center">
-                    <h2 class="text-3xl font-extrabold text-blue-900 mb-6">Quando a excelência atravessa oceanos, ela se torna destino.</h2>
-                    <p class="text-gray-600 mb-8 text-lg leading-relaxed">
-                        Pacientes de todo o Brasil e do mundo escolhem o Rio de Janeiro em busca de um resultado que permanece. A <strong>Experiência Blue</strong> foi desenhada para que você não precise se preocupar com nada além da sua transformação.
+            <div class="flex flex-col lg:flex-row gap-16 items-center">
+                <div class="lg:w-5/12">
+                    <h2 class="text-3xl font-medium text-blue-900 mb-6">Cirurgias combinadas</h2>
+                    <p class="text-gray-600 leading-relaxed font-light mb-6">
+                        Aproveitamos o tempo cirúrgico com inteligência e segurança. Para pacientes que buscam um resultado estético e funcional completo, realizamos a combinação de procedimentos no mesmo ato operatório.
                     </p>
-                    <ul class="space-y-4 mb-10">
-                        <li class="flex items-center text-blue-800 font-semibold"><i class="fas fa-check-circle text-gold-500 mr-3 text-xl"></i> Atendimento Concierge VIP</li>
-                        <li class="flex items-center text-blue-800 font-semibold"><i class="fas fa-check-circle text-gold-500 mr-3 text-xl"></i> Estrutura Tecnológica de Ponta</li>
-                        <li class="flex items-center text-blue-800 font-semibold"><i class="fas fa-check-circle text-gold-500 mr-3 text-xl"></i> Acompanhamento Dedicado</li>
-                    </ul>
+                    <p class="text-gray-600 leading-relaxed font-light">
+                        Avaliamos cuidadosamente cada perfil para indicar apenas o que é melhor para você, garantindo resultados perfeitamente alinhados, visíveis e duradouros, com um único período de recuperação.
+                    </p>
                 </div>
-                <div class="lg:w-1/2">
-                    <img src="https://rafaelerthal.com/wp-content/uploads/2025/11/7-scaled.webp" alt="Clínica Blue" class="w-full h-full object-cover min-h-[400px]">
+                <div class="lg:w-7/12 grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="border border-slate-100 p-8 bg-slate-50 rounded-sm">
+                        <i class="fas fa-arrows-to-circle text-blue-900 text-2xl mb-4"></i>
+                        <h3 class="text-lg font-medium text-blue-900 mb-2">Lipedefinition</h3>
+                        <p class="text-sm text-gray-500 font-light">Nossa técnica autoral para o tratamento preciso do lipedema, devolvendo a funcionalidade e o contorno estético dos membros.</p>
+                    </div>
+                    <div class="border border-slate-100 p-8 bg-slate-50 rounded-sm">
+                        <i class="fas fa-user-check text-blue-900 text-2xl mb-4"></i>
+                        <h3 class="text-lg font-medium text-blue-900 mb-2">Contorno corporal</h3>
+                        <p class="text-sm text-gray-500 font-light">Lipoaspiração de alta definição e cirurgias mamárias integradas ao seu plano de tratamento, desenhadas para o seu corpo.</p>
+                    </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <footer class="bg-blue-900 text-gray-400 py-12 border-t border-blue-800 text-center lg:text-left">
-        <div class="max-w-7xl mx-auto px-6 lg:px-8 grid md:grid-cols-3 gap-8 items-center">
+    <section id="experiencia" class="py-24 bg-blue-900 text-white">
+        <div class="max-w-7xl mx-auto px-6 lg:px-8 text-center">
+            <span class="text-xs uppercase tracking-[0.2em] text-gray-400 mb-4 block">Pacientes globais</span>
+            <h2 class="text-3xl lg:text-4xl font-medium mb-8">A experiência blue</h2>
+            <p class="text-gray-300 max-w-3xl mx-auto font-light leading-relaxed mb-16 text-lg">
+                Cuidamos de todo o processo, desde a primeira consulta até a cirurgia e a sua total recuperação. É por essa estrutura de excelência que pacientes de diversos estados e países escolhem o Rio de Janeiro para realizar seus procedimentos.
+            </p>
+            
+            <div class="grid md:grid-cols-3 gap-12 text-left">
+                <div>
+                    <h3 class="text-xl font-medium mb-3 border-b border-blue-800 pb-3">01. Planejamento</h3>
+                    <p class="text-sm text-gray-400 font-light">Consultas aprofundadas por telemedicina ou presenciais. Avaliação criteriosa do grau do lipedema e indicação cirúrgica exata.</p>
+                </div>
+                <div>
+                    <h3 class="text-xl font-medium mb-3 border-b border-blue-800 pb-3">02. Logística e conforto</h3>
+                    <p class="text-sm text-gray-400 font-light">Localizada na Barra da Tijuca. Orientação completa para hospedagem e logística de pacientes que vêm de fora do Rio de Janeiro.</p>
+                </div>
+                <div>
+                    <h3 class="text-xl font-medium mb-3 border-b border-blue-800 pb-3">03. Pós-operatório</h3>
+                    <p class="text-sm text-gray-400 font-light">Acompanhamento contínuo e rede de apoio. A cirurgia é apenas uma etapa; nossa equipe permanece com você até o fim.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="sobre" class="py-24 bg-slate-50">
+        <div class="max-w-7xl mx-auto px-6 lg:px-8 flex flex-col lg:flex-row items-center gap-16">
+            <div class="lg:w-5/12">
+                <img src="https://rafaelerthal.com/wp-content/uploads/2025/09/foto-sobre.webp" alt="Dr. Rafael Erthal" class="w-full object-cover rounded-sm shadow-md">
+            </div>
+            <div class="lg:w-7/12">
+                <h2 class="text-3xl font-medium text-blue-900 mb-6">Dr. Rafael Erthal</h2>
+                <div class="text-gray-600 space-y-5 font-light leading-relaxed">
+                    <p>Formou-se em medicina em 2007. Construiu sua base técnica em cirurgia plástica com ênfase em lipoaspiração de alta definição e cirurgias de mama.</p>
+                    <p>Ao compreender o impacto funcional e emocional do lipedema, buscou aprimoramento na Alemanha, o maior centro de referência mundial na doença.</p>
+                    <p>Dessa vivência, desenvolveu a técnica autoral Lipedefinition, que integra o rigor da cirurgia de alta definição ao tratamento seguro do lipedema, com foco em preservação linfática e mobilidade.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="py-24 bg-white border-t border-slate-100">
+        <div class="max-w-7xl mx-auto px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-2xl font-medium text-blue-900 mb-2">Relatos de quem viveu a experiência</h2>
+                <p class="text-sm text-gray-400 font-light uppercase tracking-widest">Avaliações verificadas do Google</p>
+            </div>
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div class="bg-slate-50 p-8 rounded-sm">
+                    <div class="flex text-blue-900 mb-4 text-xs"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
+                    <p class="text-gray-600 font-light text-sm italic mb-6">"Você sai da consulta sabendo que escolheu o profissional certo. Ele exerce uma medicina competente e humanizada."</p>
+                    <p class="text-xs font-medium text-blue-900 uppercase tracking-wider">Tayssa Bonilauri</p>
+                </div>
+                <div class="bg-slate-50 p-8 rounded-sm">
+                    <div class="flex text-blue-900 mb-4 text-xs"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
+                    <p class="text-gray-600 font-light text-sm italic mb-6">"Estou muito feliz. Minha vida mudou muito desde a cirurgia e, o mais importante, é que agora posso dormir sem sentir dor."</p>
+                    <p class="text-xs font-medium text-blue-900 uppercase tracking-wider">Audrey (Espanha)</p>
+                </div>
+                <div class="bg-slate-50 p-8 rounded-sm">
+                    <div class="flex text-blue-900 mb-4 text-xs"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
+                    <p class="text-gray-600 font-light text-sm italic mb-6">"A melhor experiência possível! Todos foram extremamente atenciosos do início ao fim e se atentaram aos mínimos detalhes."</p>
+                    <p class="text-xs font-medium text-blue-900 uppercase tracking-wider">Gabriella Rivelli</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="bg-white pt-16 pb-8 border-t border-slate-200">
+        <div class="max-w-7xl mx-auto px-6 lg:px-8 flex flex-col md:flex-row justify-between items-start md:items-center">
+            <div class="mb-8 md:mb-0">
+                <h4 class="text-blue-900 text-lg font-medium tracking-widest uppercase mb-1">Dr. Rafael Erthal</h4>
+                <p class="text-xs text-gray-500 font-light">Cirurgião Plástico</p>
+            </div>
+            <div class="text-left md:text-right mb-8 md:mb-0">
+                <p class="text-sm text-gray-600 font-light">Av. José Silva de Azevedo Neto, 200</p>
+                <p class="text-sm text-gray-600 font-light">Salas 107 e 108 - Barra da Tijuca, RJ</p>
+            </div>
             <div>
-                <h4 class="text-white text-xl font-bold mb-2">Dr. Rafael Erthal</h4>
-                <p class="text-sm">CRM 52.83803-9 | RQE 27466<br>Cirurgia Plástica Especializada</p>
-            </div>
-            <div class="text-center">
-                <p class="text-sm">Av. José Silva de Azevedo Neto, 200<br>Salas 107 e 108 - Barra da Tijuca, RJ</p>
-            </div>
-            <div class="text-center lg:text-right">
-                <a href="https://www.instagram.com/dr.rafaelerthal/" target="_blank" class="inline-flex items-center justify-center w-12 h-12 bg-blue-800 rounded-full text-white hover:bg-gold-500 transition hover:scale-110">
+                <a href="https://www.instagram.com/dr.rafaelerthal/" target="_blank" class="text-blue-900 hover:text-blue-600 transition">
                     <i class="fab fa-instagram text-2xl"></i>
                 </a>
             </div>
         </div>
+        <div class="max-w-7xl mx-auto px-6 lg:px-8 mt-16 text-center border-t border-slate-100 pt-8">
+            <p class="text-xs text-gray-400 font-light">© 2026 Dr. Rafael Erthal. Todos os direitos reservados.</p>
+        </div>
     </footer>
 
-    <button onclick="dispararNeuroSniper('Flutuante')" class="fixed bottom-6 right-6 bg-green-500 text-white w-16 h-16 rounded-full flex items-center justify-center shadow-[0_4px_15px_rgba(34,197,94,0.5)] hover:bg-green-600 hover:scale-110 transition-all z-50 group">
-        <i class="fab fa-whatsapp text-3xl"></i>
-        <span class="absolute right-20 bg-white text-blue-900 text-xs font-bold py-2 px-4 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-            Falar com a Letícia
-        </span>
-    </button>
-
     <script>
-        function dispararNeuroSniper(origem) {
-            // SEU NÚMERO AQUI (Da Evolution API)
-            const numeroWhatsApp = "5521971101000"; 
-            
-            // Mensagem formatada que serve como gatilho para o seu robô (Neuro-Sniper)
-            // A IA vai ler "LipeDefinition" e "Experiência Blue" e já taguear como High-Ticket.
-            let mensagem = "Olá! Estava no site oficial, li sobre a técnica LipeDefinition e a Experiência Blue. Gostaria de agendar minha avaliação com o Dr. Rafael Erthal.";
-            
-            const url = `https://wa.me/${numeroWhatsApp}?text=${encodeURIComponent(mensagem)}`;
+        function dispararWhatsApp() {
+            const numero = "5521971101000"; 
+            const mensagem = "Olá! Acessei o site, vi sobre a Experiência Blue e as cirurgias combinadas. Gostaria de informações sobre avaliação.";
+            const url = `https://wa.me/${numero}?text=${encodeURIComponent(mensagem)}`;
             window.open(url, '_blank');
         }
     </script>
+
 </body>
 </html>
