@@ -3,20 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dr. Rafael Erthal | A evolução cirúrgica no tratamento do lipedema</title>
-    <meta name="description" content="Resultados visíveis e duradouros no tratamento do lipedema. Técnica lipedefinition, precisão alemã e acolhimento no Rio de Janeiro.">
+    <title>Rafael Erthal | A evolução cirúrgica no tratamento do lipedema</title>
+    <meta name="description" content="Resultados visíveis e duradouros no tratamento do lipedema. Técnica lipedefinition, precisão e acolhimento no Rio de Janeiro.">
     
-    <link rel="icon" href="https://rafaelerthal.com/wp-content/uploads/2025/09/foto-sobre.webp" type="image/webp">
+    <link rel="icon" href="LINK_DA_SUA_LOGO_AQUI.png" type="image/png">
     
-    <meta property="og:title" content="Dr. Rafael Erthal | Cirurgia de lipedema e contorno corporal">
-    <meta property="og:description" content="Inicie seu mapeamento clínico. Qualidade de vida que não tem preço e resultados duradouros no Rio de Janeiro.">
-    <meta property="og:image" content="https://rafaelerthal.com/wp-content/uploads/2025/09/foto-sobre.webp">
+    <meta property="og:title" content="Rafael Erthal | Cirurgia Plástica & Lipedema">
+    <meta property="og:description" content="Inicie seu mapeamento clínico. Qualidade de vida e resultados duradouros no Rio de Janeiro.">
+    <meta property="og:image" content="LINK_DA_SUA_LOGO_AQUI.png">
     <meta property="og:type" content="website">
 
     <script src="https://cdn.tailwindcss.com"></script>
+    
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@200;300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400&family=Montserrat:wght@200;300;400;500&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
@@ -26,71 +27,107 @@
         tailwind.config = {
             theme: {
                 extend: {
-                    colors: { blue: { 900: '#040812', 800: '#0a1020', 600: '#15223a' } },
-                    fontFamily: { sans: ['Montserrat', 'sans-serif'] }
+                    colors: { 
+                        blue: { 900: '#040812', 800: '#0a1020', 600: '#15223a' },
+                        gold: { 500: '#c5a059', 400: '#d4b472' } // A cor da placa da clínica
+                    },
+                    fontFamily: { 
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Montserrat', 'sans-serif']
+                    },
+                    animation: {
+                        'marquee': 'marquee 25s linear infinite',
+                    },
+                    keyframes: {
+                        marquee: {
+                            '0%': { transform: 'translateX(0%)' },
+                            '100%': { transform: 'translateX(-100%)' },
+                        }
+                    }
                 }
             }
         }
     </script>
 
     <style>
-        .gsap-reveal { opacity: 0; transform: translateY(40px); }
-        body { overflow-x: hidden; background-color: #fafafa; }
-        .img-parallax { transform: scale(1.15); }
+        body { background-color: #fafafa; overflow-x: hidden; scroll-behavior: smooth; }
         
-        .quiz-step { display: none; opacity: 0; transition: opacity 0.6s ease; }
+        /* Efeitos High-End */
+        .gsap-reveal { clip-path: polygon(0 0, 100% 0, 100% 100%, 0% 100%); opacity: 0; transform: translateY(40px); }
+        .img-parallax { transform: scale(1.1); transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
+        
+        /* Quiz App-like */
+        .quiz-step { display: none; opacity: 0; transition: opacity 0.5s ease; }
         .quiz-step.active { display: block; opacity: 1; }
+        .quiz-option { cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border-left: 2px solid transparent; }
+        .quiz-option:hover { background-color: #f8fafc; border-left: 2px solid #c5a059; transform: translateX(4px); }
         
-        .quiz-option { cursor: pointer; transition: all 0.4s ease; position: relative; overflow: hidden; }
-        .quiz-option:hover { border-color: #040812; background-color: #f8fafc; transform: translateX(5px); }
-        
-        .lang-active { border-bottom: 1px solid #040812; font-weight: 500; color: #040812; }
-        .lang-inactive { color: #94a3b8; }
+        /* Tradutor */
+        .lang-active { color: #c5a059; font-weight: 500; }
+        .lang-inactive { color: #94a3b8; transition: color 0.3s; }
         .lang-inactive:hover { color: #040812; }
     </style>
 </head>
-<body class="text-gray-800 antialiased font-light tracking-wide selection:bg-blue-900 selection:text-white">
+<body class="text-gray-800 antialiased selection:bg-gold-500 selection:text-white">
 
-    <nav class="fixed w-full z-50 bg-white/80 backdrop-blur-2xl border-b border-gray-100 transition-all duration-700" id="navbar">
+    <nav class="fixed w-full z-50 bg-white/70 backdrop-blur-2xl border-b border-gray-100/50 transition-all duration-500" id="navbar">
         <div class="max-w-7xl mx-auto px-6 lg:px-12 py-5 flex justify-between items-center">
-            <div class="flex items-center space-x-4">
-                <img src="https://rafaelerthal.com/wp-content/uploads/2025/09/foto-sobre.webp" alt="Logo Dr. Rafael Erthal" class="w-8 h-8 rounded-full object-cover grayscale opacity-80">
-                <div class="text-sm font-medium text-blue-900 tracking-[0.2em] uppercase">Dr. Rafael Erthal</div>
+            
+            <div class="flex flex-col items-start cursor-pointer">
+                <span class="font-display text-[17px] font-light tracking-[0.25em] text-blue-900 leading-none mb-1">RAFAEL ERTHAL</span>
+                <span class="font-display text-[7.5px] font-medium tracking-[0.3em] text-gray-500 uppercase">Cirurgia Plástica & Lipedema</span>
             </div>
             
-            <div class="hidden lg:flex space-x-10 text-[11px] font-medium text-gray-500 tracking-[0.15em] uppercase">
-                <a href="#empatia" data-i18n="nav_understanding" class="hover:text-blue-900 transition-colors">A compreensão</a>
-                <a href="#medico" data-i18n="nav_authority" class="hover:text-blue-900 transition-colors">A autoridade</a>
-                <a href="#ciencia" data-i18n="nav_science" class="hover:text-blue-900 transition-colors">A cirurgia</a>
-                <a href="#experiencia" data-i18n="nav_experience" class="hover:text-blue-900 transition-colors">A experiência blue</a>
+            <div class="hidden lg:flex space-x-10 text-[10px] font-medium text-gray-400 tracking-[0.2em] uppercase font-display">
+                <a href="#empatia" data-i18n="nav_understanding" class="hover:text-gold-500 transition-colors">A compreensão</a>
+                <a href="#medico" data-i18n="nav_authority" class="hover:text-gold-500 transition-colors">A autoridade</a>
+                <a href="#ciencia" data-i18n="nav_science" class="hover:text-gold-500 transition-colors">A cirurgia</a>
+                <a href="#experiencia" data-i18n="nav_experience" class="hover:text-gold-500 transition-colors">A experiência blue</a>
             </div>
 
             <div class="flex items-center space-x-6">
-                <div class="text-[10px] flex space-x-3 uppercase tracking-widest cursor-pointer">
-                    <span onclick="setLang('pt')" id="btn-pt" class="lang-active transition-all pb-1">PT</span>
-                    <span onclick="setLang('en')" id="btn-en" class="lang-inactive transition-all pb-1">EN</span>
-                    <span onclick="setLang('es')" id="btn-es" class="lang-inactive transition-all pb-1">ES</span>
+                <div class="text-[9px] flex space-x-3 uppercase tracking-[0.2em] cursor-pointer font-display">
+                    <span onclick="setLang('pt')" id="btn-pt" class="lang-active">PT</span>
+                    <span onclick="setLang('en')" id="btn-en" class="lang-inactive">EN</span>
+                    <span onclick="setLang('es')" id="btn-es" class="lang-inactive">ES</span>
                 </div>
             </div>
         </div>
     </nav>
 
-    <section class="relative h-screen flex items-center justify-center overflow-hidden bg-slate-50">
+    <div class="fixed top-[70px] w-full bg-blue-900 text-gold-500/80 py-2 z-40 overflow-hidden border-b border-blue-800/50">
+        <div class="flex whitespace-nowrap animate-marquee text-[8px] font-display uppercase tracking-[0.4em]">
+            <span class="mx-4">Rio de Janeiro</span> <i class="fas fa-circle text-[3px] mx-4 mt-1 opacity-50"></i>
+            <span class="mx-4">Excelência global</span> <i class="fas fa-circle text-[3px] mx-4 mt-1 opacity-50"></i>
+            <span class="mx-4">Lipedefinition</span> <i class="fas fa-circle text-[3px] mx-4 mt-1 opacity-50"></i>
+            <span class="mx-4">Rio de Janeiro</span> <i class="fas fa-circle text-[3px] mx-4 mt-1 opacity-50"></i>
+            <span class="mx-4">Excelência global</span> <i class="fas fa-circle text-[3px] mx-4 mt-1 opacity-50"></i>
+            <span class="mx-4">Lipedefinition</span> <i class="fas fa-circle text-[3px] mx-4 mt-1 opacity-50"></i>
+            <span class="mx-4">Rio de Janeiro</span> <i class="fas fa-circle text-[3px] mx-4 mt-1 opacity-50"></i>
+            <span class="mx-4">Excelência global</span> <i class="fas fa-circle text-[3px] mx-4 mt-1 opacity-50"></i>
+            <span class="mx-4">Lipedefinition</span> <i class="fas fa-circle text-[3px] mx-4 mt-1 opacity-50"></i>
+            <span class="mx-4">Rio de Janeiro</span> <i class="fas fa-circle text-[3px] mx-4 mt-1 opacity-50"></i>
+            <span class="mx-4">Excelência global</span> <i class="fas fa-circle text-[3px] mx-4 mt-1 opacity-50"></i>
+            <span class="mx-4">Lipedefinition</span> <i class="fas fa-circle text-[3px] mx-4 mt-1 opacity-50"></i>
+        </div>
+    </div>
+
+    <section class="relative h-screen flex items-center justify-center overflow-hidden bg-slate-50 pt-20">
         <div class="absolute inset-0 z-0 overflow-hidden">
-            <img src="https://rafaelerthal.com/wp-content/uploads/2025/09/capa-pc-scaled.webp" alt="Cirurgia no Rio de Janeiro" class="w-full h-full object-cover object-top img-parallax filter grayscale-[20%] opacity-90">
-            <div class="absolute inset-0 bg-gradient-to-t from-white via-white/70 to-transparent"></div>
+            <img src="https://rafaelerthal.com/wp-content/uploads/2025/09/capa-pc-scaled.webp" alt="Cirurgia no Rio de Janeiro" class="w-full h-full object-cover object-top img-parallax filter grayscale-[25%] opacity-90">
+            <div class="absolute inset-0 bg-gradient-to-t from-white via-white/80 to-transparent"></div>
         </div>
         
         <div class="relative z-10 max-w-7xl mx-auto px-6 lg:px-12 w-full text-center mt-20">
-            <span data-i18n="hero_crm" class="gsap-hero block text-[10px] uppercase tracking-[0.4em] text-blue-900 mb-8 font-medium">CRM 838039 • RQE 27466</span>
-            <h1 data-i18n="hero_title" class="gsap-hero text-4xl md:text-5xl lg:text-7xl font-light text-blue-900 leading-tight mb-8 tracking-tighter">
+            <span data-i18n="hero_crm" class="gsap-hero block text-[9px] uppercase tracking-[0.5em] text-gold-500 mb-8 font-display font-medium">CRM 838039 • RQE 27466</span>
+            <h1 data-i18n="hero_title" class="gsap-hero font-display text-4xl md:text-5xl lg:text-[5rem] font-light text-blue-900 leading-[1.05] mb-8 tracking-tighter">
                 A evolução cirúrgica no<br>tratamento do lipedema.
             </h1>
-            <p data-i18n="hero_subtitle" class="gsap-hero text-base lg:text-lg text-gray-600 mb-14 leading-relaxed font-light max-w-2xl mx-auto">
-                A união entre a preservação linfática e o requinte da alta definição. Uma jornada focada em conforto, segurança e qualidade de vida que não tem preço.
+            <p data-i18n="hero_subtitle" class="gsap-hero text-base text-gray-500 mb-14 leading-relaxed font-light max-w-2xl mx-auto">
+                A união absoluta entre a preservação linfática e a alta definição. Uma jornada com sede no Rio de Janeiro, focada em conforto, segurança e qualidade de vida que não tem preço.
             </p>
             <div class="gsap-hero">
-                <a href="#triagem" data-i18n="hero_cta" class="inline-block bg-blue-900 text-white px-12 py-5 text-xs font-medium uppercase tracking-[0.2em] hover:bg-blue-800 transition-all duration-500 shadow-2xl hover:scale-105">
+                <a href="#triagem" data-i18n="hero_cta" class="inline-block bg-blue-900 text-white px-12 py-5 text-[10px] font-display font-medium uppercase tracking-[0.3em] hover:bg-gold-500 hover:text-white transition-colors duration-500 shadow-[0_10px_40px_rgba(4,8,18,0.2)]">
                     Iniciar mapeamento clínico
                 </a>
             </div>
@@ -98,44 +135,45 @@
     </section>
 
     <section id="empatia" class="py-32 bg-white">
-        <div class="max-w-4xl mx-auto px-6 lg:px-12 text-center gsap-reveal">
-            <h2 data-i18n="emp_title" class="text-3xl lg:text-4xl font-light text-blue-900 mb-8">Você não tem culpa.</h2>
-            <div class="space-y-6 text-gray-500 font-light leading-loose text-base lg:text-lg">
-                <p data-i18n="emp_p1">Durante muito tempo, você ouviu que a dificuldade em afinar as pernas era apenas uma questão de esforço, dieta ou celulite comum.</p>
-                <p data-i18n="emp_p2">O lipedema é uma doença inflamatória e progressiva. A dor ao toque, o peso nas pernas no fim do dia e os hematomas inexplicáveis não são normais. Não importa o quanto você treine, a gordura doente não responde ao emagrecimento tradicional.</p>
-                <p data-i18n="emp_p3" class="text-blue-900 font-medium">A sua dor é real, tem nome e, principalmente, tem uma solução cirúrgica segura e acolhedora.</p>
+        <div class="max-w-3xl mx-auto px-6 lg:px-12 text-center gsap-reveal">
+            <h2 data-i18n="emp_title" class="font-display text-3xl lg:text-4xl font-light text-blue-900 mb-10">Você não tem culpa.</h2>
+            <div class="space-y-6 text-gray-500 font-light leading-loose text-base">
+                <p data-i18n="emp_p1">Durante muito tempo, você ouviu que a dificuldade em afinar as pernas era apenas uma questão de esforço, dieta restritiva ou celulite comum.</p>
+                <p data-i18n="emp_p2">O lipedema é uma doença inflamatória crônica. A dor ao toque, a sensação de peso extremo no fim do dia e os hematomas inexplicáveis não são normais. Não importa o quanto você treine, a gordura doente não responde ao emagrecimento tradicional.</p>
+                <p data-i18n="emp_p3" class="text-blue-900 font-medium">A sua dor é real, tem nome e, principalmente, possui uma solução cirúrgica segura, definitiva e acolhedora.</p>
             </div>
         </div>
     </section>
 
     <section id="medico" class="py-32 bg-slate-50 border-y border-slate-100">
         <div class="max-w-7xl mx-auto px-6 lg:px-12 flex flex-col lg:flex-row items-center gap-24">
-            <div class="lg:w-1/2 w-full img-container aspect-[3/4] relative">
-                <img src="https://rafaelerthal.com/wp-content/uploads/2025/09/foto-sobre.webp" alt="Dr. Rafael Erthal" class="relative w-full h-full object-cover img-parallax grayscale-[10%] rounded-sm shadow-xl">
+            <div class="lg:w-1/2 w-full img-container aspect-[4/5] relative group">
+                <div class="absolute inset-0 bg-gold-500/10 transform translate-x-4 translate-y-4 rounded-sm transition-transform duration-700 group-hover:translate-x-6 group-hover:translate-y-6"></div>
+                <img src="https://rafaelerthal.com/wp-content/uploads/2025/09/foto-sobre.webp" alt="Dr. Rafael Erthal" class="relative w-full h-full object-cover img-parallax grayscale-[10%] rounded-sm shadow-2xl">
             </div>
             <div class="lg:w-1/2 gsap-reveal">
-                <span data-i18n="doc_tag" class="text-[10px] uppercase tracking-[0.3em] text-gray-400 mb-6 block">A mente por trás da técnica</span>
-                <h2 class="text-4xl lg:text-5xl font-light text-blue-900 mb-10 tracking-tight">Dr. Rafael Erthal.</h2>
+                <span data-i18n="doc_tag" class="font-display text-[9px] uppercase tracking-[0.4em] text-gold-500 mb-6 block font-medium">A mente por trás da técnica</span>
+                <h2 class="font-display text-4xl lg:text-5xl font-light text-blue-900 mb-10 tracking-tight">Dr. Rafael Erthal.</h2>
                 
                 <div class="text-gray-500 space-y-6 font-light leading-relaxed text-base">
                     <p data-i18n="doc_p1">Escolher o cirurgião que vai conduzir a sua história com o lipedema é o passo mais importante para a sua segurança e tranquilidade.</p>
-                    <p data-i18n="doc_p2">Com mais de 15 anos de medicina e domínio técnico em contorno corporal, o dr. Rafael compreendeu que o lipedema exige uma abordagem cirúrgica muito mais delicada e precisa do que uma lipoaspiração comum.</p>
-                    <p data-i18n="doc_p3">Sua busca por excelência o levou à alemanha, o maior polo de referência mundial na doença. Ao retornar, estruturou a técnica autoral lipedefinition.</p>
-                    <p data-i18n="doc_p4">Hoje, ele representa a união entre a precisão europeia e o refinamento estético brasileiro, garantindo cirurgias inovadoras e personalizadas. É também um renomado especialista em cirurgia de mama e mastopexia em l multiplanos.</p>
+                    <p data-i18n="doc_p2">Com mais de 15 anos de medicina e um rigoroso domínio técnico em contorno corporal, o dr. Rafael compreendeu que o lipedema exige uma abordagem cirúrgica imensamente mais delicada e precisa do que uma lipoaspiração comum.</p>
+                    <p data-i18n="doc_p3">Sua busca incessante por excelência o levou à Alemanha, o maior polo de referência mundial na doença. Ao retornar, estruturou a técnica autoral Lipedefinition.</p>
+                    <p data-i18n="doc_p4">Hoje, ele representa a raríssima união entre a precisão europeia e o refinamento estético brasileiro. É também um renomado especialista em cirurgia de mama e mastopexia em L multiplanos, garantindo inovação e personalização para cada paciente.</p>
                 </div>
                 
-                <div class="mt-12 grid grid-cols-3 gap-6 border-t border-gray-200 pt-8">
+                <div class="mt-12 grid grid-cols-3 gap-6 border-t border-gray-200 pt-10">
                     <div>
-                        <span class="block text-2xl text-blue-900 font-light mb-1">+15</span>
-                        <span data-i18n="stat_1" class="text-[10px] text-gray-400 uppercase tracking-widest">Anos de medicina</span>
+                        <span class="font-display block text-3xl text-blue-900 font-light mb-2">+15</span>
+                        <span data-i18n="stat_1" class="font-display text-[9px] text-gray-400 uppercase tracking-widest">Anos de medicina</span>
                     </div>
                     <div>
-                        <span class="block text-2xl text-blue-900 font-light mb-1">R24R</span>
-                        <span data-i18n="stat_2" class="text-[10px] text-gray-400 uppercase tracking-widest">Recuperação rápida</span>
+                        <span class="font-display block text-3xl text-blue-900 font-light mb-2">R24R</span>
+                        <span data-i18n="stat_2" class="font-display text-[9px] text-gray-400 uppercase tracking-widest">Recuperação rápida</span>
                     </div>
                     <div>
-                        <span class="block text-2xl text-blue-900 font-light mb-1"><i class="fas fa-layer-group text-lg relative bottom-1"></i></span>
-                        <span data-i18n="stat_3" class="text-[10px] text-gray-400 uppercase tracking-widest">Mastopexia em l</span>
+                        <span class="font-display block text-3xl text-blue-900 font-light mb-2"><i class="fas fa-layer-group text-2xl relative bottom-1"></i></span>
+                        <span data-i18n="stat_3" class="font-display text-[9px] text-gray-400 uppercase tracking-widest">Mastopexia em L</span>
                     </div>
                 </div>
             </div>
@@ -145,28 +183,28 @@
     <section id="ciencia" class="py-32 bg-white">
         <div class="max-w-7xl mx-auto px-6 lg:px-12">
             <div class="text-center max-w-3xl mx-auto mb-24 gsap-reveal">
-                <span data-i18n="tech_tag" class="text-[10px] uppercase tracking-[0.3em] text-gray-400 mb-4 block">Segurança e estética</span>
-                <h2 data-i18n="tech_title" class="text-3xl lg:text-5xl font-light text-blue-900 mb-8 tracking-tight">A técnica lipedefinition.</h2>
+                <span data-i18n="tech_tag" class="font-display text-[9px] uppercase tracking-[0.4em] text-gold-500 mb-6 block font-medium">Segurança e estética aliadas</span>
+                <h2 data-i18n="tech_title" class="font-display text-3xl lg:text-5xl font-light text-blue-900 mb-8 tracking-tight">A técnica lipedefinition.</h2>
                 <p data-i18n="tech_desc" class="text-gray-500 font-light leading-relaxed text-base">
-                    Cada paciente possui um tipo e um grau de lipedema. Por isso, o tratamento é feito de forma cirúrgica e 100% personalizada, garantindo resultados visíveis e duradouros.
+                    Cada paciente possui um tipo e um grau de lipedema. Por isso, o tratamento é feito de forma totalmente personalizada, garantindo resultados visíveis e a devolução da autoestima.
                 </p>
             </div>
 
-            <div class="grid md:grid-cols-3 gap-8">
-                <div class="gsap-reveal bg-slate-50 p-10 border border-slate-100 hover:shadow-xl transition-all duration-700">
-                    <i class="fas fa-hand-holding-medical text-blue-900 text-2xl mb-6 opacity-80"></i>
-                    <h3 data-i18n="tech_box1_title" class="text-lg font-medium text-blue-900 mb-4 tracking-wide">Cânulas delicadas</h3>
-                    <p data-i18n="tech_box1_desc" class="text-sm text-gray-500 font-light leading-relaxed">O dr. Rafael utiliza uma cânula bem delicada, em pontos específicos, para retirar a gordura doente sem machucar as áreas linfáticas. Por isso, é muito diferente e mais segura que a lipo comum.</p>
+            <div class="grid md:grid-cols-3 gap-10">
+                <div class="gsap-reveal bg-slate-50 p-12 border border-slate-100/50 hover:shadow-2xl hover:-translate-y-2 transition-all duration-500">
+                    <i class="fas fa-hand-holding-medical text-gold-500 text-3xl mb-8"></i>
+                    <h3 data-i18n="tech_box1_title" class="font-display text-lg font-medium text-blue-900 mb-4 tracking-wide">Cânulas delicadas</h3>
+                    <p data-i18n="tech_box1_desc" class="text-sm text-gray-500 font-light leading-relaxed">O dr. Rafael utiliza cânulas milimétricas, em pontos específicos, para retirar a gordura doente sem machucar a malha linfática. Por isso, a cirurgia é profundamente diferente e mais segura que a lipo comum.</p>
                 </div>
-                <div class="gsap-reveal bg-slate-50 p-10 border border-slate-100 hover:shadow-xl transition-all duration-700 md:mt-12">
-                    <i class="fas fa-compress text-blue-900 text-2xl mb-6 opacity-80"></i>
-                    <h3 data-i18n="tech_box2_title" class="text-lg font-medium text-blue-900 mb-4 tracking-wide">Retração e definição</h3>
-                    <p data-i18n="tech_box2_desc" class="text-sm text-gray-500 font-light leading-relaxed">Poucos médicos no mundo pensam no detalhe da retração. Além de diminuir o volume e a dor, essa técnica ajuda a pele a retrair naturalmente, dando definição ao corpo sem perder a naturalidade.</p>
+                <div class="gsap-reveal bg-white shadow-xl p-12 border border-blue-900/5 hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 md:-mt-6 md:mb-6">
+                    <i class="fas fa-compress text-gold-500 text-3xl mb-8"></i>
+                    <h3 data-i18n="tech_box2_title" class="font-display text-lg font-medium text-blue-900 mb-4 tracking-wide">Retração e definição</h3>
+                    <p data-i18n="tech_box2_desc" class="text-sm text-gray-500 font-light leading-relaxed">Pouquíssimos médicos no mundo pensam no detalhe da retração tecidual. Além de diminuir o volume, a técnica ajuda a pele a retrair naturalmente de dentro para fora, dando definição ao corpo sem perder a naturalidade.</p>
                 </div>
-                <div class="gsap-reveal bg-slate-50 p-10 border border-slate-100 hover:shadow-xl transition-all duration-700">
-                    <i class="fas fa-user-nurse text-blue-900 text-2xl mb-6 opacity-80"></i>
-                    <h3 data-i18n="tech_box3_title" class="text-lg font-medium text-blue-900 mb-4 tracking-wide">Você não está sozinha</h3>
-                    <p data-i18n="tech_box3_desc" class="text-sm text-gray-500 font-light leading-relaxed">E não é só a cirurgia. Ele acompanha de perto todo o processo, tanto no pré quanto no rigoroso pós-operatório, porque o cuidado clínico também faz parte do tratamento. Você não vai estar sozinha em nenhum momento.</p>
+                <div class="gsap-reveal bg-slate-50 p-12 border border-slate-100/50 hover:shadow-2xl hover:-translate-y-2 transition-all duration-500">
+                    <i class="fas fa-user-nurse text-gold-500 text-3xl mb-8"></i>
+                    <h3 data-i18n="tech_box3_title" class="font-display text-lg font-medium text-blue-900 mb-4 tracking-wide">Você não está sozinha</h3>
+                    <p data-i18n="tech_box3_desc" class="text-sm text-gray-500 font-light leading-relaxed">E não é só a cirurgia. A equipe acompanha de perto todo o processo, tanto no preparo quanto no rigoroso pós-operatório, porque o cuidado clínico é parte vital do tratamento. Você terá as mãos dadas conosco em cada etapa.</p>
                 </div>
             </div>
         </div>
@@ -174,25 +212,25 @@
 
     <section id="experiencia" class="py-32 bg-blue-900 text-white relative overflow-hidden">
         <div class="absolute inset-0 z-0 opacity-10">
-            <img src="https://rafaelerthal.com/wp-content/uploads/2025/11/7-scaled.webp" alt="Rio de Janeiro" class="w-full h-full object-cover img-parallax filter blur-sm">
+            <img src="https://rafaelerthal.com/wp-content/uploads/2025/11/7-scaled.webp" alt="Rio de Janeiro" class="w-full h-full object-cover img-parallax filter blur-[2px]">
         </div>
-        <div class="max-w-7xl mx-auto px-6 lg:px-12 relative z-10 flex flex-col lg:flex-row items-center gap-20">
+        <div class="max-w-7xl mx-auto px-6 lg:px-12 relative z-10 flex flex-col lg:flex-row items-center gap-24">
             <div class="lg:w-1/2 gsap-reveal">
-                <span data-i18n="rj_tag" class="text-[10px] uppercase tracking-[0.3em] text-gray-400 mb-6 block">Sua jornada no rio de janeiro</span>
-                <h2 data-i18n="rj_title" class="text-4xl lg:text-6xl font-light mb-8 leading-tight tracking-tight">A experiência blue.</h2>
+                <span data-i18n="rj_tag" class="font-display text-[9px] uppercase tracking-[0.4em] text-gold-500 mb-6 block font-medium">Sua jornada no Rio de Janeiro</span>
+                <h2 data-i18n="rj_title" class="font-display text-4xl lg:text-6xl font-light mb-10 leading-[1.1] tracking-tight">A experiência blue.</h2>
                 <div class="space-y-6 text-gray-300 font-light leading-relaxed text-base pr-0 lg:pr-10">
-                    <p data-i18n="rj_p1">Recebemos continuamente pacientes de todo o brasil e do exterior que buscam a segurança e a expertise que oferecemos.</p>
-                    <p data-i18n="rj_p2">Nossa estrutura na barra da tijuca conta com um ecossistema projetado para quem vem de fora. Desde o primeiro planejamento por telemedicina, orientamos e cuidamos de cada detalhe da sua logística e conforto.</p>
-                    <p data-i18n="rj_p3">Você apenas se concentra no seu alívio e na sua qualidade de vida. Nossa equipe orquestra todo o resto.</p>
+                    <p data-i18n="rj_p1">Recebemos continuamente pacientes de todas as regiões do brasil e do exterior. Mulheres que buscam a segurança e a expertise que nossa estrutura proporciona.</p>
+                    <p data-i18n="rj_p2">Localizada na barra da tijuca, desenvolvemos um ecossistema projetado exclusivamente para quem vem de fora. Desde o planejamento por telemedicina, nossa equipe de concierge orienta e cuida de cada detalhe da sua logística.</p>
+                    <p data-i18n="rj_p3" class="text-white font-medium">Você apenas se concentra no seu alívio e na sua qualidade de vida. Nós orquestramos todo o resto.</p>
                 </div>
             </div>
             <div class="lg:w-1/2 w-full gsap-reveal">
-                <div class="bg-white/5 backdrop-blur-xl p-12 border border-white/10 rounded-sm">
-                    <h3 data-i18n="rj_box_title" class="text-2xl font-light mb-6">A transformação visível.</h3>
+                <div class="bg-white/5 backdrop-blur-2xl p-12 border border-white/10 rounded-sm">
+                    <h3 data-i18n="rj_box_title" class="font-display text-2xl font-light mb-6 text-gold-500">A transformação visível.</h3>
                     <p data-i18n="rj_box_desc" class="text-sm text-gray-300 font-light mb-10 leading-relaxed">
-                        A devolução da qualidade de vida e a harmonia estética falam por si mesmas. Explore nosso acervo cirúrgico restrito e compreenda os resultados da nossa técnica.
+                        A devolução da qualidade de vida e a harmonia estética falam por si mesmas. Explore nosso acervo cirúrgico restrito e compreenda a excelência dos resultados da nossa técnica.
                     </p>
-                    <a href="https://www.instagram.com/s/aGlnaGxpZ2h0OjE4MDAzMTc4MTU3Mzc2NjQz?story_media_id=3408495470609808950_35195133&igsh=MWdwMzhrczc0M3J0OA==" target="_blank" class="inline-flex items-center text-xs font-medium uppercase tracking-[0.2em] text-white border-b border-white/30 pb-2 hover:border-white transition-all">
+                    <a href="https://www.instagram.com/s/aGlnaGxpZ2h0OjE4MDAzMTc4MTU3Mzc2NjQz?story_media_id=3408495470609808950_35195133&igsh=MWdwMzhrczc0M3J0OA==" target="_blank" class="inline-flex items-center text-[10px] font-display font-medium uppercase tracking-[0.2em] text-white border-b border-gold-500 pb-2 hover:text-gold-500 transition-all">
                         <span data-i18n="rj_box_link">Lipedefinition. Resultados.</span> <i class="fas fa-arrow-right ml-3"></i>
                     </a>
                 </div>
@@ -202,96 +240,98 @@
 
     <section id="triagem" class="py-32 bg-white">
         <div class="max-w-4xl mx-auto px-6 lg:px-12">
-            <div class="text-center mb-20 gsap-reveal">
-                <span data-i18n="quiz_tag" class="text-[10px] uppercase tracking-[0.2em] text-gray-400 mb-6 block font-medium">Inicie a sua jornada agora</span>
-                <h2 data-i18n="quiz_title" class="text-3xl lg:text-5xl font-light text-blue-900 mb-6 tracking-tight">Mapeamento clínico.</h2>
+            <div class="text-center mb-24 gsap-reveal">
+                <span data-i18n="quiz_tag" class="font-display text-[9px] uppercase tracking-[0.4em] text-gold-500 mb-6 block font-medium">Inicie a sua jornada agora</span>
+                <h2 data-i18n="quiz_title" class="font-display text-3xl lg:text-5xl font-light text-blue-900 mb-8 tracking-tight">Mapeamento clínico.</h2>
                 <p data-i18n="quiz_desc" class="text-base text-gray-500 font-light max-w-2xl mx-auto leading-relaxed">O primeiro passo para o seu alívio é a clareza. Interaja com as afirmações abaixo para que possamos compreender o seu quadro com precisão antes de conversarmos.</p>
             </div>
 
-            <div class="bg-slate-50 p-10 lg:p-16 border border-slate-100 shadow-xl rounded-sm gsap-reveal" id="quiz-container">
+            <div class="bg-slate-50 p-10 lg:p-16 border border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.03)] rounded-sm gsap-reveal" id="quiz-container">
                 
                 <div class="quiz-step active" id="step-1">
-                    <p class="text-[10px] text-gray-400 tracking-[0.2em] uppercase mb-8">Etapa 1 de 3</p>
+                    <p class="font-display text-[9px] text-gray-400 tracking-[0.3em] uppercase mb-8">Etapa 1 de 3</p>
                     <h3 data-i18n="q1_text" class="text-2xl font-light text-blue-900 mb-10 leading-relaxed">Olhando para a sua rotina atual, qual cenário mais descreve o seu desconforto físico?</h3>
                     <div class="space-y-4">
-                        <div class="quiz-option border border-gray-200 p-6 text-sm font-light text-gray-600 rounded-sm" onclick="nextStep('step-1', 'step-2', 'Dores intensas e inchaço constante')">
+                        <div class="quiz-option bg-white border border-gray-200 p-6 text-sm font-light text-gray-600 rounded-sm shadow-sm" onclick="nextStep('step-1', 'step-2', 'Dores intensas e inchaço constante')">
                             A dor ao toque. Sinto minhas pernas pesadas, cansadas e percebo hematomas surgindo sem motivo aparente.
                         </div>
-                        <div class="quiz-option border border-gray-200 p-6 text-sm font-light text-gray-600 rounded-sm" onclick="nextStep('step-1', 'step-2', 'Apenas desconforto estético leve')">
+                        <div class="quiz-option bg-white border border-gray-200 p-6 text-sm font-light text-gray-600 rounded-sm shadow-sm" onclick="nextStep('step-1', 'step-2', 'Apenas desconforto estético leve')">
                             O impacto é mais visual. Incomoda a textura da pele e a celulite severa que não cede com tratamentos estéticos.
                         </div>
-                        <div class="quiz-option border border-gray-200 p-6 text-sm font-light text-gray-600 rounded-sm" onclick="nextStep('step-1', 'step-2', 'Mobilidade já comprometida pelas dores')">
+                        <div class="quiz-option bg-white border border-gray-200 p-6 text-sm font-light text-gray-600 rounded-sm shadow-sm" onclick="nextStep('step-1', 'step-2', 'Mobilidade já comprometida pelas dores')">
                             Minha mobilidade já está afetada. Sinto muita sobrecarga e dores constantes nas articulações, especialmente nos joelhos.
                         </div>
                     </div>
                 </div>
 
                 <div class="quiz-step" id="step-2">
-                    <p class="text-[10px] text-gray-400 tracking-[0.2em] uppercase mb-8">Etapa 2 de 3</p>
+                    <p class="font-display text-[9px] text-gray-400 tracking-[0.3em] uppercase mb-8">Etapa 2 de 3</p>
                     <h3 data-i18n="q2_text" class="text-2xl font-light text-blue-900 mb-10 leading-relaxed">Em relação ao seu histórico de dietas e exercícios intensos, qual costuma ser o resultado no seu corpo?</h3>
                     <div class="space-y-4">
-                        <div class="quiz-option border border-gray-200 p-6 text-sm font-light text-gray-600 rounded-sm" onclick="nextStep('step-2', 'step-3', 'Resistente a dietas nas pernas')">
+                        <div class="quiz-option bg-white border border-gray-200 p-6 text-sm font-light text-gray-600 rounded-sm shadow-sm" onclick="nextStep('step-2', 'step-3', 'Resistente a dietas nas pernas')">
                             Eu emagreço no rosto, braços e abdômen, mas as minhas pernas continuam grossas. Parece quase impossível perder medidas nelas.
                         </div>
-                        <div class="quiz-option border border-gray-200 p-6 text-sm font-light text-gray-600 rounded-sm" onclick="nextStep('step-2', 'step-3', 'Emagrece o corpo inteiro')">
+                        <div class="quiz-option bg-white border border-gray-200 p-6 text-sm font-light text-gray-600 rounded-sm shadow-sm" onclick="nextStep('step-2', 'step-3', 'Emagrece o corpo inteiro')">
                             Quando eu faço dieta e perco peso, sinto que minhas pernas também afinam de forma proporcional ao resto do corpo.
                         </div>
                     </div>
                 </div>
 
                 <div class="quiz-step" id="step-3">
-                    <p class="text-[10px] text-gray-400 tracking-[0.2em] uppercase mb-8">Etapa 3 de 3</p>
+                    <p class="font-display text-[9px] text-gray-400 tracking-[0.3em] uppercase mb-8">Etapa 3 de 3</p>
                     <h3 data-i18n="q3_text" class="text-2xl font-light text-blue-900 mb-10 leading-relaxed">O que mais tem gerado frustração na sua busca por uma solução médica definitiva?</h3>
                     <div class="space-y-4">
-                        <div class="quiz-option border border-gray-200 p-6 text-sm font-light text-gray-600 rounded-sm" onclick="finishQuiz('Medicos culpam por obesidade')">
+                        <div class="quiz-option bg-white border border-gray-200 p-6 text-sm font-light text-gray-600 rounded-sm shadow-sm" onclick="finishQuiz('Medicos culpam por obesidade')">
                             Sentir que não sou ouvida. Médicos que minimizam a minha dor e dizem que meu problema é apenas obesidade ou falta de esforço.
                         </div>
-                        <div class="quiz-option border border-gray-200 p-6 text-sm font-light text-gray-600 rounded-sm" onclick="finishQuiz('Medo da cirurgia e flacidez')">
-                            O medo da cirurgia em si. O receio de machucar os vasos linfáticos, de ficar com muita flacidez na pele ou ter uma recuperação desamparada.
+                        <div class="quiz-option bg-white border border-gray-200 p-6 text-sm font-light text-gray-600 rounded-sm shadow-sm" onclick="finishQuiz('Medo da cirurgia e flacidez')">
+                            O medo da cirurgia em si. O receio de machucar os vasos linfáticos, ficar com flacidez ou ter uma recuperação desamparada.
                         </div>
-                        <div class="quiz-option border border-gray-200 p-6 text-sm font-light text-gray-600 rounded-sm" onclick="finishQuiz('Busca a melhor equipe combinada')">
-                            A dificuldade de encontrar uma equipe realmente qualificada que resolva a doença e faça o contorno corporal estético de uma vez só.
+                        <div class="quiz-option bg-white border border-gray-200 p-6 text-sm font-light text-gray-600 rounded-sm shadow-sm" onclick="finishQuiz('Busca a melhor equipe combinada')">
+                            A dificuldade de encontrar uma equipe realmente qualificada que resolva a doença e faça a retração de pele com maestria.
                         </div>
                     </div>
                 </div>
 
-                <div class="quiz-step text-center py-12" id="step-result">
-                    <i class="fas fa-check text-blue-900 text-3xl mb-8"></i>
-                    <h3 data-i18n="res_title" class="text-3xl font-light text-blue-900 mb-6 tracking-tight">Mapeamento concluído com sucesso.</h3>
+                <div class="quiz-step text-center py-16" id="step-result">
+                    <i class="fas fa-check text-gold-500 text-4xl mb-8"></i>
+                    <h3 data-i18n="res_title" class="font-display text-3xl font-light text-blue-900 mb-6 tracking-tight">Mapeamento concluído com sucesso.</h3>
                     <p data-i18n="res_desc" class="text-base text-gray-500 font-light mb-12 leading-relaxed max-w-xl mx-auto">
-                        Avaliamos cuidadosamente as suas respostas. A resistência à dieta e a frustração com a dor indicam que você merece um cuidado cirúrgico especializado. O tratamento existe e nós pegaremos na sua mão nesta jornada de transformação.
+                        Avaliamos cuidadosamente as suas respostas. A resistência à dieta e a frustração com a dor indicam que você merece um cuidado cirúrgico de altíssimo nível. O tratamento definitivo existe, e nós pegaremos na sua mão nesta jornada de transformação.
                     </p>
-                    <button onclick="enviarLeadParaSDR()" data-i18n="res_cta" class="bg-blue-900 text-white px-12 py-5 text-xs font-medium uppercase tracking-[0.2em] hover:bg-blue-800 transition-all duration-500 shadow-xl hover:scale-105 w-full sm:w-auto">
+                    <button onclick="enviarLeadParaSDR()" data-i18n="res_cta" class="bg-blue-900 text-white px-12 py-5 text-[10px] font-display font-medium uppercase tracking-[0.3em] hover:bg-gold-500 transition-colors duration-500 shadow-xl w-full sm:w-auto">
                         Prosseguir com o atendimento
                     </button>
-                    <p data-i18n="res_sec" class="text-[9px] text-gray-400 mt-8 tracking-[0.2em] uppercase"><i class="fas fa-lock mr-2"></i>Ambiente protegido pelo absoluto sigilo médico.</p>
+                    <p data-i18n="res_sec" class="font-display text-[8px] text-gray-400 mt-10 tracking-[0.3em] uppercase"><i class="fas fa-lock mr-2 text-gold-500"></i>Ambiente protegido pelo absoluto sigilo médico.</p>
                 </div>
 
             </div>
         </div>
     </section>
 
-    <footer class="bg-slate-50 pt-24 pb-12 border-t border-slate-200">
-        <div class="max-w-7xl mx-auto px-6 lg:px-12 flex flex-col md:flex-row justify-between items-center md:items-end mb-12 text-center md:text-left gap-8">
+    <footer class="bg-white pt-24 pb-12 border-t border-slate-100">
+        <div class="max-w-7xl mx-auto px-6 lg:px-12 flex flex-col md:flex-row justify-between items-center md:items-end mb-16 text-center md:text-left gap-8">
             <div>
-                <h4 class="text-sm font-medium tracking-[0.3em] uppercase text-blue-900 mb-3">Dr. Rafael Erthal</h4>
-                <p class="text-[11px] text-gray-400 font-light tracking-widest uppercase">CRM 838039 • RQE 27466</p>
+                <div class="flex flex-col items-center md:items-start cursor-pointer mb-6 md:mb-0">
+                    <span class="font-display text-[15px] font-light tracking-[0.25em] text-blue-900 leading-none mb-1">RAFAEL ERTHAL</span>
+                    <span class="font-display text-[6.5px] font-medium tracking-[0.3em] text-gray-400 uppercase">Cirurgia Plástica & Lipedema</span>
+                </div>
             </div>
-            <div class="text-xs text-gray-500 font-light leading-loose text-center md:text-right">
+            <div class="text-xs text-gray-400 font-light leading-loose text-center md:text-right">
                 <p>Av. José Silva de Azevedo Neto, 200</p>
                 <p>Salas 107 e 108 - Bloco 7 - Barra da Tijuca</p>
                 <p>Rio de Janeiro, Brasil</p>
             </div>
         </div>
-        <div class="max-w-7xl mx-auto px-6 lg:px-12 flex flex-col md:flex-row justify-between items-center text-[10px] font-light text-gray-400 uppercase tracking-widest border-t border-slate-200 pt-8 gap-6">
-            <p>© 2024 dr. rafael erthal. todos os direitos reservados.</p>
-            <a href="https://www.instagram.com/dr.rafaelerthal/" target="_blank" class="hover:text-blue-900 transition flex items-center">
+        <div class="max-w-7xl mx-auto px-6 lg:px-12 flex flex-col md:flex-row justify-between items-center font-display text-[9px] font-medium text-gray-400 uppercase tracking-[0.2em] border-t border-slate-100 pt-8 gap-6">
+            <p>© 2024 rafael erthal. CRM 838039 • RQE 27466.</p>
+            <a href="https://www.instagram.com/dr.rafaelerthal/" target="_blank" class="hover:text-gold-500 transition-colors flex items-center">
                 <i class="fab fa-instagram text-lg mr-2"></i> @dr.rafaelerthal
             </a>
         </div>
     </footer>
 
-    <button onclick="dispararNeuroSniper()" class="fixed bottom-10 right-10 bg-blue-900 text-white w-14 h-14 rounded-full flex items-center justify-center shadow-2xl hover:scale-110 hover:bg-blue-800 transition-all duration-300 z-50">
+    <button onclick="dispararNeuroSniper()" class="fixed bottom-10 right-10 bg-gold-500 text-white w-14 h-14 rounded-full flex items-center justify-center shadow-[0_10px_30px_rgba(197,160,89,0.4)] hover:bg-blue-900 transition-colors duration-500 z-50">
         <i class="fab fa-whatsapp text-2xl"></i>
     </button>
 
@@ -301,97 +341,97 @@
                 nav_understanding: "A compreensão", nav_authority: "A autoridade", nav_science: "A cirurgia", nav_experience: "A experiência blue",
                 hero_crm: "CRM 838039 • RQE 27466",
                 hero_title: "A evolução cirúrgica no<br>tratamento do lipedema.",
-                hero_subtitle: "A união entre a preservação linfática e o requinte da alta definição. Uma jornada focada em conforto, segurança e qualidade de vida que não tem preço.",
+                hero_subtitle: "A união absoluta entre a preservação linfática e a alta definição. Uma jornada com sede no Rio de Janeiro, focada em conforto, segurança e qualidade de vida que não tem preço.",
                 hero_cta: "Iniciar mapeamento clínico",
                 emp_title: "Você não tem culpa.",
-                emp_p1: "Durante muito tempo, você ouviu que a dificuldade em afinar as pernas era apenas uma questão de esforço, dieta ou celulite comum.",
-                emp_p2: "O lipedema é uma doença inflamatória e progressiva. A dor ao toque, o peso nas pernas no fim do dia e os hematomas inexplicáveis não são normais. Não importa o quanto você treine, a gordura doente não responde ao emagrecimento tradicional.",
-                emp_p3: "A sua dor é real, tem nome e, principalmente, tem uma solução cirúrgica segura e acolhedora.",
+                emp_p1: "Durante muito tempo, você ouviu que a dificuldade em afinar as pernas era apenas uma questão de esforço, dieta restritiva ou celulite comum.",
+                emp_p2: "O lipedema é uma doença inflamatória crônica. A dor ao toque, a sensação de peso extremo no fim do dia e os hematomas inexplicáveis não são normais. Não importa o quanto você treine, a gordura doente não responde ao emagrecimento tradicional.",
+                emp_p3: "A sua dor é real, tem nome e, principalmente, possui uma solução cirúrgica segura, definitiva e acolhedora.",
                 doc_tag: "A mente por trás da técnica",
                 doc_p1: "Escolher o cirurgião que vai conduzir a sua história com o lipedema é o passo mais importante para a sua segurança e tranquilidade.",
-                doc_p2: "Com mais de 15 anos de medicina e domínio técnico em contorno corporal, o dr. Rafael compreendeu que o lipedema exige uma abordagem cirúrgica muito mais delicada e precisa do que uma lipoaspiração comum.",
-                doc_p3: "Sua busca por excelência o levou à alemanha, o maior polo de referência mundial na doença. Ao retornar, estruturou a técnica autoral lipedefinition.",
-                doc_p4: "Hoje, ele representa a união entre a precisão europeia e o refinamento estético brasileiro, garantindo cirurgias inovadoras e personalizadas. É também um renomado especialista em cirurgia de mama e mastopexia em l multiplanos.",
-                stat_1: "Anos de medicina", stat_2: "Recuperação rápida", stat_3: "Mastopexia em l",
-                tech_tag: "Segurança e estética", tech_title: "A técnica lipedefinition.",
-                tech_desc: "Cada paciente possui um tipo e um grau de lipedema. Por isso, o tratamento é feito de forma cirúrgica e 100% personalizada, garantindo resultados visíveis e duradouros.",
-                tech_box1_title: "Cânulas delicadas", tech_box1_desc: "O dr. Rafael utiliza uma cânula bem delicada, em pontos específicos, para retirar a gordura doente sem machucar as áreas linfáticas. Por isso, é muito diferente e mais segura que a lipo comum.",
-                tech_box2_title: "Retração e definição", tech_box2_desc: "Poucos médicos no mundo pensam no detalhe da retração. Além de diminuir o volume e a dor, essa técnica ajuda a pele a retrair naturalmente, dando definição ao corpo sem perder a naturalidade.",
-                tech_box3_title: "Você não está sozinha", tech_box3_desc: "E não é só a cirurgia. Ele acompanha de perto todo o processo, tanto no pré quanto no rigoroso pós-operatório, porque o cuidado clínico também faz parte do tratamento. Você não vai estar sozinha em nenhum momento.",
-                rj_tag: "Sua jornada no rio de janeiro", rj_title: "A experiência blue.",
-                rj_p1: "Recebemos continuamente pacientes de todo o brasil e do exterior que buscam a segurança e a expertise que oferecemos.",
-                rj_p2: "Nossa estrutura na barra da tijuca conta com um ecossistema projetado para quem vem de fora. Desde o primeiro planejamento por telemedicina, orientamos e cuidamos de cada detalhe da sua logística e conforto.",
-                rj_p3: "Você apenas se concentra no seu alívio e na sua qualidade de vida. Nossa equipe orquestra todo o resto.",
-                rj_box_title: "A transformação visível.", rj_box_desc: "A devolução da qualidade de vida e a harmonia estética falam por si mesmas. Explore nosso acervo cirúrgico restrito e compreenda os resultados da nossa técnica.", rj_box_link: "Lipedefinition. Resultados.",
+                doc_p2: "Com mais de 15 anos de medicina e um rigoroso domínio técnico em contorno corporal, o dr. Rafael compreendeu que o lipedema exige uma abordagem cirúrgica imensamente mais delicada e precisa do que uma lipoaspiração comum.",
+                doc_p3: "Sua busca incessante por excelência o levou à Alemanha, o maior polo de referência mundial na doença. Ao retornar, estruturou a técnica autoral Lipedefinition.",
+                doc_p4: "Hoje, ele representa a raríssima união entre a precisão europeia e o refinamento estético brasileiro. É também um renomado especialista em cirurgia de mama e mastopexia em L multiplanos, garantindo inovação e personalização para cada paciente.",
+                stat_1: "Anos de medicina", stat_2: "Recuperação rápida", stat_3: "Mastopexia em L",
+                tech_tag: "Segurança e estética aliadas", tech_title: "A técnica lipedefinition.",
+                tech_desc: "Cada paciente possui um tipo e um grau de lipedema. Por isso, o tratamento é feito de forma totalmente personalizada, garantindo resultados visíveis e a devolução da autoestima.",
+                tech_box1_title: "Cânulas delicadas", tech_box1_desc: "O dr. Rafael utiliza cânulas milimétricas, em pontos específicos, para retirar a gordura doente sem machucar a malha linfática. Por isso, a cirurgia é profundamente diferente e mais segura que a lipo comum.",
+                tech_box2_title: "Retração e definição", tech_box2_desc: "Pouquíssimos médicos no mundo pensam no detalhe da retração tecidual. Além de diminuir o volume, a técnica ajuda a pele a retrair naturalmente de dentro para fora, dando definição ao corpo sem perder a naturalidade.",
+                tech_box3_title: "Você não está sozinha", tech_box3_desc: "E não é só a cirurgia. A equipe acompanha de perto todo o processo, tanto no preparo quanto no rigoroso pós-operatório, porque o cuidado clínico é parte vital do tratamento. Você terá as mãos dadas conosco em cada etapa.",
+                rj_tag: "Sua jornada no Rio de Janeiro", rj_title: "A experiência blue.",
+                rj_p1: "Recebemos continuamente pacientes de todas as regiões do brasil e do exterior. Mulheres que buscam a segurança e a expertise que nossa estrutura proporciona.",
+                rj_p2: "Localizada na barra da tijuca, desenvolvemos um ecossistema projetado exclusivamente para quem vem de fora. Desde o planejamento por telemedicina, nossa equipe de concierge orienta e cuida de cada detalhe da sua logística.",
+                rj_p3: "Você apenas se concentra no seu alívio e na sua qualidade de vida. Nós orquestramos todo o resto.",
+                rj_box_title: "A transformação visível.", rj_box_desc: "A devolução da qualidade de vida e a harmonia estética falam por si mesmas. Explore nosso acervo cirúrgico restrito e compreenda a excelência dos resultados da nossa técnica.", rj_box_link: "Lipedefinition. Resultados.",
                 quiz_tag: "Inicie a sua jornada agora", quiz_title: "Mapeamento clínico.", quiz_desc: "O primeiro passo para o seu alívio é a clareza. Interaja com as afirmações abaixo para que possamos compreender o seu quadro com precisão antes de conversarmos.",
                 q1_text: "Olhando para a sua rotina atual, qual cenário mais descreve o seu desconforto físico?",
                 q2_text: "Em relação ao seu histórico de dietas e exercícios intensos, qual costuma ser o resultado no seu corpo?",
                 q3_text: "O que mais tem gerado frustração na sua busca por uma solução médica definitiva?",
-                res_title: "Mapeamento concluído com sucesso.", res_desc: "Avaliamos cuidadosamente as suas respostas. A resistência à dieta e a frustração com a dor indicam que você merece um cuidado cirúrgico especializado. O tratamento existe e nós pegaremos na sua mão nesta jornada de transformação.", res_cta: "Prosseguir com o atendimento", res_sec: "Ambiente protegido pelo absoluto sigilo médico."
+                res_title: "Mapeamento concluído com sucesso.", res_desc: "Avaliamos cuidadosamente as suas respostas. A resistência à dieta e a frustração com a dor indicam que você merece um cuidado cirúrgico de altíssimo nível. O tratamento definitivo existe, e nós pegaremos na sua mão nesta jornada de transformação.", res_cta: "Prosseguir com o atendimento", res_sec: "Ambiente protegido pelo absoluto sigilo médico."
             },
             en: {
                 nav_understanding: "The understanding", nav_authority: "The authority", nav_science: "The surgery", nav_experience: "Blue experience",
                 hero_crm: "Medical License CRM 838039",
                 hero_title: "The surgical evolution in<br>lipedema treatment.",
-                hero_subtitle: "The union between lymphatic preservation and high-definition refinement. A journey focused on comfort, safety, and a quality of life that is priceless.",
+                hero_subtitle: "The absolute union between lymphatic preservation and high-definition refinement. A journey based in Rio de Janeiro, focused on comfort, safety, and priceless quality of life.",
                 hero_cta: "Start clinical mapping",
                 emp_title: "It's not your fault.",
-                emp_p1: "For a long time, you've heard that the difficulty in slimming your legs was just a matter of effort, diet, or common cellulite.",
-                emp_p2: "Lipedema is an inflammatory and progressive disease. The pain to the touch, the heavy legs at the end of the day, and unexplained bruising are not normal. No matter how much you train, diseased fat does not respond to traditional weight loss.",
-                emp_p3: "Your pain is real, it has a name, and most importantly, it has a safe surgical solution.",
+                emp_p1: "For a long time, you've heard that the difficulty in slimming your legs was just a matter of effort, restrictive diet, or common cellulite.",
+                emp_p2: "Lipedema is a chronic inflammatory disease. The pain to the touch, the extreme feeling of heaviness at the end of the day, and unexplained bruises are not normal. No matter how much you train, diseased fat does not respond to traditional weight loss.",
+                emp_p3: "Your pain is real, it has a name, and most importantly, it has a safe, definitive, and welcoming surgical solution.",
                 doc_tag: "The mind behind the technique",
                 doc_p1: "Choosing the surgeon who will guide your story with lipedema is the most important step for your safety and peace of mind.",
-                doc_p2: "With over 15 years in medicine and technical mastery in body contouring, dr. Rafael understood that lipedema requires a surgical approach much more delicate and precise than common liposuction.",
-                doc_p3: "His pursuit of excellence took him to germany, the world's leading reference center for the disease. Upon returning, he structured the signature lipedefinition technique.",
-                doc_p4: "Today, he represents the union of european precision and brazilian aesthetic refinement, ensuring innovative and personalized surgeries. He is also a renowned specialist in breast surgery and multi-plane L-mastopexy.",
+                doc_p2: "With over 15 years in medicine and a rigorous technical mastery in body contouring, dr. Rafael understood that lipedema requires a surgical approach immensely more delicate and precise than common liposuction.",
+                doc_p3: "His relentless pursuit of excellence took him to Germany, the world's leading reference center for the disease. Upon returning, he structured the signature Lipedefinition technique.",
+                doc_p4: "Today, he represents the very rare union of European precision and Brazilian aesthetic refinement. He is also a renowned specialist in breast surgery and multi-plane L-mastopexy, ensuring innovation and personalization for each patient.",
                 stat_1: "Years in medicine", stat_2: "Fast recovery", stat_3: "L-mastopexy",
-                tech_tag: "Safety and aesthetics", tech_title: "The lipedefinition technique.",
-                tech_desc: "Each patient has a specific type and grade of lipedema. Therefore, the treatment is surgical and 100% personalized, ensuring visible and long-lasting results.",
-                tech_box1_title: "Delicate cannulas", tech_box1_desc: "Dr. Rafael uses a very delicate cannula, at specific points, to remove diseased fat without injuring lymphatic areas. This is why it is very different and safer than common lipo.",
-                tech_box2_title: "Retraction and definition", tech_box2_desc: "Few doctors in the world think about the retraction detail. In addition to reducing volume and pain, this technique helps the skin retract naturally, providing body definition without losing naturalness.",
-                tech_box3_title: "You are not alone", tech_box3_desc: "And it's not just the surgery. He closely monitors the entire process, both pre and strictly post-operative, because clinical care is also part of the treatment. You won't be alone at any point.",
-                rj_tag: "Your journey in rio de janeiro", rj_title: "The blue experience.",
-                rj_p1: "We continuously welcome patients from all over brazil and abroad seeking the safety and expertise we offer.",
-                rj_p2: "Our facility in barra da tijuca features an ecosystem designed for those traveling from afar. From the initial telemedicine planning, we guide and care for every detail of your logistics and comfort.",
-                rj_p3: "You simply focus on your relief and your quality of life. Our team orchestrates everything else.",
-                rj_box_title: "The visible transformation.", rj_box_desc: "The return of quality of life and aesthetic harmony speak for themselves. Explore our restricted surgical archive and understand the results of our technique.", rj_box_link: "Lipedefinition. Results.",
+                tech_tag: "Safety and aesthetics combined", tech_title: "The lipedefinition technique.",
+                tech_desc: "Each patient has a specific type and grade of lipedema. Therefore, the treatment is fully personalized, ensuring visible results and the restoration of self-esteem.",
+                tech_box1_title: "Delicate cannulas", tech_box1_desc: "Dr. Rafael uses millimeter cannulas, at specific points, to remove diseased fat without injuring the lymphatic mesh. Therefore, the surgery is profoundly different and safer than common lipo.",
+                tech_box2_title: "Retraction and definition", tech_box2_desc: "Very few doctors in the world think about the detail of tissue retraction. In addition to reducing volume, the technique helps the skin retract naturally from the inside out, providing body definition without losing naturalness.",
+                tech_box3_title: "You are not alone", tech_box3_desc: "And it's not just the surgery. The team closely monitors the entire process, both in preparation and in the rigorous post-operative period, because clinical care is a vital part of the treatment. We will hold your hand at every stage.",
+                rj_tag: "Your journey in Rio de Janeiro", rj_title: "The blue experience.",
+                rj_p1: "We continuously welcome patients from all regions of Brazil and abroad. Women seeking the safety and expertise our structure provides.",
+                rj_p2: "Located in Barra da Tijuca, we developed an ecosystem exclusively designed for those traveling from afar. From telemedicine planning, our concierge team guides and cares for every detail of your logistics.",
+                rj_p3: "You simply focus on your relief and quality of life. We orchestrate everything else.",
+                rj_box_title: "The visible transformation.", rj_box_desc: "The return of quality of life and aesthetic harmony speak for themselves. Explore our restricted surgical archive and understand the excellence of our technique's results.", rj_box_link: "Lipedefinition. Results.",
                 quiz_tag: "Start your journey now", quiz_title: "Clinical mapping.", quiz_desc: "The first step to your relief is clarity. Interact with the statements below so we can accurately understand your condition before we talk.",
                 q1_text: "Looking at your current routine, which scenario best describes your physical discomfort?",
                 q2_text: "Regarding your history of intense diets and exercises, what is usually the result on your body?",
                 q3_text: "What has caused you the most frustration in your search for a definitive medical solution?",
-                res_title: "Mapping successfully completed.", res_desc: "We carefully evaluated your answers. Resistance to diet and frustration with pain indicate that you deserve specialized surgical care. The treatment exists, and we will hold your hand on this journey of transformation.", res_cta: "Proceed to support", res_sec: "Environment protected by absolute medical secrecy."
+                res_title: "Mapping successfully completed.", res_desc: "We carefully evaluated your answers. Resistance to diet and frustration with pain indicate that you deserve top-tier surgical care. The definitive treatment exists, and we will hold your hand on this journey of transformation.", res_cta: "Proceed to support", res_sec: "Environment protected by absolute medical secrecy."
             },
             es: {
                 nav_understanding: "La comprensión", nav_authority: "La autoridad", nav_science: "La cirugía", nav_experience: "Experiencia blue",
                 hero_crm: "Licencia Médica CRM 838039",
                 hero_title: "La evolución quirúrgica en<br>el tratamiento del lipedema.",
-                hero_subtitle: "La unión entre la preservación linfática y el refinamiento de alta definición. Un viaje enfocado en confort, seguridad y calidad de vida sin precio.",
+                hero_subtitle: "La unión absoluta entre la preservación linfática y la alta definición. Un viaje con sede en Río de Janeiro, enfocado en confort, seguridad y calidad de vida sin precio.",
                 hero_cta: "Iniciar mapeo clínico",
                 emp_title: "No tienes la culpa.",
-                emp_p1: "Durante mucho tiempo, escuchaste que la dificultad para adelgazar tus piernas era solo cuestión de esfuerzo, dieta o celulitis común.",
-                emp_p2: "El lipedema es una enfermedad inflamatoria y progresiva. El dolor al tacto, la pesadez en las piernas al final del día y los hematomas inexplicables no son normales. Por más que entrenes, la grasa enferma no responde al adelgazamiento tradicional.",
-                emp_p3: "Tu dolor es real, tiene nombre y, principalmente, tiene una solución quirúrgica segura y acogedora.",
+                emp_p1: "Durante mucho tiempo, escuchaste que la dificultad para afinar tus piernas era solo cuestión de esfuerzo, dieta restrictiva o celulitis común.",
+                emp_p2: "El lipedema es una enfermedad inflamatoria crónica. El dolor al tacto, la sensación de pesadez extrema al final del día y los hematomas inexplicables no son normales. Por más que entrenes, la grasa enferma no responde al adelgazamiento tradicional.",
+                emp_p3: "Tu dolor es real, tiene nombre y, principalmente, posee una solución quirúrgica segura, definitiva y acogedora.",
                 doc_tag: "La mente detrás de la técnica",
                 doc_p1: "Elegir al cirujano que conducirá tu historia con el lipedema es el paso más importante para tu seguridad y tranquilidad.",
-                doc_p2: "Con más de 15 años de medicina y dominio técnico en contorno corporal, el dr. Rafael comprendió que el lipedema exige un enfoque quirúrgico mucho más delicado y preciso que una liposucción común.",
-                doc_p3: "Su búsqueda de excelencia lo llevó a alemania, el mayor polo de referencia mundial en la enfermedad. Al regresar, estructuró la técnica de autor lipedefinition.",
-                doc_p4: "Hoy, representa la unión entre la precisión europea y el refinamiento estético brasileño, garantizando cirugías innovadoras y personalizadas. También es un reconocido especialista en cirugía de mamas y mastopexia en l multiplanos.",
-                stat_1: "Años de medicina", stat_2: "Recuperación rápida", stat_3: "Mastopexia en l",
-                tech_tag: "Seguridad y estética", tech_title: "La técnica lipedefinition.",
-                tech_desc: "Cada paciente tiene un tipo y grado de lipedema. Por ello, el tratamiento se realiza de forma quirúrgica y 100% personalizada, garantizando resultados visibles y duraderos.",
-                tech_box1_title: "Cánulas delicadas", tech_box1_desc: "El dr. Rafael utiliza una cánula muy delicada, en puntos específicos, para extraer la grasa enferma sin dañar las áreas linfáticas. Por eso es muy diferente y más segura que la lipo común.",
-                tech_box2_title: "Retracción y definición", tech_box2_desc: "Pocos médicos en el mundo piensan en el detalle de la retracción. Además de reducir volumen y dolor, esta técnica ayuda a que la piel se retraiga naturalmente, dando definición al cuerpo sin perder la naturalidad.",
-                tech_box3_title: "No estás sola", tech_box3_desc: "Y no es solo la cirugía. Él acompaña de cerca todo el proceso, tanto en el pre como en el riguroso postoperatorio, porque el cuidado clínico también es parte del tratamiento. No estarás sola en ningún momento.",
-                rj_tag: "Tu viaje en río de janeiro", rj_title: "La experiencia blue.",
-                rj_p1: "Recibimos continuamente pacientes de todo brasil y del exterior que buscan la seguridad y experiencia que ofrecemos.",
-                rj_p2: "Nuestra estructura en barra da tijuca cuenta con un ecosistema diseñado para quienes vienen de lejos. Desde la planificación inicial por telemedicina, orientamos y cuidamos cada detalle de tu logística y confort.",
-                rj_p3: "Tú solo te concentras en tu alivio y calidad de vida. Nuestro equipo orquesta todo lo demás.",
-                rj_box_title: "La transformación visible.", rj_box_desc: "La recuperación de la calidad de vida y la armonía estética hablan por sí mismas. Explora nuestro archivo quirúrgico restringido y comprende los resultados de nuestra técnica.", rj_box_link: "Lipedefinition. Resultados.",
-                quiz_tag: "Inicia tu viaje ahora", quiz_title: "Mapeo clínico.", quiz_desc: "El primer paso hacia tu alivio es la claridad. Interactúa con las afirmaciones a continuación para que podamos comprender con precisión tu cuadro antes de conversar.",
+                doc_p2: "Con más de 15 años de medicina y un riguroso dominio técnico en contorno corporal, el dr. Rafael comprendió que el lipedema exige un enfoque quirúrgico inmensamente más delicado y preciso que una liposucción común.",
+                doc_p3: "Su incesante búsqueda de excelencia lo llevó a Alemania, el mayor polo de referencia mundial en la enfermedad. Al regresar, estructuró la técnica de autor Lipedefinition.",
+                doc_p4: "Hoy, representa la rarísima unión entre la precisión europea y el refinamiento estético brasileño. También es un reconocido especialista en cirugía de mamas y mastopexia en L multiplanos, garantizando innovación y personalización para cada paciente.",
+                stat_1: "Años de medicina", stat_2: "Recuperación rápida", stat_3: "Mastopexia en L",
+                tech_tag: "Seguridad y estética aliadas", tech_title: "La técnica lipedefinition.",
+                tech_desc: "Cada paciente tiene un tipo y grado de lipedema. Por ello, el tratamiento se realiza de forma totalmente personalizada, garantizando resultados visibles y la devolución de la autoestima.",
+                tech_box1_title: "Cánulas delicadas", tech_box1_desc: "El dr. Rafael utiliza cánulas milimétricas, en puntos específicos, para extraer la grasa enferma sin dañar la red linfática. Por eso, la cirugía es profundamente diferente y más segura que la lipo común.",
+                tech_box2_title: "Retracción y definición", tech_box2_desc: "Poquísimos médicos en el mundo piensan en el detalle de la retracción tisular. Además de reducir el volumen, la técnica ayuda a que la piel se retraiga naturalmente de adentro hacia afuera, dando definición al cuerpo sin perder la naturalidad.",
+                tech_box3_title: "No estás sola", tech_box3_desc: "Y no es solo la cirugía. El equipo acompaña de cerca todo el proceso, tanto en la preparación como en el riguroso postoperatorio, porque el cuidado clínico es parte vital del tratamiento. Te tomaremos de la mano en cada etapa.",
+                rj_tag: "Tu viaje en Río de Janeiro", rj_title: "La experiencia blue.",
+                rj_p1: "Recibimos continuamente pacientes de todas las regiones de Brasil y del exterior. Mujeres que buscan la seguridad y la experiencia que nuestra estructura proporciona.",
+                rj_p2: "Ubicada en Barra da Tijuca, desarrollamos un ecosistema diseñado exclusivamente para quienes vienen de lejos. Desde la planificación por telemedicina, nuestro equipo de conserjería orienta y cuida cada detalle de tu logística.",
+                rj_p3: "Tú solo te concentras en tu alivio y calidad de vida. Nosotros orquestamos todo lo demás.",
+                rj_box_title: "La transformación visible.", rj_box_desc: "La devolución de la calidad de vida y la armonía estética hablan por sí mismas. Explora nuestro archivo quirúrgico restringido y comprende la excelencia de los resultados de nuestra técnica.", rj_box_link: "Lipedefinition. Resultados.",
+                quiz_tag: "Inicia tu viaje ahora", quiz_title: "Mapeo clínico.", quiz_desc: "El primer paso hacia tu alivio es la claridad. Interactúa con las afirmaciones a continuación para que podamos comprender tu cuadro con precisión antes de conversar.",
                 q1_text: "Mirando tu rutina actual, ¿qué escenario describe mejor tu malestar físico?",
                 q2_text: "En relación a tu historial de dietas y ejercicios intensos, ¿cuál suele ser el resultado en tu cuerpo?",
                 q3_text: "¿Qué te ha generado más frustración en tu búsqueda de una solución médica definitiva?",
-                res_title: "Mapeo completado con éxito.", res_desc: "Evaluamos cuidadosamente tus respuestas. La resistencia a la dieta y la frustración con el dolor indican que mereces un cuidado quirúrgico especializado. El tratamiento existe y te tomaremos de la mano en este viaje de transformación.", res_cta: "Proceder con la atención", res_sec: "Entorno protegido por absoluto secreto médico."
+                res_title: "Mapeo completado con éxito.", res_desc: "Evaluamos cuidadosamente tus respuestas. La resistencia a la dieta y la frustración con el dolor indican que mereces un cuidado quirúrgico de altísimo nivel. El tratamiento definitivo existe y te tomaremos de la mano en este viaje de transformación.", res_cta: "Proceder con la atención", res_sec: "Entorno protegido por absoluto secreto médico."
             }
         };
 
@@ -422,9 +462,9 @@
         window.addEventListener('scroll', () => {
             const nav = document.getElementById('navbar');
             if (window.scrollY > 50) {
-                nav.classList.replace('py-5', 'py-4'); nav.classList.replace('bg-white/80', 'bg-white/95'); nav.classList.add('shadow-sm');
+                nav.classList.replace('py-5', 'py-4'); nav.classList.replace('bg-white/70', 'bg-white/95');
             } else {
-                nav.classList.replace('py-4', 'py-5'); nav.classList.replace('bg-white/95', 'bg-white/80'); nav.classList.remove('shadow-sm');
+                nav.classList.replace('py-4', 'py-5'); nav.classList.replace('bg-white/95', 'bg-white/70');
             }
         });
 
@@ -442,7 +482,7 @@
                 current.classList.remove('active');
                 next.classList.add('active');
                 setTimeout(() => next.style.opacity = 1, 50);
-            }, 600);
+            }, 500);
         }
 
         function finishQuiz(answer) {
@@ -454,10 +494,10 @@
             const numero = "5521971101000"; 
             const activeLang = document.documentElement.lang;
             
-            let texto = `Olá, Letícia! Concluí o mapeamento interativo da técnica Lipedefinition no site oficial. \n\nEstes são os meus relatos clínicos:\n- Foco do incômodo: ${leadData.sintoma}\n- Resultado das dietas: ${leadData.proporcao}\n- Frustração relatada: ${leadData.dieta}\n\nGostaria do acolhimento da equipe para alinhar os próximos passos da minha cirurgia.`;
+            let texto = `Olá, Letícia! Concluí o mapeamento da técnica Lipedefinition no site oficial. \n\nMeus relatos clínicos:\n- Foco da dor: ${leadData.sintoma}\n- Resultado de dietas: ${leadData.proporcao}\n- Frustração relatada: ${leadData.dieta}\n\nGostaria de falar com você para alinhar a avaliação médica e minha cirurgia.`;
             
-            if(activeLang === "en") texto = `Hello! I have completed the Lipedefinition interactive mapping on the official website. I am waiting for the clinical team's reception to align my next steps.`;
-            if(activeLang === "es") texto = `¡Hola! He completado el mapeo interactivo Lipedefinition en el sitio web oficial. Espero la acogida del equipo clínico para alinear mis próximos pasos.`;
+            if(activeLang === "en") texto = `Hello Letícia! I have completed the Lipedefinition mapping on the official website. I am waiting for your guidance regarding the medical evaluation.`;
+            if(activeLang === "es") texto = `¡Hola Letícia! He completado el mapeo Lipedefinition en el sitio web oficial. Espero tu orientación para la evaluación médica.`;
 
             window.open(`https://wa.me/${numero}?text=${encodeURIComponent(texto)}`, '_blank');
         }
@@ -465,9 +505,9 @@
         function dispararNeuroSniper() {
             const numero = "5521971101000"; 
             const activeLang = document.documentElement.lang;
-            let mensagem = "Olá, Letícia! Estava no site oficial e me senti muito segura com a abordagem. Gostaria de entender mais sobre o acolhimento clínico e a técnica Lipedefinition do Dr. Rafael.";
-            if(activeLang === "en") mensagem = "Hello! I accessed the main page and felt very confident with the approach. I would like to speak with the team.";
-            if(activeLang === "es") mensagem = "¡Hola! Accedí a la página principal y me sentí muy segura con el enfoque. Me gustaría hablar con el equipo.";
+            let mensagem = "Olá, Letícia! Senti muita segurança ao ler sobre a abordagem clínica. Quero saber mais sobre o acolhimento e a cirurgia do Dr. Rafael Erthal.";
+            if(activeLang === "en") mensagem = "Hello Letícia! I felt very confident reading about the clinical approach. I want to know more about Dr. Rafael Erthal's surgery.";
+            if(activeLang === "es") mensagem = "¡Hola Letícia! Me sentí muy segura al leer sobre el enfoque clínico. Quiero saber más sobre la cirugía del Dr. Rafael Erthal.";
             window.open(`https://wa.me/${numero}?text=${encodeURIComponent(mensagem)}`, '_blank');
         }
     </script>
