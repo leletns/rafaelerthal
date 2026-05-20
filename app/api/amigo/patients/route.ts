@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { patientExists, getPatientById } from '@/lib/amigo-client';
+import { patients } from '@/lib/amigo-client';
 
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get('Authorization');
@@ -13,26 +13,29 @@ export async function GET(req: NextRequest) {
   }
 
   if (!process.env.AMIGOCLINIC_API_KEY) {
-    return NextResponse.json({ success: true, data: null, message: 'AmigoClinic not configured' });
+    return NextResponse.json({ success: true, data: null, message: 'AmigoClinic não configurado' });
   }
 
   const { searchParams } = new URL(req.url);
-  const id = searchParams.get('id');
+  const id    = searchParams.get('id');
   const phone = searchParams.get('phone');
-  const name = searchParams.get('name');
+  const name  = searchParams.get('name');
 
   try {
     if (id) {
-      const patient = await getPatientById(id);
+      const patient = await patients.getById(id);
       return NextResponse.json({ success: true, data: patient });
     }
 
     if (phone || name) {
-      const result = await patientExists({ phone: phone ?? undefined, name: name ?? undefined });
+      const result = await patients.exists({
+        phone: phone ?? undefined,
+        name: name ?? undefined,
+      });
       return NextResponse.json({ success: true, data: result });
     }
 
-    return NextResponse.json({ error: 'Provide id, phone, or name param' }, { status: 400 });
+    return NextResponse.json({ error: 'Informe id, phone ou name' }, { status: 400 });
   } catch (err) {
     return NextResponse.json(
       { error: err instanceof Error ? err.message : 'unknown' },

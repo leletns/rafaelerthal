@@ -1,131 +1,181 @@
 // ============================================================
-// AMIGO CLIENT — Server-side adapter for AmigoClinic API
-// Base URL: https://amigobot-api.amigoapp.com.br
-// Auth: Bearer token via AMIGOCLINIC_API_KEY env var
+// AMIGO CLIENT — Adapter server-side para AmigoClinic API
+// Base: https://amigobot-api.amigoapp.com.br
+// Auth: Bearer via env AMIGOCLINIC_API_KEY (nunca no browser)
 // ============================================================
 
 const BASE_URL = 'https://amigobot-api.amigoapp.com.br';
 
-function getHeaders(): HeadersInit {
+function headers(): HeadersInit {
   const key = process.env.AMIGOCLINIC_API_KEY;
-  if (!key) throw new Error('AMIGOCLINIC_API_KEY not configured');
-  return {
-    Authorization: `Bearer ${key}`,
-    'Content-Type': 'application/json',
-  };
+  if (!key) throw new Error('AMIGOCLINIC_API_KEY não configurada');
+  return { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' };
 }
 
-async function amigoFetch<T>(path: string): Promise<T> {
+async function get<T>(path: string, params?: Record<string, string>): Promise<T> {
+  const qs = params ? '?' + new URLSearchParams(params).toString() : '';
+  const res = await fetch(`${BASE_URL}${path}${qs}`, { headers: headers(), cache: 'no-store' });
+  if (!res.ok) throw new Error(`AmigoAPI GET ${path} → HTTP ${res.status}`);
+  return res.json() as Promise<T>;
+}
+
+async function post<T>(path: string, body: unknown): Promise<T> {
   const res = await fetch(`${BASE_URL}${path}`, {
-    headers: getHeaders(),
-    next: { revalidate: 0 }, // always fresh
+    method: 'POST', headers: headers(), body: JSON.stringify(body), cache: 'no-store',
   });
-  if (!res.ok) {
-    throw new Error(`AmigoAPI ${path} → HTTP ${res.status}`);
-  }
+  if (!res.ok) throw new Error(`AmigoAPI POST ${path} → HTTP ${res.status}`);
+  return res.json() as Promise<T>;
+}
+
+async function put<T>(path: string, body?: unknown): Promise<T> {
+  const res = await fetch(`${BASE_URL}${path}`, {
+    method: 'PUT', headers: headers(), body: body ? JSON.stringify(body) : undefined, cache: 'no-store',
+  });
+  if (!res.ok) throw new Error(`AmigoAPI PUT ${path} → HTTP ${res.status}`);
   return res.json() as Promise<T>;
 }
 
 // -------------------------------------------------------
-// Types (expand as you discover real response shapes)
+// Types
 // -------------------------------------------------------
 export interface AmigoPatient {
   id: string;
   name: string;
   phone?: string;
-  birthDate?: string;
   email?: string;
+  birthDate?: string;
+  cpf?: string;
   [key: string]: unknown;
 }
 
-export interface AmigoAppointment {
+export interface AmigoAttendance {
   id: string;
   patientId: string;
   patientName?: string;
+  doctorId?: string;
+  doctorName?: string;
   date: string;
   time?: string;
   procedure?: string;
   status?: string;
-  doctorId?: string;
+  placeId?: string;
+  notes?: string;
   [key: string]: unknown;
 }
 
-export interface AmigoSurgery {
+export interface AmigoDoctor {
   id: string;
-  patientId: string;
-  patientName?: string;
+  name: string;
+  specialty?: string;
+  [key: string]: unknown;
+}
+
+export interface AmigoPlace {
+  id: string;
+  name: string;
+  address?: string;
+  [key: string]: unknown;
+}
+
+export interface AmigoCalendarSlot {
   date: string;
-  procedure?: string;
-  value?: number;
-  clinic?: string;
-  status?: string;
+  time: string;
+  doctorId: string;
+  available: boolean;
   [key: string]: unknown;
 }
 
 // -------------------------------------------------------
 // Pacientes
 // -------------------------------------------------------
-export async function getPatientById(patientId: string): Promise<AmigoPatient> {
-  return amigoFetch<AmigoPatient>(`/patients/${patientId}`);
-}
+export const patients = {
+  getById: (patientId: string) =>
+    get<AmigoPatient>(`/patients/${patientId}`),
 
-export async function patientExists(params: {
-  phone?: string;
-  email?: string;
-  name?: string;
-}): Promise<{ exists: boolean; patientId?: string }> {
-  const qs = new URLSearchParams(params as Record<string, string>).toString();
-  return amigoFetch(`/patients/exists?${qs}`);
-}
+  exists: (params: { phone?: string; email?: string; name?: string }) =>
+    get<{ exists: boolean; patientId?: string }>('/patients/exists', params as Record<string, string>),
 
-export async function getBirthdayPatients(date?: string): Promise<AmigoPatient[]> {
-  const qs = date ? `?date=${encodeURIComponent(date)}` : '';
-  return amigoFetch<AmigoPatient[]>(`/patients/birthday${qs}`);
-}
+  birthday: (date?: string) =>
+    get<AmigoPatient[]>('/patients/birthday', date ? { date } : undefined),
 
-export async function getPatientDoctors(patientId: string): Promise<unknown[]> {
-  return amigoFetch<unknown[]>(`/patients/${patientId}/doctors`);
-}
+  getDoctors: (patientId: string) =>
+    get<AmigoDoctor[]>(`/patients/${patientId}/doctors`),
+
+  update: (patientId: string, data: Partial<AmigoPatient>) =>
+    put<AmigoPatient>(`/patients/${patientId}`, data),
+
+  create: (data: Omit<AmigoPatient, 'id'>) =>
+    post<AmigoPatient>('/patients', data),
+};
 
 // -------------------------------------------------------
-// Agendamentos / Consultas
-// (paths to be confirmed from full Swagger)
+// Atendimentos (consultas agendadas)
 // -------------------------------------------------------
-export async function getAppointments(params?: {
-  from?: string;
-  to?: string;
-  doctorId?: string;
-  status?: string;
-}): Promise<AmigoAppointment[]> {
-  const qs = params ? '?' + new URLSearchParams(params as Record<string, string>).toString() : '';
-  return amigoFetch<AmigoAppointment[]>(`/appointments${qs}`);
-}
+export const attendances = {
+  list: (params?: { from?: string; to?: string; doctorId?: string; status?: string }) =>
+    get<AmigoAttendance[]>('/attendances', params as Record<string, string>),
 
-export async function getAppointmentById(id: string): Promise<AmigoAppointment> {
-  return amigoFetch<AmigoAppointment>(`/appointments/${id}`);
-}
+  getByPatient: (patientId: string) =>
+    get<AmigoAttendance[]>(`/attendances/${patientId}`),
 
-// -------------------------------------------------------
-// Cirurgias
-// (paths to be confirmed from full Swagger)
-// -------------------------------------------------------
-export async function getSurgeries(params?: {
-  from?: string;
-  to?: string;
-  doctorId?: string;
-}): Promise<AmigoSurgery[]> {
-  const qs = params ? '?' + new URLSearchParams(params as Record<string, string>).toString() : '';
-  return amigoFetch<AmigoSurgery[]>(`/surgeries${qs}`);
-}
+  create: (data: Omit<AmigoAttendance, 'id'>) =>
+    post<AmigoAttendance>('/attendances', data),
+
+  cancel: (id: string) =>
+    put<{ ok: boolean }>(`/attendances/cancel/${id}`),
+
+  updateStatus: (status: string, data: { id: string; [key: string]: unknown }) =>
+    put<{ ok: boolean }>(`/attendances/${status}`, data),
+
+  reschedule: (id: string, data: { date: string; time?: string }) =>
+    put<AmigoAttendance>(`/attendances/${id}/reschedule`, data),
+};
 
 // -------------------------------------------------------
-// Financeiro
-// (paths to be confirmed from full Swagger)
+// Médicos
 // -------------------------------------------------------
-export async function getFinancialSummary(params?: {
-  from?: string;
-  to?: string;
-}): Promise<unknown> {
-  const qs = params ? '?' + new URLSearchParams(params as Record<string, string>).toString() : '';
-  return amigoFetch(`/financial/summary${qs}`);
-}
+export const doctors = {
+  list: () =>
+    get<AmigoDoctor[]>('/doctors'),
+
+  available: () =>
+    get<AmigoDoctor[]>('/doctors/available'),
+
+  specialties: () =>
+    get<{ id: string; name: string }[]>('/doctors/specialties'),
+
+  availableDates: (doctorId: string, params?: { from?: string; to?: string }) =>
+    get<string[]>(`/doctors/${doctorId}/available-dates`, params as Record<string, string>),
+};
+
+// -------------------------------------------------------
+// Calendário
+// -------------------------------------------------------
+export const calendar = {
+  slots: (params?: { doctorId?: string; date?: string; placeId?: string }) =>
+    get<AmigoCalendarSlot[]>('/calendar', params as Record<string, string>),
+};
+
+// -------------------------------------------------------
+// Convênios
+// -------------------------------------------------------
+export const insurances = {
+  list: () =>
+    get<{ id: string; name: string }[]>('/insurances'),
+
+  plans: (insuranceGroupId: string) =>
+    get<{ id: string; name: string }[]>(`/insurances/plans/${insuranceGroupId}`),
+};
+
+// -------------------------------------------------------
+// Geral
+// -------------------------------------------------------
+export const places = {
+  list: () =>
+    get<AmigoPlace[]>('/places'),
+};
+
+export const events = {
+  list: () =>
+    get<{ id: string; name: string; [key: string]: unknown }[]>('/events'),
+};
