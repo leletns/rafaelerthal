@@ -1,25 +1,26 @@
 // ============================================================
 // DATA MODEL - TypeScript interfaces for Clínica Blue dashboard
+// Matches exactly the ORIGINAL data shapes from the HTML/Sheets.
 // ============================================================
 
 export interface Surgery {
   d: string;           // date string "DD/MM"
-  mes: string;         // month name in PT
+  mes: string;         // month name in PT (e.g. "Janeiro")
   p: string;           // patient name
   c: string;           // procedure/cirurgia
-  cl: string;          // clinic/local
+  cl: string;          // clinic category (e.g. "LIPEDEMA E TECNOLOGIA")
   v: number;           // value in BRL
-  reg?: string;        // region (e.g., "EX" for exterior)
+  reg?: string;        // region (e.g. "RJ", "SP", "INTERNACIONAL")
   ano?: number;        // year
 }
 
 export interface Consultation {
   d: string;           // date string "DD/MM"
-  mes: string;         // month
+  mes: string;         // month name in PT
   p: string;           // patient name
   tel: string;         // phone
   idade: number;       // age
-  canal: string;       // acquisition channel
+  canal: string;       // acquisition channel (raw text from spreadsheet)
   cidade?: string;     // city
   obs?: string;        // notes
   ano?: number;        // year
@@ -77,27 +78,19 @@ export interface KPIData {
   avgTicket2026: number;
 }
 
-export interface CanalStat {
-  canal: string;
-  count: number;
-  pct: number;
-}
+// Canal/Age/City/Intl stats: plain Record<string, number> matching the original HTML ORIGINAL object
+export type CanalStats  = Record<string, number>;
+export type FxStats     = Record<string, number>;   // faixa etária: "17–29", "30–40", ...
+export type CidadeStats = Record<string, number>;
+export type IntlStats   = Record<string, number>;
 
-export interface AgeStat {
-  faixa: string;
-  count: number;
-  pct: number;
-}
-
-export interface CityStat {
-  cidade: string;
-  count: number;
-}
-
-export interface FunnelData {
-  label: string;
-  value: number;
-  pct?: number;
+// Orçamento stats — matches the ORIGINAL.orc25 / orc26 shape
+export interface OrcStats {
+  total: number;
+  fechou: number;     // fechou cirurgia
+  nao: number;        // não fechou / recusado
+  plano: number;      // plano de pagamento
+  pendente: number;   // em aberto
 }
 
 export interface MonthlyData {
@@ -105,6 +98,12 @@ export interface MonthlyData {
   cirurgias: number;
   receita: number;
   consultas: number;
+}
+
+export interface FunnelData {
+  label: string;
+  value: number;
+  pct?: number;
 }
 
 export interface Notification {
@@ -126,33 +125,23 @@ export interface Reminder {
   completed: boolean;
 }
 
-export interface OrcStats {
-  total: number;
-  aceitos: number;
-  pendentes: number;
-  recusados: number;
-  valorTotal: number;
-  valorAceito: number;
-}
-
-export interface IntlStat {
-  pais: string;
-  count: number;
-}
-
 export interface DashboardData {
   cir25: Surgery[];
   cir26: Surgery[];
   cons25: Consultation[];
   cons26: Consultation[];
-  canal25: CanalStat[];
-  canal26: CanalStat[];
-  age25: AgeStat[];
-  age26: AgeStat[];
-  city25: CityStat[];
-  city26: CityStat[];
-  intl25: IntlStat[];
-  intl26: IntlStat[];
+  // Stats objects (Record<string, number>) — matching original HTML shapes
+  canal25: CanalStats;
+  canal26: CanalStats;
+  fx25: FxStats;
+  fx26: FxStats;
+  cidades25: CidadeStats;
+  cidades26: CidadeStats;
+  intl25: IntlStats;
+  intl26: IntlStats;
   orc25: OrcStats;
   orc26: OrcStats;
+  // Monthly consultation counts (from ORIGINAL.cons25_mes / cons26_mes)
+  cons25_mes?: number[];
+  cons26_mes?: number[];
 }

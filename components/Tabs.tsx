@@ -4,6 +4,7 @@ interface Tab {
   id: string;
   label: string;
   icon?: React.ReactNode;
+  highlight?: boolean; // blue highlight like Mayra/Comercial in original
 }
 
 interface TabsProps {
@@ -14,39 +15,18 @@ interface TabsProps {
 
 export default function Tabs({ tabs, activeTab, onChange }: TabsProps) {
   return (
-    <div
-      style={{
-        display: 'flex',
-        gap: '2px',
-        background: '#F2F2F7',
-        borderRadius: '12px',
-        padding: '4px',
-        overflowX: 'auto',
-        flexWrap: 'wrap',
-      }}
-    >
+    <div className="tabs" style={{ marginBottom: 0 }}>
       {tabs.map((tab) => {
         const isActive = tab.id === activeTab;
         return (
           <button
             key={tab.id}
             onClick={() => onChange(tab.id)}
-            style={{
-              padding: '7px 14px',
-              borderRadius: '8px',
-              border: 'none',
-              cursor: 'pointer',
-              fontSize: '0.8rem',
-              fontWeight: isActive ? 700 : 500,
-              fontFamily: 'inherit',
-              color: isActive ? '#1D1D1F' : '#86868B',
-              background: isActive ? '#fff' : 'transparent',
-              boxShadow: isActive ? '0 1px 6px rgba(0,0,0,0.1)' : 'none',
-              transition: 'all 0.15s ease',
-              whiteSpace: 'nowrap',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '5px',
+            className={`tab${isActive ? ' on' : ''}`}
+            style={tab.highlight && !isActive ? { color: '#007AFF', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '5px' } : {
+              display: tab.icon ? 'inline-flex' : undefined,
+              alignItems: tab.icon ? 'center' : undefined,
+              gap: tab.icon ? '5px' : undefined,
             }}
           >
             {tab.icon}

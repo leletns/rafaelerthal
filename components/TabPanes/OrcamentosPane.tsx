@@ -2,22 +2,16 @@
 
 import { useState } from 'react';
 import { orc25, orc26 } from '@/lib/legacy-data';
-import { formatCurrency } from '@/lib/dashboard-calculations';
 
 export default function OrcamentosPane() {
   const [year, setYear] = useState<2025 | 2026>(2025);
   const data = year === 2025 ? orc25 : orc26;
 
-  const stats = [
-    { label: 'Total enviados', value: String(data.total), color: '#007AFF', bg: '#E5F1FF' },
-    { label: 'Aceitos', value: String(data.aceitos), color: '#28A745', bg: '#E6F7EC' },
-    { label: 'Pendentes', value: String(data.pendentes), color: '#FF9500', bg: '#FFF3E0' },
-    { label: 'Recusados', value: String(data.recusados), color: '#FF3B30', bg: '#FFE5E3' },
-  ];
-
-  const acceptRate = data.total > 0 ? Math.round((data.aceitos / data.total) * 100) : 0;
-  const pendingRate = data.total > 0 ? Math.round((data.pendentes / data.total) * 100) : 0;
-  const refusedRate = data.total > 0 ? Math.round((data.recusados / data.total) * 100) : 0;
+  // fechou = fechou cirurgia, nao = não fechou, plano = plano de pagamento, pendente = em aberto
+  const fechouRate   = data.total > 0 ? Math.round((data.fechou   / data.total) * 100) : 0;
+  const naoRate      = data.total > 0 ? Math.round((data.nao      / data.total) * 100) : 0;
+  const planoRate    = data.total > 0 ? Math.round((data.plano    / data.total) * 100) : 0;
+  const pendenteRate = data.total > 0 ? Math.round((data.pendente / data.total) * 100) : 0;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -32,13 +26,8 @@ export default function OrcamentosPane() {
               key={y}
               onClick={() => setYear(y)}
               style={{
-                padding: '5px 12px',
-                borderRadius: '7px',
-                border: 'none',
-                cursor: 'pointer',
-                fontWeight: y === year ? 700 : 500,
-                fontFamily: 'inherit',
-                fontSize: '0.8rem',
+                padding: '5px 12px', borderRadius: '7px', border: 'none', cursor: 'pointer',
+                fontWeight: y === year ? 700 : 500, fontFamily: 'inherit', fontSize: '0.8rem',
                 background: y === year ? '#fff' : 'transparent',
                 color: y === year ? '#1D1D1F' : '#86868B',
                 boxShadow: y === year ? '0 1px 4px rgba(0,0,0,0.1)' : 'none',
@@ -50,37 +39,20 @@ export default function OrcamentosPane() {
         </div>
       </div>
 
-      {/* Stats */}
+      {/* KPI boxes */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '12px' }}>
-        {stats.map(({ label, value, color, bg }) => (
+        {[
+          { label: 'Total consultados', value: data.total,    color: '#007AFF', bg: '#E5F1FF' },
+          { label: 'Fechou cirurgia',   value: data.fechou,   color: '#28A745', bg: '#E6F7EC' },
+          { label: 'Não fechou',        value: data.nao,      color: '#FF3B30', bg: '#FFE5E3' },
+          { label: 'Plano pagamento',   value: data.plano,    color: '#FF9500', bg: '#FFF3E0' },
+          { label: 'Pendente',          value: data.pendente, color: '#5856D6', bg: '#F0F0FF' },
+        ].map(({ label, value, color, bg }) => (
           <div key={label} style={{ background: bg, borderRadius: '12px', padding: '14px', textAlign: 'center' }}>
-            <div style={{ fontSize: '1.6rem', fontWeight: 800, color }}>{value}</div>
-            <div style={{ fontSize: '0.72rem', color, fontWeight: 600, marginTop: '2px' }}>{label}</div>
+            <div style={{ fontSize: '1.8rem', fontWeight: 800, color }}>{value}</div>
+            <div style={{ fontSize: '0.7rem', color, fontWeight: 600, marginTop: '4px', lineHeight: 1.2 }}>{label}</div>
           </div>
         ))}
-      </div>
-
-      {/* Revenue comparison */}
-      <div style={{ background: '#fff', borderRadius: '18px', padding: '20px', boxShadow: '0 2px 16px rgba(0,0,0,0.07)' }}>
-        <h4 style={{ margin: '0 0 16px', fontSize: '0.875rem', fontWeight: 700, color: '#1D1D1F' }}>
-          Valores
-        </h4>
-        <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
-          {[
-            { label: 'Valor total orçado', value: formatCurrency(data.valorTotal), color: '#007AFF' },
-            { label: 'Valor aceito', value: formatCurrency(data.valorAceito), color: '#28A745' },
-            {
-              label: 'Taxa de aprovação',
-              value: `${data.valorTotal > 0 ? Math.round((data.valorAceito / data.valorTotal) * 100) : 0}%`,
-              color: '#5856D6',
-            },
-          ].map(({ label, value, color }) => (
-            <div key={label}>
-              <div style={{ fontSize: '0.72rem', color: '#86868B', fontWeight: 600, marginBottom: '4px' }}>{label}</div>
-              <div style={{ fontSize: '1.4rem', fontWeight: 800, color }}>{value}</div>
-            </div>
-          ))}
-        </div>
       </div>
 
       {/* Rate bars */}
@@ -89,9 +61,10 @@ export default function OrcamentosPane() {
           Distribuição dos orçamentos
         </h4>
         {[
-          { label: 'Aceitos', rate: acceptRate, color: '#28A745', count: data.aceitos },
-          { label: 'Pendentes', rate: pendingRate, color: '#FF9500', count: data.pendentes },
-          { label: 'Recusados', rate: refusedRate, color: '#FF3B30', count: data.recusados },
+          { label: 'Fechou cirurgia', rate: fechouRate,   color: '#28A745', count: data.fechou },
+          { label: 'Não fechou',      rate: naoRate,      color: '#FF3B30', count: data.nao },
+          { label: 'Plano',           rate: planoRate,    color: '#FF9500', count: data.plano },
+          { label: 'Pendente',        rate: pendenteRate, color: '#5856D6', count: data.pendente },
         ].map(({ label, rate, color, count }) => (
           <div key={label} style={{ marginBottom: '12px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
@@ -102,24 +75,16 @@ export default function OrcamentosPane() {
               </div>
             </div>
             <div style={{ height: '10px', background: '#F2F2F7', borderRadius: '5px', overflow: 'hidden' }}>
-              <div
-                style={{
-                  height: '100%',
-                  width: `${rate}%`,
-                  background: color,
-                  borderRadius: '5px',
-                  transition: 'width 0.5s ease',
-                }}
-              />
+              <div style={{ height: '100%', width: `${rate}%`, background: color, borderRadius: '5px', transition: 'width 0.5s ease' }} />
             </div>
           </div>
         ))}
       </div>
 
-      {/* Notes */}
-      <div style={{ background: '#FFF3E0', borderRadius: '14px', padding: '14px 16px', border: '1.5px solid #FF950040' }}>
-        <p style={{ margin: 0, fontSize: '0.82rem', color: '#FF9500', fontWeight: 600 }}>
-          💡 Para acompanhar orçamentos individualmente, use o Pipeline Comercial (aba Pipeline)
+      {/* Funil insight */}
+      <div style={{ background: '#E6F7EC', borderRadius: '14px', padding: '16px', border: '1.5px solid #28A74540' }}>
+        <p style={{ margin: 0, fontSize: '0.85rem', color: '#1D7A33', fontWeight: 600 }}>
+          ✅ Taxa de conversão: <strong>{fechouRate}%</strong> dos {data.total} atendimentos se tornaram cirurgias em {year}
         </p>
       </div>
     </div>

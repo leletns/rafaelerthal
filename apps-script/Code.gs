@@ -263,17 +263,17 @@ function buildConsultas_(ss, consSheet, resumoSheet) {
   // 2. CONSULTAS: agrega + monta lista detalhada de pacientes
   const cons = ss.getSheetByName(consSheet);
   if (!cons) return result;
-  
+
   const cData = cons.getDataRange().getValues();
   if (cData.length <= 1) return result;
-  
+
   const headers = cData[0].map(function(h) { return String(h).trim().toUpperCase(); });
   const idxPac   = findCol_(headers, ['PACIENTE']);
   const idxData  = findCol_(headers, ['DATA']);
   const idxIdade = findCol_(headers, ['IDADE']);
   const idxCanal = findCol_(headers, ['COMO CONHECEU', 'CANAL']);
   const idxTel   = findCol_(headers, ['TELEFONE', 'CELULAR']);
-  
+
   // Se total não veio do RESUMO, contar aqui mesmo
   let consultaCount = 0;
 
@@ -343,7 +343,7 @@ function buildConsultas_(ss, consSheet, resumoSheet) {
       isIntl: locPac.isIntl || false
     });
   }
-  
+
   // Se RESUMO não tinha dados, usa contagem da lista de consultas
   if (result.total === 0) result.total = consultaCount;
 
