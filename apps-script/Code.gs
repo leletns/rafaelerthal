@@ -2,9 +2,8 @@
  * ============================================================
  *  DASHBOARD DR. RAFAEL ERTHAL · API GOOGLE SHEETS v2
  * ============================================================
- *  TOKEN: leia de Script Properties → chave "DASHBOARD_TOKEN"
- *  Para setar: execute setToken() uma vez no editor, com o
- *  valor real. Nunca commitar o token em texto claro.
+ *  ⚠️  TROQUE O TOKEN ABAIXO por um texto único e secreto
+ *      (mesmo valor que APPS_SCRIPT_TOKEN no .env.local)
  *
  *  Reconhece automaticamente abas cujo nome começa com:
  *    • CIRURGIAS YYYY
@@ -15,16 +14,10 @@
  * ============================================================
  */
 
-function getToken_() {
-  return PropertiesService.getScriptProperties().getProperty('DASHBOARD_TOKEN') || '';
-}
+// ⚠️ TROQUE ESTE TOKEN POR UM TEXTO ÚNICO E SECRETO
+const TOKEN_SECRETO = 'May@Blue2026';
 
-/** Execute uma vez para salvar o token */
-function setToken() {
-  const token = 'COLE_O_TOKEN_AQUI'; // substitua antes de executar
-  PropertiesService.getScriptProperties().setProperty('DASHBOARD_TOKEN', token);
-  Logger.log('Token salvo com sucesso.');
-}
+function getToken_() { return TOKEN_SECRETO; }
 
 // ─── ENDPOINT PRINCIPAL ───────────────────────────────────────
 function doGet(e) {
