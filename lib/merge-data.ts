@@ -11,16 +11,21 @@
 import type { Surgery, Consultation, DashboardData } from './data-model';
 import {
   cir25_lista, cir26_lista, cons25_lista, cons26_lista,
-  canal25, canal26, age25, age26, city25, city26,
-  intl25, intl26, orc25, orc26,
+  canal25, canal26, fx25, fx26,
+  cidades25, cidades26, intl25, intl26,
+  orc25, orc26, cons25_mes, cons26_mes,
 } from './legacy-data';
 
 export function getBaseData(): DashboardData {
   return {
     cir25: cir25_lista, cir26: cir26_lista,
     cons25: cons25_lista, cons26: cons26_lista,
-    canal25, canal26, age25, age26,
-    city25, city26, intl25, intl26, orc25, orc26,
+    canal25, canal26,
+    fx25, fx26,
+    cidades25, cidades26,
+    intl25, intl26,
+    orc25, orc26,
+    cons25_mes, cons26_mes,
   };
 }
 
