@@ -2,29 +2,34 @@
  * ============================================================
  *  DASHBOARD DR. RAFAEL ERTHAL · API GOOGLE SHEETS v2
  * ============================================================
- *  ⚠️  TROQUE O TOKEN ABAIXO por um texto único e secreto
- *      (mesmo valor que APPS_SCRIPT_TOKEN no .env.local)
+ *  Versão com AUTO-DETECÇÃO de novas abas.
  *
- *  Reconhece automaticamente abas cujo nome começa com:
- *    • CIRURGIAS YYYY
- *    • CONSULTAS YYYY
- *    • RESUMO YYYY
- *    • ORÇAMENTOS E REALIZADOS YYYY
- *    • ORÇAMENTOS [MES] YYYY / ORÇAMENTOS [MES]
+ *  Reconhece automaticamente qualquer aba cujo nome comece com:
+ *    • CIRURGIAS YYYY        (ex: CIRURGIAS 2027)
+ *    • CONSULTAS YYYY        (ex: CONSULTAS 2027)
+ *    • RESUMO YYYY           (ex: RESUMO 2027)
+ *    • ORÇAMENTOS E REALIZADOS YYYY    (formato anual)
+ *    • ORÇAMENTOS [MES] YYYY            (formato mensal)
+ *    • ORÇAMENTOS [MES]                 (mensal sem ano = ano atual)
+ *
+ *  COMO USAR:
+ *  1. Cole este código em script.google.com (Extensões → Apps Script)
+ *  2. Troque a linha TOKEN_SECRETO abaixo
+ *  3. Salve · Implantar → Nova implantação → App da Web
+ *     • Executar como: Eu
+ *     • Quem tem acesso: Qualquer pessoa
+ *  4. Copie a URL gerada e cole no dashboard
  * ============================================================
  */
 
 // ⚠️ TROQUE ESTE TOKEN POR UM TEXTO ÚNICO E SECRETO
 const TOKEN_SECRETO = 'May@Blue2026';
 
-function getToken_() { return TOKEN_SECRETO; }
-
 // ─── ENDPOINT PRINCIPAL ───────────────────────────────────────
 function doGet(e) {
   try {
     const token = e && e.parameter ? e.parameter.token : null;
-    const configured = getToken_();
-    if (configured && (!token || token !== configured)) {
+    if (!token || token !== TOKEN_SECRETO) {
       return jsonOut_({ error: 'Token inválido ou ausente' });
     }
 
@@ -32,6 +37,7 @@ function doGet(e) {
     const sheets = ss.getSheets();
     const allNames = sheets.map(function(s) { return s.getName(); });
 
+    // 1. Descobre todos os anos presentes
     const yearSet = {};
     allNames.forEach(function(name) {
       const m = name.match(/(?:CIRURGIAS|CONSULTAS|RESUMO|ORÇAMENTOS|ORCAMENTOS)\s.*?(\d{4})/i);
@@ -49,26 +55,30 @@ function doGet(e) {
       syncedAt: new Date().toISOString()
     };
 
+    // 2. Para cada ano descoberto, lê CIRURGIAS, CONSULTAS, RESUMO, ORÇAMENTOS
     years.forEach(function(yr) {
       const yrStr = String(yr);
-      const cirName  = 'CIRURGIAS ' + yrStr;
+      const cirName = 'CIRURGIAS ' + yrStr;
       const consName = 'CONSULTAS ' + yrStr;
-      const resName  = 'RESUMO ' + yrStr;
+      const resName = 'RESUMO ' + yrStr;
 
-      if (allNames.indexOf(cirName) >= 0)
+      if (allNames.indexOf(cirName) >= 0) {
         result.cirurgias[yrStr] = buildCirurgias_(ss, cirName, yr);
-
-      if (allNames.indexOf(consName) >= 0)
+      }
+      if (allNames.indexOf(consName) >= 0) {
         result.consultas[yrStr] = buildConsultas_(
           ss, consName,
           allNames.indexOf(resName) >= 0 ? resName : null
         );
+      }
 
+      // Orçamentos: tenta formato anual primeiro, depois mensal
       const orcFull = 'ORÇAMENTOS E REALIZADOS ' + yrStr;
       if (allNames.indexOf(orcFull) >= 0) {
         const sh = ss.getSheetByName(orcFull);
         result.orcamentos[yrStr] = countOrcamentos_(sh.getDataRange().getValues());
       } else {
+        // Formato mensal: pega todas as abas ORÇAMENTOS [MES] desse ano
         const monthly = allNames.filter(function(name) {
           return matchesOrcamentoMonthly_(ss, name, yr, latestYear);
         });
@@ -78,10 +88,10 @@ function doGet(e) {
           monthly.forEach(function(name) {
             const sh = ss.getSheetByName(name);
             const c = countOrcamentos_(sh.getDataRange().getValues());
-            acc.total   += c.total;
-            acc.fechou  += c.fechou;
-            acc.nao     += c.nao;
-            acc.plano   += c.plano;
+            acc.total += c.total;
+            acc.fechou += c.fechou;
+            acc.nao += c.nao;
+            acc.plano += c.plano;
             acc.pendente += c.pendente;
             acc.fontes.push(name);
           });
@@ -90,22 +100,23 @@ function doGet(e) {
       }
     });
 
-    // Backward compat: cir25, cir26, cons25, cons26, orc25, orc26
+    // 3. Backward compatibility: também expõe cir25, cir26, cons25, etc.
     years.forEach(function(yr) {
       const suffix = String(yr).slice(-2);
-      const yrStr  = String(yr);
-      if (result.cirurgias[yrStr])  result['cir'  + suffix] = result.cirurgias[yrStr];
-      if (result.consultas[yrStr])  result['cons' + suffix] = result.consultas[yrStr];
-      if (result.orcamentos[yrStr]) result['orc'  + suffix] = result.orcamentos[yrStr];
+      const yrStr = String(yr);
+      if (result.cirurgias[yrStr]) result['cir' + suffix] = result.cirurgias[yrStr];
+      if (result.consultas[yrStr]) result['cons' + suffix] = result.consultas[yrStr];
+      if (result.orcamentos[yrStr]) result['orc' + suffix] = result.orcamentos[yrStr];
     });
 
-    // Outras abas (raw, até 500 linhas)
+    // 4. Outras abas (FORNECEDORES, PROCEDIMENTOS, etc.) — raw access
     const knownRe = /^(CIRURGIAS|CONSULTAS|RESUMO|ORÇAMENTOS|ORCAMENTOS)\s/i;
     allNames.forEach(function(name) {
       if (knownRe.test(name)) return;
-      const sheet  = ss.getSheetByName(name);
-      const data   = sheet.getDataRange().getValues();
+      const sheet = ss.getSheetByName(name);
+      const data = sheet.getDataRange().getValues();
       if (data.length === 0) return;
+      // Limita a 500 linhas por aba pra evitar payload gigante
       const limited = data.slice(0, 501);
       const cleaned = limited.map(function(row) {
         return row.map(function(v) {
@@ -127,74 +138,20 @@ function doGet(e) {
   }
 }
 
-// ─── doPost — ESCRITA ─────────────────────────────────────────
-function doPost(e) {
-  try {
-    const body = JSON.parse(e.postData.contents);
-    const configured = getToken_();
-    if (configured && (!body.token || body.token !== configured)) {
-      return jsonOut_({ error: 'Token inválido' });
-    }
-
-    const ss   = SpreadsheetApp.getActiveSpreadsheet();
-    const acao = body.acao;
-
-    if (acao === 'nova_cirurgia') {
-      const yr   = new Date(body.data).getFullYear() || new Date().getFullYear();
-      const nome = 'CIRURGIAS ' + yr;
-      const sh   = ss.getSheetByName(nome) || ss.insertSheet(nome);
-      sh.appendRow([body.data, body.paciente, body.cirurgia, body.classificacao || '', body.valor || '', body.regiao || '', new Date().toISOString()]);
-      return jsonOut_({ ok: true, aba: nome });
-    }
-
-    if (acao === 'nova_consulta') {
-      const yr   = new Date(body.data).getFullYear() || new Date().getFullYear();
-      const nome = 'CONSULTAS ' + yr;
-      const sh   = ss.getSheetByName(nome) || ss.insertSheet(nome);
-      sh.appendRow([body.data, body.paciente, body.idade || '', body.canal || '', body.telefone || '', body.email || '', new Date().toISOString()]);
-      return jsonOut_({ ok: true, aba: nome });
-    }
-
-    if (acao === 'novo_orcamento') {
-      const yr   = body.ano || new Date().getFullYear();
-      const mes  = (body.mes || '').toUpperCase();
-      const nome = mes ? 'ORÇAMENTOS ' + mes + ' ' + yr : 'ORÇAMENTOS E REALIZADOS ' + yr;
-      const sh   = ss.getSheetByName(nome) || ss.insertSheet(nome);
-      sh.appendRow([body.data, body.paciente, body.cirurgia || '', body.status || '', body.valor || '', new Date().toISOString()]);
-      return jsonOut_({ ok: true, aba: nome });
-    }
-
-    if (acao === 'atualizar_status') {
-      const sh = ss.getSheetByName('PIPELINE') || ss.insertSheet('PIPELINE');
-      const data_ = sh.getDataRange().getValues();
-      let found = false;
-      for (var row2 = 1; row2 < data_.length; row2++) {
-        if (String(data_[row2][0]).toLowerCase().trim() === String(body.paciente).toLowerCase().trim()) {
-          sh.getRange(row2 + 1, 2).setValue(body.status);
-          sh.getRange(row2 + 1, 3).setValue(new Date().toISOString());
-          found = true;
-          break;
-        }
-      }
-      if (!found) sh.appendRow([body.paciente, body.status, new Date().toISOString()]);
-      return jsonOut_({ ok: true, acao: 'atualizar_status', paciente: body.paciente });
-    }
-
-    return jsonOut_({ error: 'Ação desconhecida: ' + acao });
-  } catch(err) {
-    return jsonOut_({ error: String(err) });
-  }
-}
-
-// ─── ORÇAMENTOS MENSAIS ───────────────────────────────────────
+// ─── ORÇAMENTOS MENSAIS: matching ────────────────────────────
 function matchesOrcamentoMonthly_(ss, name, year, latestYear) {
   const upper = name.toUpperCase();
   if (upper.indexOf('ORÇAMENTOS ') !== 0 && upper.indexOf('ORCAMENTOS ') !== 0) return false;
   if (upper.indexOf('E REALIZADOS') >= 0) return false;
+
   const yearMatch = name.match(/(\d{4})/);
-  if (yearMatch) return parseInt(yearMatch[1]) === year;
+  if (yearMatch) {
+    return parseInt(yearMatch[1]) === year;
+  }
+  // Sem ano no nome → inferir lendo a primeira data válida da aba
   const inferred = inferYearFromSheet_(ss, name);
   if (inferred !== null) return inferred === year;
+  // Fallback final: assume o ano mais recente
   return year === latestYear;
 }
 
@@ -203,6 +160,7 @@ function inferYearFromSheet_(ss, sheetName) {
     const sheet = ss.getSheetByName(sheetName);
     if (!sheet) return null;
     const data = sheet.getDataRange().getValues();
+    // Procura primeira data válida nas primeiras 15 linhas, 3 primeiras colunas
     for (var i = 1; i < Math.min(15, data.length); i++) {
       for (var j = 0; j < Math.min(3, data[i].length); j++) {
         if (data[i][j] instanceof Date) return data[i][j].getFullYear();
@@ -254,9 +212,14 @@ function buildCirurgias_(ss, sheetName, year) {
       if (m) { monthNum = parseInt(m[2]); dStr = pad_(m[1]) + '/' + pad_(m[2]); }
     }
     const valor = parseFloat(row[idxVal]) || null;
-    const cl    = String(row[idxCl] || '').trim();
-    const reg   = idxReg >= 0 ? String(row[idxReg] || '').trim() : '';
-    lista.push({ id: year + '_sync_' + i, d: dStr, mes: monthNum, p: String(row[idxPac]).trim(), c: String(row[idxCir] || '').trim(), cl: cl, v: valor, reg: reg });
+    const cl = String(row[idxCl] || '').trim();
+    const reg = idxReg >= 0 ? String(row[idxReg] || '').trim() : '';
+    lista.push({
+      id: year + '_sync_' + i, d: dStr, mes: monthNum,
+      p: String(row[idxPac]).trim(),
+      c: String(row[idxCir] || '').trim(),
+      cl: cl, v: valor, reg: reg
+    });
     if (monthNum >= 1 && monthNum <= 12) {
       mes[monthNum - 1]++;
       if (valor && valor > 0) fatMes[monthNum - 1] += valor;
@@ -266,41 +229,57 @@ function buildCirurgias_(ss, sheetName, year) {
   return { mes: mes, total: lista.length, fatMes: fatMes, tipos: tipos, lista: lista };
 }
 
-// ─── CONSULTAS ────────────────────────────────────────────────
+// ─── CONSULTAS + RESUMO ──────────────────────────────────────
 function buildConsultas_(ss, consSheet, resumoSheet) {
-  const result = { mes: arr12_(), total: 0, canal: {}, fx: {}, cidades: {}, intl: {}, lista: [] };
+  const result = {
+    mes: arr12_(), total: 0,
+    canal: {}, fx: {}, cidades: {}, intl: {},
+    lista: []
+  };
 
+  // 1. RESUMO: contagem mensal autoritativa
   if (resumoSheet) {
     const resumo = ss.getSheetByName(resumoSheet);
     if (resumo) {
       const rData = resumo.getDataRange().getValues();
-      const idxMap = {'JANEIRO':0,'FEVEREIRO':1,'MARÇO':2,'MARCO':2,'ABRIL':3,'MAIO':4,'JUNHO':5,'JULHO':6,'AGOSTO':7,'SETEMBRO':8,'OUTUBRO':9,'NOVEMBRO':10,'DEZEMBRO':11};
+      const idxMap = {
+        'JANEIRO':0,'FEVEREIRO':1,'MARÇO':2,'MARCO':2,'ABRIL':3,
+        'MAIO':4,'JUNHO':5,'JULHO':6,'AGOSTO':7,
+        'SETEMBRO':8,'OUTUBRO':9,'NOVEMBRO':10,'DEZEMBRO':11
+      };
       for (var i = 0; i < rData.length; i++) {
-        const fc = String(rData[i][0] || '').toUpperCase().trim();
-        if (idxMap[fc] !== undefined && typeof rData[i][1] === 'number') result.mes[idxMap[fc]] = rData[i][1];
+        const firstCell = String(rData[i][0] || '').toUpperCase().trim();
+        if (idxMap[firstCell] !== undefined && typeof rData[i][1] === 'number') {
+          result.mes[idxMap[firstCell]] = rData[i][1];
+        }
       }
       result.total = result.mes.reduce(function(a, b) { return a + b; }, 0);
     }
   }
 
+  // 2. CONSULTAS: agrega + monta lista detalhada de pacientes
   const cons = ss.getSheetByName(consSheet);
   if (!cons) return result;
+
   const cData = cons.getDataRange().getValues();
   if (cData.length <= 1) return result;
 
-  const headers  = cData[0].map(function(h) { return String(h).trim().toUpperCase(); });
+  const headers = cData[0].map(function(h) { return String(h).trim().toUpperCase(); });
   const idxPac   = findCol_(headers, ['PACIENTE']);
   const idxData  = findCol_(headers, ['DATA']);
   const idxIdade = findCol_(headers, ['IDADE']);
   const idxCanal = findCol_(headers, ['COMO CONHECEU', 'CANAL']);
   const idxTel   = findCol_(headers, ['TELEFONE', 'CELULAR']);
 
+  // Se total não veio do RESUMO, contar aqui mesmo
   let consultaCount = 0;
+
   for (var i = 1; i < cData.length; i++) {
     const row = cData[i];
     if (idxPac < 0 || !row[idxPac]) continue;
     consultaCount++;
 
+    // Canal
     let canalRaw = '';
     if (idxCanal >= 0) {
       canalRaw = String(row[idxCanal] || '').trim();
@@ -316,6 +295,7 @@ function buildConsultas_(ss, consSheet, resumoSheet) {
       result.canal[key] = (result.canal[key] || 0) + 1;
     }
 
+    // Idade
     let idadeNum = null;
     if (idxIdade >= 0 && row[idxIdade]) {
       const im = String(row[idxIdade]).match(/(\d+)/);
@@ -331,6 +311,7 @@ function buildConsultas_(ss, consSheet, resumoSheet) {
       }
     }
 
+    // Telefone + cidade/país
     let telStr = '';
     if (idxTel >= 0) {
       telStr = String(row[idxTel] || '').trim();
@@ -341,17 +322,28 @@ function buildConsultas_(ss, consSheet, resumoSheet) {
       }
     }
 
+    // Adiciona à lista detalhada de pacientes
     let dStr = '';
     if (idxData >= 0) {
       const d = row[idxData];
       if (d instanceof Date) dStr = Utilities.formatDate(d, 'America/Sao_Paulo', 'dd/MM/yyyy');
       else if (d) dStr = String(d);
     }
-    const locPac = parseLocation_(telStr);
-    result.lista.push({ p: String(row[idxPac]).trim(), d: dStr, idade: idadeNum, canal: canalRaw, tel: telStr, reg: locPac.label || '', isIntl: locPac.isIntl || false });
+    var locPac = parseLocation_(telStr);
+    result.lista.push({
+      p: String(row[idxPac]).trim(),
+      d: dStr,
+      idade: idadeNum,
+      canal: canalRaw,
+      tel: telStr,
+      reg: locPac.label || '',
+      isIntl: locPac.isIntl || false
+    });
   }
 
+  // Se RESUMO não tinha dados, usa contagem da lista de consultas
   if (result.total === 0) result.total = consultaCount;
+
   return result;
 }
 
@@ -372,7 +364,7 @@ function countOrcamentos_(data) {
     else if (status === 'NÃO' || status === 'NAO') result.nao++;
     else if (status.indexOf('PLANO') >= 0) result.plano++;
     else if (row[3] instanceof Date || status.match(/^\d{4}-\d{2}-\d{2}/) || status.match(/^\d{2}\/\d{2}\/\d{4}/)) result.fechou++;
-    else if (status === 'CANCELOU') result.total--;
+    else if (status === 'CANCELOU') { result.total--; }
     else result.pendente++;
   }
   return result;
@@ -425,4 +417,82 @@ function dddToCity_(ddd) {
 function ddiToCountry_(code) {
   const map = {'1':'EUA e Canadá 🇺🇸','33':'França 🇫🇷','34':'Espanha 🇪🇸','39':'Itália 🇮🇹','41':'Suíça 🇨🇭','44':'Reino Unido 🇬🇧','49':'Alemanha 🇩🇪','51':'Peru 🇵🇪','52':'México 🇲🇽','54':'Argentina 🇦🇷','56':'Chile 🇨🇱','57':'Colômbia 🇨🇴','58':'Venezuela 🇻🇪','61':'Austrália 🇦🇺','81':'Japão 🇯🇵','351':'Portugal 🇵🇹','353':'Irlanda 🇮🇪','420':'Rep. Tcheca 🇨🇿','971':'EAU 🇦🇪','972':'Israel 🇮🇱','974':'Qatar 🇶🇦','593':'Equador 🇪🇨','503':'El Salvador 🇸🇻','598':'Uruguai 🇺🇾'};
   return map[code] || null;
+}
+
+// ════════════════════════════════════════════════════════════════════════
+//  doPost — ESCRITA DO DASHBOARD → SHEETS
+//  Recebe JSON do dashboard e grava na aba correta
+// ════════════════════════════════════════════════════════════════════════
+function doPost(e) {
+  try {
+    const body = JSON.parse(e.postData.contents);
+    if (!body.token || body.token !== TOKEN_SECRETO) {
+      return jsonOut_({ error: 'Token inválido' });
+    }
+
+    const ss  = SpreadsheetApp.getActiveSpreadsheet();
+    const acao = body.acao; // 'nova_cirurgia' | 'nova_consulta' | 'atualizar_status'
+
+    if (acao === 'nova_cirurgia') {
+      // body: { data, paciente, cirurgia, classificacao, valor, regiao }
+      const yr   = new Date(body.data).getFullYear() || new Date().getFullYear();
+      const nome = 'CIRURGIAS ' + yr;
+      const sh   = ss.getSheetByName(nome) || ss.insertSheet(nome);
+      sh.appendRow([
+        body.data, body.paciente, body.cirurgia,
+        body.classificacao || '', body.valor || '', body.regiao || '',
+        new Date().toISOString()
+      ]);
+      return jsonOut_({ ok: true, aba: nome, acao: 'nova_cirurgia' });
+    }
+
+    if (acao === 'nova_consulta') {
+      // body: { data, paciente, idade, canal, telefone, email }
+      const yr   = new Date(body.data).getFullYear() || new Date().getFullYear();
+      const nome = 'CONSULTAS ' + yr;
+      const sh   = ss.getSheetByName(nome) || ss.insertSheet(nome);
+      sh.appendRow([
+        body.data, body.paciente, body.idade || '',
+        body.canal || '', body.telefone || '', body.email || '',
+        new Date().toISOString()
+      ]);
+      return jsonOut_({ ok: true, aba: nome, acao: 'nova_consulta' });
+    }
+
+    if (acao === 'novo_orcamento') {
+      // body: { data, paciente, cirurgia, valor, status, mes, ano }
+      const yr   = body.ano || new Date().getFullYear();
+      const mes  = (body.mes || '').toUpperCase();
+      const nome = mes ? 'ORÇAMENTOS ' + mes + ' ' + yr : 'ORÇAMENTOS E REALIZADOS ' + yr;
+      const sh   = ss.getSheetByName(nome) || ss.insertSheet(nome);
+      sh.appendRow([
+        body.data, body.paciente, body.cirurgia || '',
+        body.status || '', body.valor || '', new Date().toISOString()
+      ]);
+      return jsonOut_({ ok: true, aba: nome, acao: 'novo_orcamento' });
+    }
+
+    if (acao === 'atualizar_status') {
+      // Atualiza status de uma paciente numa aba PIPELINE (ou cria se não existir)
+      const sh = ss.getSheetByName('PIPELINE') || ss.insertSheet('PIPELINE');
+      // Verifica se paciente já existe e atualiza; se não, adiciona
+      const data_ = sh.getDataRange().getValues();
+      let found = false;
+      for (var row2 = 1; row2 < data_.length; row2++) {
+        if (String(data_[row2][0]).toLowerCase().trim() === String(body.paciente).toLowerCase().trim()) {
+          sh.getRange(row2+1, 2).setValue(body.status);
+          sh.getRange(row2+1, 3).setValue(new Date().toISOString());
+          found = true; break;
+        }
+      }
+      if (!found) {
+        sh.appendRow([body.paciente, body.status, new Date().toISOString()]);
+      }
+      return jsonOut_({ ok: true, acao: 'atualizar_status', paciente: body.paciente, status: body.status });
+    }
+
+    return jsonOut_({ error: 'Ação desconhecida: ' + acao });
+  } catch(err) {
+    return jsonOut_({ error: String(err) });
+  }
 }
