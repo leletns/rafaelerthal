@@ -12,6 +12,9 @@
  *    • ORÇAMENTOS [MES] YYYY            (formato mensal)
  *    • ORÇAMENTOS [MES]                 (mensal sem ano = ano atual)
  *
+ *  Outras abas (FORNECEDORES, PROCEDIMENTOS, etc.) são lidas como
+ *  raw data e disponibilizadas em `outras_abas` (para uso futuro).
+ *
  *  COMO USAR:
  *  1. Cole este código em script.google.com (Extensões → Apps Script)
  *  2. Troque a linha TOKEN_SECRETO abaixo
