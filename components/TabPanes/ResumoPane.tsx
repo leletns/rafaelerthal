@@ -4,19 +4,22 @@ import { useState } from 'react';
 import KPICards from '../KPICards';
 import { RevenueBarChart, MonthlySurgeriesChart } from '../Charts';
 import { computeKPIs, computeMonthlyData, computeRevenueByMonth, computeTopProcedures, formatCurrency } from '@/lib/dashboard-calculations';
-import type { Surgery, Consultation } from '@/lib/data-model';
-import { canal25, canal26, fx25, fx26 } from '@/lib/legacy-data';
+import type { Surgery, Consultation, CanalStats, FxStats } from '@/lib/data-model';
 
 interface ResumoPaneProps {
   cir25: Surgery[];
   cir26: Surgery[];
   cons25: Consultation[];
   cons26: Consultation[];
+  canal25: CanalStats;
+  canal26: CanalStats;
+  fx25: FxStats;
+  fx26: FxStats;
 }
 
 const COLORS = ['#007AFF', '#5856D6', '#FF9500', '#28A745', '#FF3B30', '#AF52DE', '#FF6B35', '#00C7BE'];
 
-export default function ResumoPane({ cir25, cir26, cons25, cons26 }: ResumoPaneProps) {
+export default function ResumoPane({ cir25, cir26, cons25, cons26, canal25, canal26, fx25, fx26 }: ResumoPaneProps) {
   const [year, setYear] = useState<2025 | 2026>(new Date().getFullYear() >= 2026 ? 2026 : 2025);
 
   const kpis     = computeKPIs(cir25, cir26, cons25, cons26);

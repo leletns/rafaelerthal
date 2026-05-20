@@ -1,10 +1,15 @@
 'use client';
 
 import { useState } from 'react';
-import { orc25, orc26 } from '@/lib/legacy-data';
+import type { OrcStats } from '@/lib/data-model';
 
-export default function OrcamentosPane() {
-  const [year, setYear] = useState<2025 | 2026>(2025);
+interface OrcamentosPaneProps {
+  orc25: OrcStats;
+  orc26: OrcStats;
+}
+
+export default function OrcamentosPane({ orc25, orc26 }: OrcamentosPaneProps) {
+  const [year, setYear] = useState<2025 | 2026>(new Date().getFullYear() >= 2026 ? 2026 : 2025);
   const data = year === 2025 ? orc25 : orc26;
 
   // fechou = fechou cirurgia, nao = não fechou, plano = plano de pagamento, pendente = em aberto
@@ -20,19 +25,9 @@ export default function OrcamentosPane() {
         <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: '#1D1D1F' }}>
           Orçamentos & Conversão
         </h3>
-        <div style={{ display: 'flex', background: '#F2F2F7', borderRadius: '10px', padding: '3px', gap: '2px' }}>
+        <div className="seg">
           {([2025, 2026] as const).map((y) => (
-            <button
-              key={y}
-              onClick={() => setYear(y)}
-              style={{
-                padding: '5px 12px', borderRadius: '7px', border: 'none', cursor: 'pointer',
-                fontWeight: y === year ? 700 : 500, fontFamily: 'inherit', fontSize: '0.8rem',
-                background: y === year ? '#fff' : 'transparent',
-                color: y === year ? '#1D1D1F' : '#86868B',
-                boxShadow: y === year ? '0 1px 4px rgba(0,0,0,0.1)' : 'none',
-              }}
-            >
+            <button key={y} className={`sb${y === year ? ' on' : ''}`} onClick={() => setYear(y)}>
               {y}
             </button>
           ))}

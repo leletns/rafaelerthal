@@ -128,7 +128,7 @@ export default function DashboardPage() {
   function renderTabContent() {
     switch (activeTab) {
       case 'resumo':
-        return <ResumoPane cir25={data.cir25} cir26={data.cir26} cons25={data.cons25} cons26={data.cons26} />;
+        return <ResumoPane cir25={data.cir25} cir26={data.cir26} cons25={data.cons25} cons26={data.cons26} canal25={data.canal25} canal26={data.canal26} fx25={data.fx25} fx26={data.fx26} />;
       case 'mayra':
         return <PipelinePane />;
       case 'cirurgias':
@@ -150,7 +150,7 @@ export default function DashboardPage() {
       case 'equipe':
         return <EquipePane />;
       case 'orcamentos':
-        return <OrcamentosPane />;
+        return <OrcamentosPane orc25={data.orc25} orc26={data.orc26} />;
       default:
         return null;
     }
