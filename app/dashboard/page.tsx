@@ -21,18 +21,20 @@ import { mergePatientRecords } from '@/lib/normalize-patient';
 import { getAuthToken, safeStorage, SNAPSHOT_KEY } from '@/lib/safe-storage';
 import type { DashboardData, Notification } from '@/lib/data-model';
 
+// Tab names match the original HTML exactly
 const TABS = [
-  { id: 'resumo', label: 'Resumo' },
+  { id: 'resumo',    label: 'Visão Geral' },
+  { id: 'mayra',     label: 'Mayra',    highlight: true },
+  { id: 'pipeline',  label: 'Comercial',highlight: true },
   { id: 'cirurgias', label: 'Cirurgias' },
   { id: 'consultas', label: 'Consultas' },
   { id: 'pacientes', label: 'Pacientes' },
-  { id: 'pipeline', label: 'Pipeline' },
-  { id: 'ranking', label: 'Ranking' },
-  { id: 'funil', label: 'Funil' },
-  { id: 'geo', label: 'Geo & Canais' },
-  { id: 'comp', label: 'Comparativo' },
-  { id: 'equipe', label: 'Equipe' },
-  { id: 'orcamentos', label: 'Orçamentos' },
+  { id: 'ranking',   label: 'Ranking' },
+  { id: 'equipe',    label: 'Equipe' },
+  { id: 'orcamentos',label: 'Orçamentos' },
+  { id: 'funil',     label: 'Funil' },
+  { id: 'geo',       label: 'Origem' },
+  { id: 'comp',      label: '2025 × 2026' },
 ];
 
 const INITIAL_NOTIFICATIONS: Notification[] = [
@@ -45,11 +47,6 @@ const INITIAL_NOTIFICATIONS: Notification[] = [
     read: false,
   },
 ];
-
-function getInitialData(): DashboardData {
-  const snap = safeStorage.get<DashboardData | null>(SNAPSHOT_KEY, null);
-  return snap ?? getBaseData();
-}
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -87,14 +84,14 @@ export default function DashboardPage() {
           setData(merged);
           safeStorage.set(SNAPSHOT_KEY, merged);
 
-          const totalCir = (merged.cir25?.length ?? 0) + (merged.cir26?.length ?? 0);
+          const totalCir  = (merged.cir25?.length  ?? 0) + (merged.cir26?.length  ?? 0);
           const totalCons = (merged.cons25?.length ?? 0) + (merged.cons26?.length ?? 0);
 
           setNotifications((prev) => [
             {
               id: `sync_${Date.now()}`,
               type: 'info',
-              title: 'Dados sincronizados',
+              title: '✅ Dados sincronizados',
               body: `Google Sheets · ${totalCir} cirurgias · ${totalCons} consultas.`,
               date: new Date().toISOString().split('T')[0],
               read: false,
@@ -110,38 +107,30 @@ export default function DashboardPage() {
     }
 
     syncSheets();
-
     return () => { cancelled = true; };
   }, [router]);
 
   function handleMarkRead(id: string) {
     setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
   }
-
   function handleMarkAllRead() {
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
   }
 
   const patients = useMemo(
-    () =>
-      mergePatientRecords(
-        [...data.cir25, ...data.cir26],
-        [...data.cons25, ...data.cons26]
-      ),
+    () => mergePatientRecords(
+      [...data.cir25, ...data.cir26],
+      [...data.cons25, ...data.cons26]
+    ),
     [data]
   );
 
   function renderTabContent() {
     switch (activeTab) {
       case 'resumo':
-        return (
-          <ResumoPane
-            cir25={data.cir25}
-            cir26={data.cir26}
-            cons25={data.cons25}
-            cons26={data.cons26}
-          />
-        );
+        return <ResumoPane cir25={data.cir25} cir26={data.cir26} cons25={data.cons25} cons26={data.cons26} />;
+      case 'mayra':
+        return <PipelinePane />;
       case 'cirurgias':
         return <CirurgiasPane cir25={data.cir25} cir26={data.cir26} />;
       case 'consultas':
@@ -151,41 +140,13 @@ export default function DashboardPage() {
       case 'pipeline':
         return <PipelinePane />;
       case 'ranking':
-        return (
-          <RankingPane
-            cir25={data.cir25}
-            cir26={data.cir26}
-            cons25={data.cons25}
-            cons26={data.cons26}
-          />
-        );
+        return <RankingPane cir25={data.cir25} cir26={data.cir26} cons25={data.cons25} cons26={data.cons26} />;
       case 'funil':
-        return (
-          <FunilPane
-            cir25={data.cir25}
-            cir26={data.cir26}
-            cons25={data.cons25}
-            cons26={data.cons26}
-          />
-        );
+        return <FunilPane cir25={data.cir25} cir26={data.cir26} cons25={data.cons25} cons26={data.cons26} />;
       case 'geo':
-        return (
-          <GeoPane
-            cir25={data.cir25}
-            cir26={data.cir26}
-            cons25={data.cons25}
-            cons26={data.cons26}
-          />
-        );
+        return <GeoPane cir25={data.cir25} cir26={data.cir26} cons25={data.cons25} cons26={data.cons26} />;
       case 'comp':
-        return (
-          <CompPane
-            cir25={data.cir25}
-            cir26={data.cir26}
-            cons25={data.cons25}
-            cons26={data.cons26}
-          />
-        );
+        return <CompPane cir25={data.cir25} cir26={data.cir26} cons25={data.cons25} cons26={data.cons26} />;
       case 'equipe':
         return <EquipePane />;
       case 'orcamentos':
@@ -200,42 +161,14 @@ export default function DashboardPage() {
       notifications={notifications}
       onMarkRead={handleMarkRead}
       onMarkAllRead={handleMarkAllRead}
+      syncing={syncing}
     >
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-        {/* Sync indicator */}
-        {syncing && (
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '6px 12px',
-              background: 'rgba(0,122,255,0.08)',
-              borderRadius: '8px',
-              fontSize: '0.75rem',
-              color: '#007AFF',
-              fontWeight: 500,
-            }}
-          >
-            <span
-              style={{
-                width: '8px',
-                height: '8px',
-                borderRadius: '50%',
-                background: '#007AFF',
-                animation: 'pulse 1.2s ease-in-out infinite',
-                display: 'inline-block',
-              }}
-            />
-            Sincronizando com Google Sheets…
-          </div>
-        )}
+      {/* Tabs */}
+      <Tabs tabs={TABS} activeTab={activeTab} onChange={setActiveTab} />
 
-        {/* Tabs */}
-        <Tabs tabs={TABS} activeTab={activeTab} onChange={setActiveTab} />
-
-        {/* Content */}
-        <div style={{ animation: 'fadeIn 0.2s ease' }}>{renderTabContent()}</div>
+      {/* Content — fadein on tab change */}
+      <div key={activeTab} style={{ animation: 'fadeIn 0.25s ease both' }}>
+        {renderTabContent()}
       </div>
 
       {/* Floating AI assistant */}
