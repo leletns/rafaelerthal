@@ -24,8 +24,11 @@ export async function GET(req: NextRequest) {
     });
   }
 
+  const appsScriptToken = process.env.APPS_SCRIPT_TOKEN || '';
+  const tokenParam = appsScriptToken ? `&token=${encodeURIComponent(appsScriptToken)}` : '';
+
   try {
-    const res = await fetch(`${sheetsUrl}?action=pull`, {
+    const res = await fetch(`${sheetsUrl}?action=pull${tokenParam}`, {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
     });

@@ -73,6 +73,7 @@ export const AUTH_TOKEN_KEY = 'clinica_blue_auth';
 export const PIPELINE_KEY = 'clinica_blue_pipeline';
 export const REMINDERS_KEY = 'clinica_blue_reminders';
 export const NOTIFICATIONS_READ_KEY = 'clinica_blue_notifications_read';
+export const SNAPSHOT_KEY = 'clinica_blue_snapshot';
 
 export function getAuthToken(): string | null {
   return safeStorage.get<string | null>(AUTH_TOKEN_KEY, null);
