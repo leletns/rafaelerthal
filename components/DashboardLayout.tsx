@@ -3,7 +3,8 @@
 import { useRouter } from 'next/navigation';
 import { clearAuthToken } from '@/lib/safe-storage';
 import NotificationBell from './NotificationBell';
-import type { Notification } from '@/lib/data-model';
+import GlobalSearch from './GlobalSearch';
+import type { Notification, Patient } from '@/lib/data-model';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -12,6 +13,7 @@ interface DashboardLayoutProps {
   onMarkAllRead: () => void;
   syncing?: boolean;
   lastSync?: string;
+  patients?: Patient[];
 }
 
 export default function DashboardLayout({
@@ -20,6 +22,7 @@ export default function DashboardLayout({
   onMarkRead,
   onMarkAllRead,
   syncing,
+  patients,
 }: DashboardLayoutProps) {
   const router = useRouter();
 
@@ -79,6 +82,11 @@ export default function DashboardLayout({
 
           {/* Right side */}
           <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '10px' }}>
+            {/* Global search */}
+            {patients && patients.length > 0 && (
+              <GlobalSearch patients={patients} />
+            )}
+
             {/* Sync indicator */}
             {syncing && (
               <div style={{

@@ -1,14 +1,21 @@
 'use client';
 
 import { useState } from 'react';
-import type { Surgery, Consultation } from '@/lib/data-model';
-import { canal25, canal26, cidades25, cidades26, fx25, fx26, intl25, intl26 } from '@/lib/legacy-data';
+import type { Surgery, Consultation, CanalStats, FxStats, CidadeStats, IntlStats } from '@/lib/data-model';
 
 interface GeoPaneProps {
   cir25: Surgery[];
   cir26: Surgery[];
   cons25: Consultation[];
   cons26: Consultation[];
+  canal25: CanalStats;
+  canal26: CanalStats;
+  cidades25: CidadeStats;
+  cidades26: CidadeStats;
+  fx25: FxStats;
+  fx26: FxStats;
+  intl25: IntlStats;
+  intl26: IntlStats;
 }
 
 const COLORS = ['#007AFF', '#5856D6', '#FF9500', '#28A745', '#FF3B30', '#AF52DE', '#FF6B35', '#00C7BE'];
@@ -95,13 +102,20 @@ function IntlCard({ data, title }: { data: Record<string, number>; title: string
   );
 }
 
-export default function GeoPane({ cir25: _c25, cir26: _c26, cons25: _co25, cons26: _co26 }: GeoPaneProps) {
+export default function GeoPane({ cir25, cir26, cons25: _co25, cons26: _co26, canal25, canal26, cidades25, cidades26, fx25, fx26, intl25, intl26 }: GeoPaneProps) {
   const [year, setYear] = useState<2025 | 2026>(2025);
 
   const canalData   = year === 2025 ? canal25   : canal26;
   const cidadeData  = year === 2025 ? cidades25  : cidades26;
   const fxData      = year === 2025 ? fx25       : fx26;
   const intlData    = year === 2025 ? intl25     : intl26;
+
+  // Compute surgery origin regions from cir25/cir26
+  const surgRegions = (year === 2025 ? cir25 : cir26).reduce<Record<string, number>>((acc, s) => {
+    const reg = (s as { reg?: string }).reg;
+    if (reg) acc[reg] = (acc[reg] ?? 0) + 1;
+    return acc;
+  }, {});
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -136,6 +150,11 @@ export default function GeoPane({ cir25: _c25, cir26: _c26, cons25: _co25, cons2
       </div>
 
       <IntlCard data={intlData} title="Pacientes internacionais" />
+
+      {/* Surgery origins section */}
+      {Object.keys(surgRegions).length > 0 && (
+        <CidadesCard data={surgRegions} title={`Origens das operadas (${year})`} />
+      )}
     </div>
   );
 }

@@ -78,18 +78,18 @@ export default function PacientesPane({ patients, amigoAttendances }: PacientesP
 
       {/* Table */}
       <div style={{ background: '#fff', borderRadius: '18px', boxShadow: '0 2px 16px rgba(0,0,0,0.07)', overflow: 'hidden' }}>
-        <div style={{ overflowX: 'auto' }}>
-          <table className="data-table">
+        <div className="ts">
+          <table>
             <thead>
               <tr>
                 <th>Paciente</th>
                 <th>Telefone</th>
                 <th>Cidade</th>
                 <th>Canal</th>
-                <th>Cirurgias</th>
-                <th>Consultas</th>
+                <th style={{ textAlign: 'center' }}>Cirurgias</th>
+                <th style={{ textAlign: 'center' }}>Consultas</th>
                 <th>Receita</th>
-                <th>Ações</th>
+                <th></th>
               </tr>
             </thead>
             <tbody>
@@ -102,6 +102,7 @@ export default function PacientesPane({ patients, amigoAttendances }: PacientesP
               ) : (
                 filtered.map((p) => {
                   const revenue = p.surgeries.reduce((acc, s) => acc + s.v, 0);
+                  const hasSurgery = p.surgeries.length > 0;
                   return (
                     <tr key={p.id}>
                       <td>
@@ -113,7 +114,7 @@ export default function PacientesPane({ patients, amigoAttendances }: PacientesP
                             cursor: 'pointer',
                             fontWeight: 700,
                             color: '#007AFF',
-                            fontSize: '0.85rem',
+                            fontSize: '13px',
                             fontFamily: 'inherit',
                             padding: 0,
                             textAlign: 'left',
@@ -121,25 +122,57 @@ export default function PacientesPane({ patients, amigoAttendances }: PacientesP
                         >
                           {p.name}
                         </button>
+                        {hasSurgery && (
+                          <div style={{ fontSize: '10px', color: '#86868B', marginTop: '2px' }}>
+                            {p.surgeries.map(s => s.c).slice(0,2).join(', ')}
+                            {p.surgeries.length > 2 && ` +${p.surgeries.length - 2}`}
+                          </div>
+                        )}
                       </td>
-                      <td style={{ color: '#86868B', fontSize: '0.82rem' }}>{p.phone || '—'}</td>
-                      <td style={{ color: '#86868B', fontSize: '0.82rem' }}>{p.city || '—'}</td>
+                      <td>
+                        <span style={{ color: '#86868B', fontSize: '12px', fontFamily: 'monospace' }}>{p.phone || '—'}</span>
+                      </td>
+                      <td style={{ color: '#86868B', fontSize: '12px' }}>{p.city || '—'}</td>
                       <td>
                         {p.canal ? (
                           <span className="badge badge-blue">{p.canal}</span>
-                        ) : '—'}
+                        ) : <span style={{ color: '#AEAEB2' }}>—</span>}
                       </td>
                       <td style={{ textAlign: 'center' }}>
-                        {p.surgeries.length > 0 ? (
-                          <span style={{ fontWeight: 700, color: '#28A745' }}>{p.surgeries.length}</span>
+                        {hasSurgery ? (
+                          <span style={{
+                            display: 'inline-block',
+                            background: '#E6F7EC',
+                            color: '#28A745',
+                            fontWeight: 800,
+                            fontSize: '12px',
+                            borderRadius: '8px',
+                            padding: '2px 8px',
+                            minWidth: '24px',
+                          }}>
+                            {p.surgeries.length}
+                          </span>
                         ) : (
                           <span style={{ color: '#AEAEB2' }}>—</span>
                         )}
                       </td>
-                      <td style={{ textAlign: 'center', color: '#5856D6', fontWeight: 600 }}>
-                        {p.consultations.length || '—'}
+                      <td style={{ textAlign: 'center' }}>
+                        {p.consultations.length > 0 ? (
+                          <span style={{
+                            display: 'inline-block',
+                            background: '#EEECFF',
+                            color: '#5856D6',
+                            fontWeight: 700,
+                            fontSize: '12px',
+                            borderRadius: '8px',
+                            padding: '2px 8px',
+                            minWidth: '24px',
+                          }}>
+                            {p.consultations.length}
+                          </span>
+                        ) : <span style={{ color: '#AEAEB2' }}>—</span>}
                       </td>
-                      <td style={{ fontWeight: 700, color: revenue > 0 ? '#28A745' : '#AEAEB2', whiteSpace: 'nowrap' }}>
+                      <td style={{ fontWeight: 700, color: revenue > 0 ? '#28A745' : '#AEAEB2', whiteSpace: 'nowrap', fontSize: '13px' }}>
                         {revenue > 0 ? formatCurrency(revenue) : '—'}
                       </td>
                       <td>

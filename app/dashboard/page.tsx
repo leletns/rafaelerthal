@@ -15,6 +15,7 @@ import FunilPane from '@/components/TabPanes/FunilPane';
 import GeoPane from '@/components/TabPanes/GeoPane';
 import CompPane from '@/components/TabPanes/CompPane';
 import EquipePane from '@/components/TabPanes/EquipePane';
+import AniversariosPane from '@/components/TabPanes/AniversariosPane';
 import OrcamentosPane from '@/components/TabPanes/OrcamentosPane';
 import { getBaseData, sheetsFirstMerge, extractPipeline } from '@/lib/merge-data';
 import { mergePatientRecords } from '@/lib/normalize-patient';
@@ -35,6 +36,7 @@ const TABS = [
   { id: 'funil',     label: 'Funil' },
   { id: 'geo',       label: 'Origem' },
   { id: 'comp',      label: '2025 × 2026' },
+  { id: 'aniversarios', label: '🎂 Aniversários', highlight: true },
 ];
 
 const INITIAL_NOTIFICATIONS: Notification[] = [
@@ -187,13 +189,15 @@ export default function DashboardPage() {
       case 'funil':
         return <FunilPane cir25={data.cir25} cir26={data.cir26} cons25={data.cons25} cons26={data.cons26} />;
       case 'geo':
-        return <GeoPane cir25={data.cir25} cir26={data.cir26} cons25={data.cons25} cons26={data.cons26} />;
+        return <GeoPane cir25={data.cir25} cir26={data.cir26} cons25={data.cons25} cons26={data.cons26} canal25={data.canal25} canal26={data.canal26} cidades25={data.cidades25} cidades26={data.cidades26} fx25={data.fx25} fx26={data.fx26} intl25={data.intl25} intl26={data.intl26} />;
       case 'comp':
         return <CompPane cir25={data.cir25} cir26={data.cir26} cons25={data.cons25} cons26={data.cons26} />;
       case 'equipe':
         return <EquipePane />;
       case 'orcamentos':
         return <OrcamentosPane orc25={data.orc25} orc26={data.orc26} />;
+      case 'aniversarios':
+        return <AniversariosPane cir25={data.cir25} cir26={data.cir26} amigoData={amigoData} />;
       default:
         return null;
     }
@@ -205,6 +209,7 @@ export default function DashboardPage() {
       onMarkRead={handleMarkRead}
       onMarkAllRead={handleMarkAllRead}
       syncing={syncing}
+      patients={patients}
     >
       {/* Tabs */}
       <Tabs tabs={TABS} activeTab={activeTab} onChange={setActiveTab} />
