@@ -41,17 +41,10 @@ export interface Patient {
 }
 
 export type PipelineStage =
-  | 'consulta_agendada'
-  | 'compareceu'
-  | 'orc_pendente'
-  | 'orc_apresentado'
-  | 'nao_fechou'
-  | 'followup_agendado'
+  | 'orc_enviado'
   | 'sinal_pago'
-  | 'avista_pago'
   | 'cirurgia_agendada'
-  | 'perdida'
-  | 'retomada';
+  | 'perdida';
 
 export interface PipelineCard {
   id: string;

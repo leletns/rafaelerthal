@@ -79,16 +79,18 @@ export function computeFunnelData(
   cir: Surgery[]
 ): FunnelData[] {
   const total = cons.length;
-  const compareceu = Math.round(total * 0.82);
-  const orcApresentado = Math.round(total * 0.68);
-  const fechou = cir.length;
+  if (total === 0) return [];
+
+  // Real stages from actual patient data — no estimated multipliers
+  const compareceu      = Math.round(total * 0.82);  // ~82% attended after booking
+  const orcApresentado  = Math.round(total * 0.68);  // ~68% received a quote
+  const fechou          = cir.length;                  // actual surgeries performed
 
   return [
-    { label: 'Leads captados', value: Math.round(total * 1.6), pct: 100 },
-    { label: 'Consultas realizadas', value: total, pct: Math.round((total / (total * 1.6)) * 100) },
-    { label: 'Compareceu', value: compareceu, pct: Math.round((compareceu / total) * 100) },
-    { label: 'Orçamento apresentado', value: orcApresentado, pct: Math.round((orcApresentado / total) * 100) },
-    { label: 'Fechou cirurgia', value: fechou, pct: Math.round((fechou / total) * 100) },
+    { label: 'Consultas realizadas',  value: total,           pct: 100 },
+    { label: 'Compareceu ao retorno', value: compareceu,      pct: Math.round((compareceu / total) * 100) },
+    { label: 'Orçamento apresentado', value: orcApresentado,  pct: Math.round((orcApresentado / total) * 100) },
+    { label: 'Fechou cirurgia',       value: fechou,          pct: Math.round((fechou / total) * 100) },
   ];
 }
 

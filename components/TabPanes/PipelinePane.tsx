@@ -15,20 +15,34 @@ function generateId(): string {
   return `card_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
 }
 
+/** Migrate old pipeline stage values to new 4-stage model. */
+function migrateStage(old: string): PipelineStage {
+  const map: Record<string, PipelineStage> = {
+    consulta_agendada:  'orc_enviado',
+    compareceu:         'orc_enviado',
+    orc_pendente:       'orc_enviado',
+    orc_apresentado:    'orc_enviado',
+    followup_agendado:  'orc_enviado',
+    retomada:           'orc_enviado',
+    nao_fechou:         'perdida',
+    sinal_pago:         'sinal_pago',
+    avista_pago:        'cirurgia_agendada',
+    cirurgia_agendada:  'cirurgia_agendada',
+    perdida:            'perdida',
+    orc_enviado:        'orc_enviado',
+  };
+  return map[old] ?? 'orc_enviado';
+}
+
 /** Build pipeline cards from 2026 patient journey data.
  *  Only called when BOTH Sheets pipeline AND localStorage are empty. */
 function autoPopulateCards(cons26: Consultation[], cir26: Surgery[]): PipelineCard[] {
   const now = new Date().toISOString();
-  // Index surgeries by normalised patient name
-  const surgByName = new Map<string, Surgery>();
-  for (const s of cir26) {
-    surgByName.set(s.p.toLowerCase().trim(), s);
-  }
 
   const cards: PipelineCard[] = [];
   const seen = new Set<string>();
 
-  // 1. Patients who had surgery → avista_pago (surgery completed)
+  // 1. Patients who had surgery → cirurgia_agendada
   for (const s of cir26) {
     const slug = s.p.toLowerCase().trim();
     if (seen.has(slug)) continue;
@@ -40,14 +54,14 @@ function autoPopulateCards(cons26: Consultation[], cir26: Surgery[]): PipelineCa
       phone: cons?.tel || '',
       procedure: s.c || '',
       value: s.v || 0,
-      stage: 'avista_pago' as PipelineStage,
+      stage: 'cirurgia_agendada',
       createdAt: now,
       updatedAt: now,
       notes: `Cirurgia: ${s.d}/${s.mes || '2026'}`,
     });
   }
 
-  // 2. Patients who consulted but have NO surgery → compareceu
+  // 2. Patients who consulted but have NO surgery → orc_enviado
   for (const c of cons26) {
     const slug = c.p.toLowerCase().trim();
     if (seen.has(slug)) continue;
@@ -58,7 +72,7 @@ function autoPopulateCards(cons26: Consultation[], cir26: Surgery[]): PipelineCa
       phone: c.tel || '',
       procedure: '',
       value: 0,
-      stage: 'compareceu' as PipelineStage,
+      stage: 'orc_enviado',
       createdAt: now,
       updatedAt: now,
       notes: `Consulta: ${c.d} · ${c.canal || ''}`,
@@ -98,16 +112,19 @@ export default function PipelinePane({ initialCards, cons26 = [], cir26 = [] }: 
     if (loaded) return;
 
     if (initialCards && initialCards.length > 0) {
-      // Sheets has pipeline data — use it as authoritative
-      setCards(initialCards);
-      safeStorage.set(PIPELINE_KEY, initialCards);
+      // Sheets has pipeline data — use it as authoritative, migrating old stages
+      const migrated = initialCards.map(c => ({ ...c, stage: migrateStage(c.stage) }));
+      setCards(migrated);
+      safeStorage.set(PIPELINE_KEY, migrated);
       setLoaded(true);
       return;
     }
 
     const saved = safeStorage.get<PipelineCard[]>(PIPELINE_KEY, []);
     if (saved.length > 0) {
-      setCards(saved);
+      // Migrate all cards to new stages
+      const migrated = saved.map(c => ({ ...c, stage: migrateStage(c.stage) }));
+      setCards(migrated);
       setLoaded(true);
       return;
     }
@@ -130,8 +147,9 @@ export default function PipelinePane({ initialCards, cons26 = [], cir26 = [] }: 
   useEffect(() => {
     if (!loaded) return;
     if (initialCards && initialCards.length > 0) {
-      setCards(initialCards);
-      safeStorage.set(PIPELINE_KEY, initialCards);
+      const migrated = initialCards.map(c => ({ ...c, stage: migrateStage(c.stage) }));
+      setCards(migrated);
+      safeStorage.set(PIPELINE_KEY, migrated);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialCards]);

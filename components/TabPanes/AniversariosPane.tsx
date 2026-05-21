@@ -1,14 +1,16 @@
 'use client';
 
 import { useMemo } from 'react';
-import type { Surgery, AmigoLiveData } from '@/lib/data-model';
+import type { Surgery, AmigoLiveData, Patient } from '@/lib/data-model';
 import { computeAnniversaries, formatDue } from '@/lib/anniversary';
 import WhatsAppButton from '../WhatsAppButton';
+import FollowUpScheduler from '../FollowUpScheduler';
 
 interface AniversariosPaneProps {
   cir25: Surgery[];
   cir26: Surgery[];
   amigoData: AmigoLiveData;
+  patients?: Patient[];
 }
 
 function Section({ title, icon, children }: { title: string; icon: string; children: React.ReactNode }) {
@@ -29,7 +31,15 @@ const MS_COLORS: Record<number, { color: string; bg: string }> = {
   12: { color: '#28A745', bg: '#E6F7EC' },
 };
 
-export default function AniversariosPane({ cir25, cir26, amigoData }: AniversariosPaneProps) {
+function getPhone(name: string, patients: Patient[]): string | undefined {
+  const n = name.toLowerCase().trim();
+  return patients.find(
+    p => p.name.toLowerCase().trim() === n ||
+         p.name.toLowerCase().includes(n.split(' ')[0].toLowerCase())
+  )?.phone;
+}
+
+export default function AniversariosPane({ cir25, cir26, amigoData, patients = [] }: AniversariosPaneProps) {
   const today = useMemo(() => new Date(), []);
   const todayStr = today.toISOString().split('T')[0];
 
@@ -64,11 +74,12 @@ export default function AniversariosPane({ cir25, cir26, amigoData }: Aniversari
   function AnnivCard({ a }: { a: ReturnType<typeof computeAnniversaries>[0] }) {
     const pal = MS_COLORS[a.milestoneMonths] ?? { color: '#86868B', bg: '#F2F2F7' };
     const urgent = a.daysUntil >= 0 && a.daysUntil <= 3;
+    const phone = getPhone(a.patientName, patients);
     return (
       <div style={{
         padding: '12px 14px', borderRadius: '12px', background: urgent ? pal.bg : '#F9F9FB',
         border: `1.5px solid ${urgent ? pal.color + '50' : '#E5E5EA'}`,
-        display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px',
+        display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px',
       }}>
         <div style={{ minWidth: 0, flex: 1 }}>
           <div style={{ fontWeight: 700, fontSize: '0.85rem', color: '#1D1D1F', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -79,6 +90,10 @@ export default function AniversariosPane({ cir25, cir26, amigoData }: Aniversari
           </div>
           <div style={{ fontSize: '0.7rem', color: '#86868B', marginTop: '1px' }}>
             Cirurgia: {a.surgeryDate}/{a.surgeryYear}
+          </div>
+          <div style={{ display: 'flex', gap: '6px', alignItems: 'center', marginTop: '6px' }}>
+            {phone && <WhatsAppButton phone={phone} size="sm" variant="icon" />}
+            <FollowUpScheduler patientId={a.patientName} patientName={a.patientName} />
           </div>
         </div>
         <div style={{ textAlign: 'right', flexShrink: 0 }}>
@@ -156,6 +171,7 @@ export default function AniversariosPane({ cir25, cir26, amigoData }: Aniversari
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span style={{ fontSize: '1.4rem' }}>🎂</span>
                 {b.phone && <WhatsAppButton phone={b.phone} size="sm" variant="icon" />}
+                <FollowUpScheduler patientId={b.name} patientName={b.name} />
               </div>
             </div>
           ))}

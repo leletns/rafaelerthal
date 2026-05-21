@@ -16,7 +16,12 @@ async function get<T>(path: string, params?: Record<string, string>): Promise<T>
   const qs = params ? '?' + new URLSearchParams(params).toString() : '';
   const res = await fetch(`${BASE_URL}${path}${qs}`, { headers: headers(), cache: 'no-store' });
   if (!res.ok) throw new Error(`AmigoAPI GET ${path} → HTTP ${res.status}`);
-  return res.json() as Promise<T>;
+  const raw = await res.json();
+  // Unwrap AmigoClinic's standard { data: T, status: 'success' } envelope
+  if (raw && typeof raw === 'object' && 'status' in raw && 'data' in raw) {
+    return (raw as { data: T }).data;
+  }
+  return raw as T;
 }
 
 async function post<T>(path: string, body: unknown): Promise<T> {

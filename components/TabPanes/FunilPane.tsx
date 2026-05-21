@@ -24,7 +24,7 @@ export default function FunilPane({ cir25, cir26, cons25, cons26 }: FunilPanePro
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: '#1D1D1F' }}>Funil de Conversão</h3>
+        <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: '#1D1D1F' }}>Funil de Conversão — Consultas → Cirurgias</h3>
         <div style={{ display: 'flex', background: '#F2F2F7', borderRadius: '10px', padding: '3px', gap: '2px' }}>
           {([2025, 2026] as const).map((y) => (
             <button

@@ -149,11 +149,16 @@ export default function GeoPane({ cir25, cir26, cons25: _co25, cons26: _co26, ca
         <CidadesCard data={cidadeData} title="Cidades de origem" />
       </div>
 
-      <IntlCard data={intlData} title="Pacientes internacionais" />
+      <IntlCard data={intlData} title="🌍 Pacientes internacionais por país" />
 
       {/* Surgery origins section */}
       {Object.keys(surgRegions).length > 0 && (
-        <CidadesCard data={surgRegions} title={`Origens das operadas (${year})`} />
+        <div style={{ marginTop: '4px' }}>
+          <h4 style={{ margin: '0 0 12px', fontSize: '13px', fontWeight: 700, color: '#1D1D1F' }}>
+            ✂️ Regiões das pacientes operadas ({year}) — {Object.values(surgRegions).reduce((s, v) => s + v, 0)} cirurgias
+          </h4>
+          <CidadesCard data={surgRegions} title="" />
+        </div>
       )}
     </div>
   );

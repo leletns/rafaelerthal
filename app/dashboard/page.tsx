@@ -25,8 +25,7 @@ import type { DashboardData, Notification, AmigoLiveData, PipelineCard } from '@
 // Tab names match the original HTML exactly
 const TABS = [
   { id: 'resumo',    label: 'Visão Geral' },
-  { id: 'mayra',     label: 'Mayra',    highlight: true },
-  { id: 'pipeline',  label: 'Comercial',highlight: true },
+  { id: 'pipeline',  label: '💼 Comercial', highlight: true },
   { id: 'cirurgias', label: 'Cirurgias' },
   { id: 'consultas', label: 'Consultas' },
   { id: 'pacientes', label: 'Pacientes' },
@@ -152,7 +151,11 @@ export default function DashboardPage() {
 
     syncSheets();
     syncAmigo();
-    return () => { cancelled = true; };
+
+    // Poll AmigoClinic every 5 minutes for real-time birthdays + agenda
+    const amigoPollId = setInterval(syncAmigo, 5 * 60 * 1000);
+
+    return () => { cancelled = true; clearInterval(amigoPollId); };
   }, [router]);
 
   function handleMarkRead(id: string) {
@@ -174,8 +177,6 @@ export default function DashboardPage() {
     switch (activeTab) {
       case 'resumo':
         return <ResumoPane cir25={data.cir25} cir26={data.cir26} cons25={data.cons25} cons26={data.cons26} canal25={data.canal25} canal26={data.canal26} fx25={data.fx25} fx26={data.fx26} />;
-      case 'mayra':
-        return <PipelinePane initialCards={pipelineFromSheets ?? undefined} cons26={data.cons26} cir26={data.cir26} />;
       case 'cirurgias':
         return <CirurgiasPane cir25={data.cir25} cir26={data.cir26} />;
       case 'consultas':
@@ -197,7 +198,7 @@ export default function DashboardPage() {
       case 'orcamentos':
         return <OrcamentosPane orc25={data.orc25} orc26={data.orc26} />;
       case 'aniversarios':
-        return <AniversariosPane cir25={data.cir25} cir26={data.cir26} amigoData={amigoData} />;
+        return <AniversariosPane cir25={data.cir25} cir26={data.cir26} amigoData={amigoData} patients={patients} />;
       default:
         return null;
     }
