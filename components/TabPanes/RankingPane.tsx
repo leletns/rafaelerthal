@@ -18,6 +18,7 @@ interface PatientRank {
   surgeries: number;
   consultations: number;
   revenue: number;
+  maxSurgery: number;  // highest single-surgery value
   lastDate: string;
   lastProc: string;
 }
@@ -38,8 +39,9 @@ export default function RankingPane({ cir25, cir26, cons25, cons26 }: RankingPan
   const [year,    setYear]    = useState<2025 | 2026 | 'all'>('all');
   const [section, setSection] = useState<Section>('pacientes');
 
-  const cir  = year === 2025 ? cir25 : year === 2026 ? cir26 : [...cir25, ...cir26];
-  const cons = year === 2025 ? cons25 : year === 2026 ? cons26 : [...cons25, ...cons26];
+  // Memoize derived arrays to satisfy useMemo deps
+  const cir  = useMemo(() => year === 2025 ? cir25 : year === 2026 ? cir26 : [...cir25, ...cir26], [year, cir25, cir26]);
+  const cons = useMemo(() => year === 2025 ? cons25 : year === 2026 ? cons26 : [...cons25, ...cons26], [year, cons25, cons26]);
   const cir26sorted = useMemo(() => sortByDate(cir26, 2026), [cir26]);
   const cir25sorted = useMemo(() => sortByDate(cir25, 2025), [cir25]);
 
@@ -51,11 +53,18 @@ export default function RankingPane({ cir25, cir26, cons25, cons26 }: RankingPan
   const patientMap = useMemo(() => {
     const map = new Map<string, PatientRank>();
     for (const s of cir) {
-      const e = map.get(s.p) ?? { name: s.p, surgeries: 0, consultations: 0, revenue: 0, lastDate: s.d, lastProc: s.c };
-      map.set(s.p, { ...e, surgeries: e.surgeries + 1, revenue: e.revenue + s.v, lastDate: s.d, lastProc: s.c });
+      const e = map.get(s.p) ?? { name: s.p, surgeries: 0, consultations: 0, revenue: 0, maxSurgery: 0, lastDate: s.d, lastProc: s.c };
+      map.set(s.p, {
+        ...e,
+        surgeries: e.surgeries + 1,
+        revenue: e.revenue + s.v,
+        maxSurgery: Math.max(e.maxSurgery, s.v),
+        lastDate: s.d,
+        lastProc: s.c,
+      });
     }
     for (const c of cons) {
-      const e = map.get(c.p) ?? { name: c.p, surgeries: 0, consultations: 0, revenue: 0, lastDate: c.d, lastProc: '' };
+      const e = map.get(c.p) ?? { name: c.p, surgeries: 0, consultations: 0, revenue: 0, maxSurgery: 0, lastDate: c.d, lastProc: '' };
       map.set(c.p, { ...e, consultations: e.consultations + 1 });
     }
     return map;
@@ -64,8 +73,17 @@ export default function RankingPane({ cir25, cir26, cons25, cons26 }: RankingPan
   const byRevenue = useMemo(() =>
     Array.from(patientMap.values())
       .filter(p => p.surgeries > 0)
-      .sort((a, b) => b.revenue - a.revenue)
-      .slice(0, 20),
+      .sort((a, b) => {
+        // Primary: highest single surgery value (most expensive procedure first)
+        if (b.maxSurgery !== a.maxSurgery) return b.maxSurgery - a.maxSurgery;
+        // Secondary: total revenue
+        if (b.revenue !== a.revenue) return b.revenue - a.revenue;
+        // Tertiary: surgery count
+        if (b.surgeries !== a.surgeries) return b.surgeries - a.surgeries;
+        // Final: alphabetical
+        return a.name.localeCompare(b.name, 'pt-BR');
+      })
+      .slice(0, 25),
     [patientMap]);
 
   // Procedure ranking
@@ -155,7 +173,7 @@ export default function RankingPane({ cir25, cir26, cons25, cons26 }: RankingPan
       {/* ── Pacientes por receita ──────────────────────────── */}
       {section === 'pacientes' && (
         <div className="card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          <div className="card-ttl">Top {byRevenue.length} pacientes por receita</div>
+          <div className="card-ttl">Top {byRevenue.length} pacientes · maior valor por cirurgia</div>
           {byRevenue.length === 0 ? (
             <p style={{ textAlign: 'center', color: '#86868B', padding: '32px 0', margin: 0 }}>Sem dados para o período</p>
           ) : (

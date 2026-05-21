@@ -4,6 +4,7 @@ import { useState } from 'react';
 import type { Patient, AmigoAttendanceItem } from '@/lib/data-model';
 import PatientProfileModal from '../PatientProfileModal';
 import WhatsAppButton from '../WhatsAppButton';
+import FollowUpScheduler from '../FollowUpScheduler';
 import { formatCurrency } from '@/lib/dashboard-calculations';
 
 interface PacientesPaneProps {
@@ -176,7 +177,10 @@ export default function PacientesPane({ patients, amigoAttendances }: PacientesP
                         {revenue > 0 ? formatCurrency(revenue) : '—'}
                       </td>
                       <td>
-                        {p.phone && <WhatsAppButton phone={p.phone} size="sm" variant="icon" />}
+                        <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                          {p.phone && <WhatsAppButton phone={p.phone} size="sm" variant="icon" />}
+                          <FollowUpScheduler patientId={p.id} patientName={p.name} />
+                        </div>
                       </td>
                     </tr>
                   );

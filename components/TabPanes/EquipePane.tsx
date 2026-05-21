@@ -2,6 +2,8 @@
 
 import { useState, useRef } from 'react';
 import { getAuthToken } from '@/lib/safe-storage';
+// @ts-ignore
+import * as XLSX from 'xlsx';
 
 interface TeamMember {
   key: string;
@@ -203,41 +205,145 @@ export default function EquipePane() {
     saveReceipts(updated);
   }
 
-  function handleExport(memberKey: string) {
+  function handleExportExcel(memberKey: string) {
     const member = TEAM.find(t => t.key === memberKey);
     if (!member) return;
     const mrs = receipts.filter(r => r.memberKey === memberKey);
     const month = new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
-    const lines = [
-      `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
-      `  𝗯. Blue Clínica Médica e Cirúrgica`,
-      `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
-      ``,
-      `Olá ${member.name},`,
-      ``,
-      `Esses foram seus recebimentos em ${month}:`,
-      ``,
-      ...mrs.map((r, i) => [
-        `${i + 1}. ${r.filename}`,
-        `   Data: ${r.data ?? '—'}`,
-        `   Valor: ${r.valor ?? '—'}`,
-        r.pagador ? `   Paciente: ${r.pagador}` : '',
-        `   Enviado em: ${new Date(r.uploadedAt).toLocaleDateString('pt-BR')}`,
-        '',
-      ].filter(Boolean).join('\n')),
-      `Total de recebimentos: ${mrs.length}`,
-      ``,
-      `Atenciosamente,`,
-      `Equipe Blue Clínica`,
-    ].join('\n');
 
-    const blob = new Blob([lines], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `recebimentos_${member.key}_${month.replace(' ', '_')}.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
+    const ws = XLSX.utils.aoa_to_sheet([
+      ['Clínica Blue — Relatório de Pagamentos'],
+      [''],
+      ['Profissional:', member.name],
+      ['Função:', member.role],
+      [`PIX: ${member.pix}`],
+      member.bank ? [`Banco: ${member.bank}${member.agency ? ` · Ag: ${member.agency}` : ''}${member.account ? ` · Conta: ${member.account}` : ''}`] : [''],
+      [''],
+      ['Período:', month],
+      [''],
+      ['#', 'Arquivo', 'Valor', 'Data do pagamento', 'Paciente/Pagador', 'Importado em'],
+      ...mrs.map((r, i) => [
+        i + 1,
+        r.filename,
+        r.valor ?? '',
+        r.data ?? '',
+        r.pagador ?? '',
+        new Date(r.uploadedAt).toLocaleDateString('pt-BR'),
+      ]),
+      [''],
+      ['Total de recebimentos:', mrs.length],
+    ]);
+
+    // Column widths
+    ws['!cols'] = [{ wch: 5 }, { wch: 35 }, { wch: 14 }, { wch: 18 }, { wch: 25 }, { wch: 16 }];
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, `Pagamentos ${month}`);
+    XLSX.writeFile(wb, `blue_pagamentos_${member.key}_${month.replace(/\s/g, '_')}.xlsx`);
+  }
+
+  function handleExportPDF(memberKey: string) {
+    const member = TEAM.find(t => t.key === memberKey);
+    if (!member) return;
+    const mrs = receipts.filter(r => r.memberKey === memberKey);
+    const month = new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+
+    const rows = mrs.map((r, i) => `
+      <tr>
+        <td>${i + 1}</td>
+        <td>${r.filename}</td>
+        <td><strong>${r.valor ?? '—'}</strong></td>
+        <td>${r.data ?? '—'}</td>
+        <td>${r.pagador ?? '—'}</td>
+        <td>${new Date(r.uploadedAt).toLocaleDateString('pt-BR')}</td>
+      </tr>
+    `).join('');
+
+    printWindow.document.write(`
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Relatório — ${member.name}</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@200;400;600;700;800&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Montserrat', sans-serif; color: #1D1D1F; padding: 40px; background: #fff; }
+  .header { display: flex; align-items: center; gap: 20px; margin-bottom: 32px; border-bottom: 2px solid #007AFF; padding-bottom: 20px; }
+  .logo { font-size: 48px; font-weight: 200; color: #007AFF; letter-spacing: -4px; line-height: 1; }
+  .brand { font-size: 20px; font-weight: 700; color: #1D1D1F; }
+  .brand-sub { font-size: 12px; color: #86868B; margin-top: 4px; }
+  .member-card { background: #F5F5F7; border-radius: 12px; padding: 16px 20px; margin-bottom: 24px; }
+  .member-name { font-size: 18px; font-weight: 800; color: #1D1D1F; }
+  .member-role { font-size: 13px; color: #86868B; margin-top: 4px; }
+  .member-pix { font-size: 12px; color: #007AFF; margin-top: 6px; font-family: monospace; }
+  .period { font-size: 13px; color: #86868B; margin-bottom: 16px; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  thead th { background: #007AFF; color: #fff; padding: 10px 12px; text-align: left; font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+  tbody tr:nth-child(even) { background: #F5F5F7; }
+  tbody td { padding: 9px 12px; border-bottom: 1px solid #E5E5EA; vertical-align: middle; }
+  .total { margin-top: 16px; font-size: 14px; font-weight: 700; color: #007AFF; text-align: right; }
+  .footer { margin-top: 32px; padding-top: 16px; border-top: 1px solid #E5E5EA; font-size: 11px; color: #86868B; text-align: center; }
+  @media print {
+    body { padding: 20px; }
+    .no-print { display: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">b.</div>
+    <div>
+      <div class="brand">Blue Clínica Médica e Cirúrgica</div>
+      <div class="brand-sub">Relatório de Pagamentos · Gerado em ${new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}</div>
+    </div>
+  </div>
+
+  <div class="member-card">
+    <div class="member-name">${member.emoji} ${member.name}</div>
+    <div class="member-role">${member.role}</div>
+    <div class="member-pix">PIX: ${member.pix}</div>
+    ${member.bank ? `<div style="font-size:11px;color:#86868B;margin-top:4px;">${member.bank}${member.agency ? ` · Ag: ${member.agency}` : ''}${member.account ? ` · Conta: ${member.account}` : ''}</div>` : ''}
+    ${member.fixedValue ? `<div style="font-size:14px;font-weight:800;color:#28A745;margin-top:6px;">Valor fixo: ${member.fixedValue}</div>` : ''}
+  </div>
+
+  <div class="period">Período: <strong>${month}</strong> · ${mrs.length} comprovante${mrs.length !== 1 ? 's' : ''}</div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Arquivo</th>
+        <th>Valor</th>
+        <th>Data</th>
+        <th>Paciente/Pagador</th>
+        <th>Importado</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${rows || '<tr><td colspan="6" style="text-align:center;padding:20px;color:#86868B;">Nenhum comprovante este mês</td></tr>'}
+    </tbody>
+  </table>
+
+  <div class="total">Total de recebimentos: ${mrs.length}</div>
+
+  <div class="footer">
+    b. Blue Clínica Médica e Cirúrgica · CNPJ 48.459.860/0001-14 · C6 Bank 336, Ag 0001, Conta 27520102-3
+  </div>
+
+  <div class="no-print" style="margin-top:24px;text-align:center;">
+    <button onclick="window.print()" style="background:#007AFF;color:#fff;border:none;border-radius:10px;padding:12px 28px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">
+      🖨️ Imprimir / Salvar PDF
+    </button>
+  </div>
+</body>
+</html>
+    `);
+    printWindow.document.close();
+    setTimeout(() => printWindow.print(), 500);
   }
 
   return (
@@ -336,12 +442,20 @@ export default function EquipePane() {
                     <input type="file" accept="image/*,.pdf,.xlsx" style={{ display: 'none' }} onChange={handleFileUpload} disabled={uploading} />
                   </label>
                   {mReceipts.length > 0 && (
-                    <button
-                      onClick={(e) => { e.stopPropagation(); handleExport(m.key); }}
-                      style={{ flex: 1, background: '#F2F2F7', border: 'none', borderRadius: '8px', padding: '6px', fontSize: '11px', fontWeight: 700, color: '#1D1D1F', cursor: 'pointer' }}
-                    >
-                      📤 Exportar relatório
-                    </button>
+                    <>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleExportExcel(m.key); }}
+                        style={{ flex: 1, background: '#F2F2F7', border: 'none', borderRadius: '8px', padding: '6px', fontSize: '11px', fontWeight: 700, color: '#1D1D1F', cursor: 'pointer' }}
+                      >
+                        📊 Excel
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleExportPDF(m.key); }}
+                        style={{ flex: 1, background: '#F2F2F7', border: 'none', borderRadius: '8px', padding: '6px', fontSize: '11px', fontWeight: 700, color: '#FF3B30', cursor: 'pointer' }}
+                      >
+                        📄 PDF
+                      </button>
+                    </>
                   )}
                 </div>
               )}
@@ -358,12 +472,20 @@ export default function EquipePane() {
               {selectedMember.emoji} Pasta de {selectedMember.name}
             </div>
             {memberReceipts.length > 0 && (
-              <button
-                onClick={() => handleExport(selected!)}
-                style={{ background: selectedMember.color, color: '#fff', border: 'none', borderRadius: '8px', padding: '6px 14px', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}
-              >
-                📤 Exportar relatório do mês
-              </button>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button
+                  onClick={() => handleExportExcel(selected!)}
+                  style={{ background: '#F2F2F7', color: '#1D1D1F', border: 'none', borderRadius: '8px', padding: '6px 14px', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}
+                >
+                  📊 Excel
+                </button>
+                <button
+                  onClick={() => handleExportPDF(selected!)}
+                  style={{ background: selectedMember.color, color: '#fff', border: 'none', borderRadius: '8px', padding: '6px 14px', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}
+                >
+                  📄 PDF
+                </button>
+              </div>
             )}
           </div>
 
