@@ -1,7 +1,9 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { clearAuthToken } from '@/lib/safe-storage';
+import { getStoredTheme, applyTheme } from '@/lib/theme';
 import NotificationBell from './NotificationBell';
 import GlobalSearch from './GlobalSearch';
 import type { Notification, Patient } from '@/lib/data-model';
@@ -25,6 +27,20 @@ export default function DashboardLayout({
   patients,
 }: DashboardLayoutProps) {
   const router = useRouter();
+
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+
+  useEffect(() => {
+    const stored = getStoredTheme();
+    setTheme(stored);
+    applyTheme(stored);
+  }, []);
+
+  function toggleTheme() {
+    const next = theme === 'light' ? 'dark' : 'light';
+    setTheme(next);
+    applyTheme(next);
+  }
 
   function handleLogout() {
     clearAuthToken();
@@ -82,6 +98,26 @@ export default function DashboardLayout({
 
           {/* Right side */}
           <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '10px' }}>
+            {/* Theme toggle */}
+            <button
+              onClick={toggleTheme}
+              title={theme === 'light' ? 'Modo escuro' : 'Modo claro'}
+              style={{
+                background: 'none',
+                border: '1.5px solid #E5E5EA',
+                borderRadius: '10px',
+                padding: '6px 10px',
+                cursor: 'pointer',
+                fontSize: '16px',
+                lineHeight: 1,
+                transition: 'all .15s',
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#007AFF'; e.currentTarget.style.background = '#F0F7FF'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#E5E5EA'; e.currentTarget.style.background = 'none'; }}
+            >
+              {theme === 'light' ? '🌙' : '☀️'}
+            </button>
+
             {/* Global search */}
             {patients && patients.length > 0 && (
               <GlobalSearch patients={patients} />

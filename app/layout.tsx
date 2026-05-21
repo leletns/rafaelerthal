@@ -13,6 +13,10 @@ export const metadata: Metadata = {
   title: 'Mydash — Clínica Blue',
   description: 'Dashboard interno de gestão da Clínica Blue — Dr. Rafael Erthal',
   robots: 'noindex, nofollow',
+  icons: {
+    icon: '/icon',
+    apple: '/apple-icon',
+  },
 };
 
 export default function RootLayout({
@@ -21,7 +25,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-BR" className={montserrat.variable}>
+    <html lang="pt-BR" className={montserrat.variable} suppressHydrationWarning>
       <body style={{ fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
         {children}
       </body>

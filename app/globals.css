@@ -243,3 +243,21 @@ input:focus, textarea:focus, select:focus {
   0%, 100% { opacity: 1; }
   50%       { opacity: .4; }
 }
+
+/* ================================================================
+   Dark mode — CSS filter invert approach
+   All non-image/canvas elements get inverted so:
+   white → black background, dark text → light text
+   hue-rotate(180deg) keeps accent colors intact
+================================================================ */
+html.dark {
+  filter: invert(1) hue-rotate(180deg);
+  background-color: #fff; /* inverts to #000-ish */
+}
+/* Double-invert media & charts so they display correctly */
+html.dark img,
+html.dark canvas,
+html.dark video,
+html.dark [data-no-invert] {
+  filter: invert(1) hue-rotate(180deg);
+}
