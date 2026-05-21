@@ -16,10 +16,10 @@ import GeoPane from '@/components/TabPanes/GeoPane';
 import CompPane from '@/components/TabPanes/CompPane';
 import EquipePane from '@/components/TabPanes/EquipePane';
 import OrcamentosPane from '@/components/TabPanes/OrcamentosPane';
-import { getBaseData, sheetsFirstMerge } from '@/lib/merge-data';
+import { getBaseData, sheetsFirstMerge, extractPipeline } from '@/lib/merge-data';
 import { mergePatientRecords } from '@/lib/normalize-patient';
 import { getAuthToken, safeStorage, SNAPSHOT_KEY } from '@/lib/safe-storage';
-import type { DashboardData, Notification, AmigoLiveData } from '@/lib/data-model';
+import type { DashboardData, Notification, AmigoLiveData, PipelineCard } from '@/lib/data-model';
 
 // Tab names match the original HTML exactly
 const TABS = [
@@ -55,6 +55,7 @@ export default function DashboardPage() {
   const [syncing, setSyncing] = useState(true);
   const [data, setData] = useState<DashboardData>(getBaseData);
   const [amigoData, setAmigoData] = useState<AmigoLiveData>({ attendances: [], birthdays: [] });
+  const [pipelineFromSheets, setPipelineFromSheets] = useState<PipelineCard[] | null>(null);
 
   // Load snapshot on client then sync with Sheets
   useEffect(() => {
@@ -78,12 +79,17 @@ export default function DashboardPage() {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
         const json = await res.json();
-        const remote = json?.data?.data as Record<string, unknown> | undefined;
+        const remote = json?.data as Record<string, unknown> | undefined;
 
         if (!cancelled && remote) {
           const merged = sheetsFirstMerge(getBaseData(), remote);
           setData(merged);
           safeStorage.set(SNAPSHOT_KEY, merged);
+          // Extract pipeline cards from Sheets if available
+          const sheetsCards = extractPipeline(remote);
+          if (sheetsCards && sheetsCards.length > 0) {
+            setPipelineFromSheets(sheetsCards);
+          }
 
           const totalCir  = (merged.cir25?.length  ?? 0) + (merged.cir26?.length  ?? 0);
           const totalCons = (merged.cons25?.length ?? 0) + (merged.cons26?.length ?? 0);
@@ -167,7 +173,7 @@ export default function DashboardPage() {
       case 'resumo':
         return <ResumoPane cir25={data.cir25} cir26={data.cir26} cons25={data.cons25} cons26={data.cons26} canal25={data.canal25} canal26={data.canal26} fx25={data.fx25} fx26={data.fx26} />;
       case 'mayra':
-        return <PipelinePane />;
+        return <PipelinePane initialCards={pipelineFromSheets ?? undefined} cons26={data.cons26} cir26={data.cir26} />;
       case 'cirurgias':
         return <CirurgiasPane cir25={data.cir25} cir26={data.cir26} />;
       case 'consultas':
@@ -175,7 +181,7 @@ export default function DashboardPage() {
       case 'pacientes':
         return <PacientesPane patients={patients} amigoAttendances={amigoData.attendances} />;
       case 'pipeline':
-        return <PipelinePane />;
+        return <PipelinePane initialCards={pipelineFromSheets ?? undefined} cons26={data.cons26} cir26={data.cir26} />;
       case 'ranking':
         return <RankingPane cir25={data.cir25} cir26={data.cir26} cons25={data.cons25} cons26={data.cons26} />;
       case 'funil':

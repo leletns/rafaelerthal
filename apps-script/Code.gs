@@ -135,6 +135,31 @@ function doGet(e) {
       };
     });
 
+    // 5. Pipeline tab — commercial funnel cards
+    try {
+      var pipSheet = ss.getSheetByName('PIPELINE');
+      if (pipSheet) {
+        var pipData = pipSheet.getDataRange().getValues();
+        var pipeline = [];
+        for (var pi = 1; pi < pipData.length; pi++) {
+          var pr = pipData[pi];
+          if (!pr[0] && !pr[1]) continue;
+          pipeline.push({
+            id:          String(pr[0] || ('p_auto_' + pi)),
+            patientName: String(pr[1] || ''),
+            phone:       String(pr[2] || ''),
+            procedure:   String(pr[3] || ''),
+            value:       Number(pr[4]) || 0,
+            stage:       String(pr[5] || 'compareceu'),
+            notes:       String(pr[6] || ''),
+            createdAt:   pr[7] instanceof Date ? pr[7].toISOString() : String(pr[7] || new Date().toISOString()),
+            updatedAt:   pr[8] instanceof Date ? pr[8].toISOString() : String(pr[8] || new Date().toISOString()),
+          });
+        }
+        result.pipeline = pipeline;
+      }
+    } catch(pipErr) { result.pipeline = []; }
+
     return jsonOut_(result);
   } catch (err) {
     return jsonOut_({ error: String(err), stack: err.stack || '' });
@@ -492,6 +517,35 @@ function doPost(e) {
         sh.appendRow([body.paciente, body.status, new Date().toISOString()]);
       }
       return jsonOut_({ ok: true, acao: 'atualizar_status', paciente: body.paciente, status: body.status });
+    }
+
+    if (acao === 'pipeline_bulk') {
+      // Overwrites the entire PIPELINE sheet with the provided cards array
+      // body: { token, acao: 'pipeline_bulk', cards: [...] }
+      var cards = body.cards || [];
+      var psh = ss.getSheetByName('PIPELINE');
+      if (!psh) {
+        psh = ss.insertSheet('PIPELINE');
+      }
+      psh.clearContents();
+      psh.appendRow(['ID','PACIENTE','TELEFONE','PROCEDIMENTO','VALOR','ETAPA','NOTAS','CRIADO EM','ATUALIZADO EM']);
+      if (cards.length > 0) {
+        var rows = cards.map(function(c) {
+          return [
+            String(c.id || ''),
+            String(c.patientName || ''),
+            String(c.phone || ''),
+            String(c.procedure || ''),
+            Number(c.value) || 0,
+            String(c.stage || 'compareceu'),
+            String(c.notes || ''),
+            String(c.createdAt || new Date().toISOString()),
+            String(c.updatedAt || new Date().toISOString()),
+          ];
+        });
+        psh.getRange(2, 1, rows.length, 9).setValues(rows);
+      }
+      return jsonOut_({ ok: true, count: cards.length, acao: 'pipeline_bulk' });
     }
 
     return jsonOut_({ error: 'Ação desconhecida: ' + acao });
