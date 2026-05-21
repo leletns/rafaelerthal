@@ -18,20 +18,18 @@ interface PatientRank {
   surgeries: number;
   consultations: number;
   revenue: number;
-  maxSurgery: number;  // highest single-surgery value
+  maxSurgery: number; // highest single-procedure value → primary sort key
   lastDate: string;
   lastProc: string;
 }
 
 const COLORS = ['#007AFF','#5856D6','#FF9500','#28A745','#FF3B30','#AF52DE','#FF6B35','#00C7BE'];
 
-function sortByDate(surgeries: Surgery[], year: number): Surgery[] {
-  return [...surgeries].sort((a, b) => {
+function sortByDate(list: Surgery[], year: number): Surgery[] {
+  return [...list].sort((a, b) => {
     const [da, ma] = a.d.split('/').map(Number);
     const [db, mb] = b.d.split('/').map(Number);
-    const dateA = new Date(year, ma - 1, da);
-    const dateB = new Date(year, mb - 1, db);
-    return dateB.getTime() - dateA.getTime(); // newest first
+    return new Date(year, mb - 1, db).getTime() - new Date(year, ma - 1, da).getTime();
   });
 }
 
@@ -39,21 +37,31 @@ export default function RankingPane({ cir25, cir26, cons25, cons26 }: RankingPan
   const [year,    setYear]    = useState<2025 | 2026 | 'all'>('all');
   const [section, setSection] = useState<Section>('pacientes');
 
-  // Memoize derived arrays to satisfy useMemo deps
-  const cir  = useMemo(() => year === 2025 ? cir25 : year === 2026 ? cir26 : [...cir25, ...cir26], [year, cir25, cir26]);
-  const cons = useMemo(() => year === 2025 ? cons25 : year === 2026 ? cons26 : [...cons25, ...cons26], [year, cons25, cons26]);
+  // Memoize combined arrays so patientMap deps are stable
+  const cir  = useMemo(
+    () => year === 2025 ? cir25 : year === 2026 ? cir26 : [...cir25, ...cir26],
+    [year, cir25, cir26]
+  );
+  const cons = useMemo(
+    () => year === 2025 ? cons25 : year === 2026 ? cons26 : [...cons25, ...cons26],
+    [year, cons25, cons26]
+  );
+
   const cir26sorted = useMemo(() => sortByDate(cir26, 2026), [cir26]);
   const cir25sorted = useMemo(() => sortByDate(cir25, 2025), [cir25]);
 
-  // Última cirurgia = most recent from 2026, fallback 2025
-  const ultimaCir = cir26sorted[0] ?? cir25sorted[0] ?? null;
+  // Most-recent surgery banner
+  const ultimaCir  = cir26sorted[0] ?? cir25sorted[0] ?? null;
   const ultimaYear = cir26sorted.length > 0 ? 2026 : 2025;
 
-  // Build patient map (include all, even v=0)
+  // ── Patient map (all patients including v=0) ─────────────
   const patientMap = useMemo(() => {
     const map = new Map<string, PatientRank>();
     for (const s of cir) {
-      const e = map.get(s.p) ?? { name: s.p, surgeries: 0, consultations: 0, revenue: 0, maxSurgery: 0, lastDate: s.d, lastProc: s.c };
+      const e = map.get(s.p) ?? {
+        name: s.p, surgeries: 0, consultations: 0,
+        revenue: 0, maxSurgery: 0, lastDate: s.d, lastProc: s.c,
+      };
       map.set(s.p, {
         ...e,
         surgeries: e.surgeries + 1,
@@ -64,27 +72,28 @@ export default function RankingPane({ cir25, cir26, cons25, cons26 }: RankingPan
       });
     }
     for (const c of cons) {
-      const e = map.get(c.p) ?? { name: c.p, surgeries: 0, consultations: 0, revenue: 0, maxSurgery: 0, lastDate: c.d, lastProc: '' };
+      const e = map.get(c.p) ?? {
+        name: c.p, surgeries: 0, consultations: 0,
+        revenue: 0, maxSurgery: 0, lastDate: c.d, lastProc: '',
+      };
       map.set(c.p, { ...e, consultations: e.consultations + 1 });
     }
     return map;
   }, [cir, cons]);
 
+  // Sort: most-expensive single procedure first → total revenue → count → name
   const byRevenue = useMemo(() =>
     Array.from(patientMap.values())
       .filter(p => p.surgeries > 0)
       .sort((a, b) => {
-        // Primary: highest single surgery value (most expensive procedure first)
         if (b.maxSurgery !== a.maxSurgery) return b.maxSurgery - a.maxSurgery;
-        // Secondary: total revenue
-        if (b.revenue !== a.revenue) return b.revenue - a.revenue;
-        // Tertiary: surgery count
-        if (b.surgeries !== a.surgeries) return b.surgeries - a.surgeries;
-        // Final: alphabetical
+        if (b.revenue    !== a.revenue)    return b.revenue    - a.revenue;
+        if (b.surgeries  !== a.surgeries)  return b.surgeries  - a.surgeries;
         return a.name.localeCompare(b.name, 'pt-BR');
       })
       .slice(0, 25),
-    [patientMap]);
+    [patientMap]
+  );
 
   // Procedure ranking
   const byProc = useMemo(() => {
@@ -97,41 +106,34 @@ export default function RankingPane({ cir25, cir26, cons25, cons26 }: RankingPan
     return Array.from(map.values()).sort((a, b) => b.count - a.count).slice(0, 10);
   }, [cir]);
 
-  // Recent surgeries
+  // Recent surgeries (newest first)
   const recentCir = useMemo(() => {
     const all = [
       ...cir26.map(s => ({ ...s, year: 2026 })),
       ...cir25.map(s => ({ ...s, year: 2025 })),
     ];
-    return all
-      .sort((a, b) => {
-        const [da, ma] = a.d.split('/').map(Number);
-        const [db, mb] = b.d.split('/').map(Number);
-        if (a.year !== b.year) return b.year - a.year;
-        if (mb !== ma) return mb - ma;
-        return db - da;
-      })
-      .slice(0, 20);
+    return all.sort((a, b) => {
+      if (a.year !== b.year) return b.year - a.year;
+      const [da, ma] = a.d.split('/').map(Number);
+      const [db, mb] = b.d.split('/').map(Number);
+      if (mb !== ma) return mb - ma;
+      return db - da;
+    }).slice(0, 25);
   }, [cir25, cir26]);
 
-  const maxRev = byRevenue[0]?.revenue || 1;
+  const maxRev  = byRevenue[0]?.maxSurgery || 1;
   const maxProc = byProc[0]?.count || 1;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
-      {/* ── Última cirurgia badge ─────────────────────────── */}
+      {/* ── Última cirurgia banner ─────────────────────── */}
       {ultimaCir && (
         <div style={{
           background: 'linear-gradient(135deg, #007AFF, #5856D6)',
-          borderRadius: '18px',
-          padding: '18px 22px',
-          color: '#fff',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          gap: '12px',
-          flexWrap: 'wrap',
+          borderRadius: '18px', padding: '18px 22px', color: '#fff',
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          gap: '12px', flexWrap: 'wrap',
         }}>
           <div>
             <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', opacity: 0.8 }}>
@@ -152,12 +154,12 @@ export default function RankingPane({ cir25, cir26, cons25, cons26 }: RankingPan
         </div>
       )}
 
-      {/* ── Controls ──────────────────────────────────────── */}
+      {/* ── Controls ──────────────────────────────────── */}
       <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
         <div className="seg">
           {(['pacientes', 'procedimentos', 'recentes'] as Section[]).map((s) => (
             <button key={s} className={`sb${section === s ? ' on' : ''}`} onClick={() => setSection(s)}>
-              {s === 'pacientes' ? 'Pacientes' : s === 'procedimentos' ? 'Procedimentos' : 'Recentes'}
+              {s === 'pacientes' ? '🏆 Pacientes' : s === 'procedimentos' ? '🔬 Procedimentos' : '🗓 Recentes'}
             </button>
           ))}
         </div>
@@ -170,15 +172,21 @@ export default function RankingPane({ cir25, cir26, cons25, cons26 }: RankingPan
         </div>
       </div>
 
-      {/* ── Pacientes por receita ──────────────────────────── */}
+      {/* ── Pacientes: cirurgia mais cara primeiro ─────── */}
       {section === 'pacientes' && (
         <div className="card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          <div className="card-ttl">Top {byRevenue.length} pacientes · maior valor por cirurgia</div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+            <div className="card-ttl" style={{ margin: 0 }}>
+              Top {byRevenue.length} · maior valor por cirurgia
+            </div>
+            <span style={{ fontSize: '11px', color: '#86868B' }}>ordenado pela cirurgia mais cara</span>
+          </div>
           {byRevenue.length === 0 ? (
             <p style={{ textAlign: 'center', color: '#86868B', padding: '32px 0', margin: 0 }}>Sem dados para o período</p>
           ) : (
             byRevenue.map((p, i) => (
               <div key={p.name} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                {/* Medal */}
                 <div style={{
                   width: '28px', height: '28px', borderRadius: '50%', flexShrink: 0,
                   background: i === 0 ? '#FFD700' : i === 1 ? '#C0C0C0' : i === 2 ? '#CD7F32' : '#F2F2F7',
@@ -187,26 +195,47 @@ export default function RankingPane({ cir25, cir26, cons25, cons26 }: RankingPan
                 }}>
                   {i + 1}
                 </div>
+                {/* Bar */}
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
                     <span style={{ fontWeight: 700, fontSize: '0.85rem', color: '#1D1D1F', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {p.name}
                     </span>
-                    <span style={{ fontWeight: 800, fontSize: '0.875rem', color: p.revenue > 0 ? '#28A745' : '#86868B', flexShrink: 0, marginLeft: '8px' }}>
-                      {p.revenue > 0 ? formatCurrency(p.revenue) : `${p.surgeries} cir.`}
-                    </span>
+                    <div style={{ display: 'flex', gap: '8px', flexShrink: 0, marginLeft: '8px', alignItems: 'center' }}>
+                      {p.maxSurgery > 0 && (
+                        <span style={{ fontWeight: 800, fontSize: '0.875rem', color: '#28A745' }}>
+                          {formatCurrency(p.maxSurgery)}
+                        </span>
+                      )}
+                      {p.revenue !== p.maxSurgery && p.revenue > 0 && (
+                        <span style={{ fontSize: '0.72rem', color: '#86868B' }}>
+                          total {formatCurrency(p.revenue)}
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <div style={{ height: '6px', background: '#F2F2F7', borderRadius: '3px', overflow: 'hidden' }}>
                     <div style={{
                       height: '100%',
-                      width: `${Math.max((p.revenue / maxRev) * 100, p.revenue === 0 ? 8 : 0)}%`,
-                      background: i === 0 ? 'linear-gradient(90deg,#FFD700,#FF9500)' : `linear-gradient(90deg,${COLORS[i % COLORS.length]},${COLORS[(i+1) % COLORS.length]})`,
+                      width: `${Math.max((p.maxSurgery / maxRev) * 100, p.maxSurgery === 0 ? 6 : 0)}%`,
+                      background: i === 0
+                        ? 'linear-gradient(90deg,#FFD700,#FF9500)'
+                        : `linear-gradient(90deg,${COLORS[i % COLORS.length]},${COLORS[(i+1) % COLORS.length]})`,
                       borderRadius: '3px', transition: 'width 0.5s ease',
                     }} />
                   </div>
                   <div style={{ display: 'flex', gap: '12px', marginTop: '3px' }}>
-                    <span style={{ fontSize: '0.68rem', color: '#86868B' }}>{p.surgeries} cirurgia{p.surgeries !== 1 ? 's' : ''}</span>
-                    {p.consultations > 0 && <span style={{ fontSize: '0.68rem', color: '#86868B' }}>{p.consultations} consulta{p.consultations !== 1 ? 's' : ''}</span>}
+                    <span style={{ fontSize: '0.68rem', color: '#86868B' }}>
+                      {p.surgeries} cirurgia{p.surgeries !== 1 ? 's' : ''}
+                    </span>
+                    {p.consultations > 0 && (
+                      <span style={{ fontSize: '0.68rem', color: '#86868B' }}>
+                        {p.consultations} consulta{p.consultations !== 1 ? 's' : ''}
+                      </span>
+                    )}
+                    {p.maxSurgery === 0 && (
+                      <span style={{ fontSize: '0.68rem', color: '#FF9500', fontWeight: 600 }}>valor pendente</span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -215,7 +244,7 @@ export default function RankingPane({ cir25, cir26, cons25, cons26 }: RankingPan
         </div>
       )}
 
-      {/* ── Procedimentos ─────────────────────────────────── */}
+      {/* ── Procedimentos ─────────────────────────────── */}
       {section === 'procedimentos' && (
         <div className="card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
           <div className="card-ttl">Top {byProc.length} procedimentos</div>
@@ -256,7 +285,7 @@ export default function RankingPane({ cir25, cir26, cons25, cons26 }: RankingPan
         </div>
       )}
 
-      {/* ── Recentes ──────────────────────────────────────── */}
+      {/* ── Recentes ──────────────────────────────────── */}
       {section === 'recentes' && (
         <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
           <div className="ts">
