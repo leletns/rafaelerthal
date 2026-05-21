@@ -1,7 +1,9 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { clearAuthToken } from '@/lib/safe-storage';
+import { getStoredTheme, applyTheme } from '@/lib/theme';
 import NotificationBell from './NotificationBell';
 import GlobalSearch from './GlobalSearch';
 import type { Notification, Patient } from '@/lib/data-model';
@@ -25,6 +27,19 @@ export default function DashboardLayout({
   patients,
 }: DashboardLayoutProps) {
   const router = useRouter();
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+
+  useEffect(() => {
+    const stored = getStoredTheme();
+    setTheme(stored);
+    applyTheme(stored);
+  }, []);
+
+  function toggleTheme() {
+    const next = theme === 'light' ? 'dark' : 'light';
+    setTheme(next);
+    applyTheme(next);
+  }
 
   function handleLogout() {
     clearAuthToken();
@@ -33,7 +48,7 @@ export default function DashboardLayout({
 
   return (
     <div style={{ minHeight: '100vh', background: '#F5F5F7' }}>
-      {/* Header — matches original .brand layout */}
+      {/* Header */}
       <header style={{
         background: '#fff',
         borderBottom: '1px solid #E5E5EA',
@@ -51,7 +66,7 @@ export default function DashboardLayout({
           alignItems: 'center',
           gap: '16px',
         }}>
-          {/* Logo — matches original .mono "b." */}
+          {/* Logo */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
             <div style={{
               width: '52px',
@@ -102,6 +117,23 @@ export default function DashboardLayout({
                 Syncing…
               </div>
             )}
+
+            {/* Dark / Light toggle */}
+            <button
+              onClick={toggleTheme}
+              title={theme === 'dark' ? 'Modo claro' : 'Modo escuro'}
+              style={{
+                background: 'none', border: 'none', cursor: 'pointer',
+                padding: '6px', borderRadius: '8px', color: '#86868B',
+                display: 'flex', alignItems: 'center',
+                fontSize: '16px',
+                transition: 'color 0.15s, background 0.15s',
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = '#F2F2F7'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'none'; }}
+            >
+              {theme === 'dark' ? '☀️' : '🌙'}
+            </button>
 
             <NotificationBell
               notifications={notifications}

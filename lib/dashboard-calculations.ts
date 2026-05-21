@@ -79,16 +79,16 @@ export function computeFunnelData(
   cir: Surgery[]
 ): FunnelData[] {
   const total = cons.length;
+  if (total === 0) return [];
   const compareceu = Math.round(total * 0.82);
   const orcApresentado = Math.round(total * 0.68);
   const fechou = cir.length;
 
   return [
-    { label: 'Leads captados', value: Math.round(total * 1.6), pct: 100 },
-    { label: 'Consultas realizadas', value: total, pct: Math.round((total / (total * 1.6)) * 100) },
-    { label: 'Compareceu', value: compareceu, pct: Math.round((compareceu / total) * 100) },
+    { label: 'Consultas realizadas',  value: total,          pct: 100 },
+    { label: 'Compareceu ao retorno', value: compareceu,     pct: Math.round((compareceu / total) * 100) },
     { label: 'Orçamento apresentado', value: orcApresentado, pct: Math.round((orcApresentado / total) * 100) },
-    { label: 'Fechou cirurgia', value: fechou, pct: Math.round((fechou / total) * 100) },
+    { label: 'Fechou cirurgia',       value: fechou,         pct: Math.round((fechou / total) * 100) },
   ];
 }
 

@@ -1,6 +1,33 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { attendances, patients, places, events } from '@/lib/amigo-client';
 
+// -------------------------------------------------------
+// Normalize AmigoClinic field names to our data model
+// (API uses snake_case & alternate names)
+// -------------------------------------------------------
+function normalizeBirthday(p: Record<string, unknown>) {
+  return {
+    id:        String(p.id ?? ''),
+    name:      String(p.name ?? p.patient_name ?? ''),
+    phone:     String(p.contact_cellphone ?? p.phone ?? p.cellphone ?? ''),
+    birthDate: String(p.born ?? p.birth_date ?? p.birthDate ?? ''),
+  };
+}
+
+function normalizeAttendance(a: Record<string, unknown>) {
+  return {
+    id:          String(a.id ?? ''),
+    patientId:   String(a.patient_id ?? a.patientId ?? ''),
+    patientName: String(a.patient_name ?? a.patientName ?? a.name ?? ''),
+    doctorName:  String(a.doctor_name  ?? a.doctorName  ?? ''),
+    date:        String(a.date ?? a.scheduled_date ?? ''),
+    time:        String(a.time ?? a.scheduled_time ?? a.hour ?? ''),
+    procedure:   String(a.procedure ?? a.event_name ?? a.type ?? ''),
+    status:      String(a.status ?? ''),
+    notes:       String(a.notes ?? a.observation ?? ''),
+  };
+}
+
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get('Authorization');
   const token = authHeader?.replace('Bearer ', '');
@@ -33,8 +60,12 @@ export async function GET(req: NextRequest) {
     success: true,
     timestamp: new Date().toISOString(),
     data: {
-      attendances: atts.status === 'fulfilled' ? atts.value : [],
-      birthdays:   birthdays.status === 'fulfilled' ? birthdays.value : [],
+      attendances: atts.status === 'fulfilled'
+        ? (atts.value as Record<string, unknown>[]).map(normalizeAttendance)
+        : [],
+      birthdays: birthdays.status === 'fulfilled'
+        ? (birthdays.value as Record<string, unknown>[]).map(normalizeBirthday)
+        : [],
       places:      placesList.status === 'fulfilled' ? placesList.value : [],
       events:      eventsList.status === 'fulfilled' ? eventsList.value : [],
     },

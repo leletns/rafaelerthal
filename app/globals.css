@@ -243,3 +243,17 @@ input:focus, textarea:focus, select:focus {
   0%, 100% { opacity: 1; }
   50%       { opacity: .4; }
 }
+
+/* ================================================================
+   Dark mode — toggled via html.dark class
+================================================================ */
+html.dark {
+  filter: invert(1) hue-rotate(180deg);
+  background-color: #fff;
+}
+html.dark img,
+html.dark canvas,
+html.dark video,
+html.dark [data-no-invert] {
+  filter: invert(1) hue-rotate(180deg);
+}

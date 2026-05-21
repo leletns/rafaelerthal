@@ -5,18 +5,11 @@ import type { PipelineCard, PipelineStage } from '@/lib/data-model';
 import WhatsAppButton from './WhatsAppButton';
 import { formatCurrency } from '@/lib/dashboard-calculations';
 
-const STAGES: { id: PipelineStage; label: string; color: string }[] = [
-  { id: 'consulta_agendada', label: 'Consulta agendada', color: '#007AFF' },
-  { id: 'compareceu', label: 'Compareceu', color: '#34C759' },
-  { id: 'orc_pendente', label: 'Orçamento pendente', color: '#FF9500' },
-  { id: 'orc_apresentado', label: 'Orçamento apresentado', color: '#5856D6' },
-  { id: 'nao_fechou', label: 'Não fechou na hora', color: '#FF3B30' },
-  { id: 'followup_agendado', label: 'Follow-up agendado', color: '#FFCC00' },
-  { id: 'sinal_pago', label: 'Sinal pago', color: '#30D158' },
-  { id: 'avista_pago', label: 'Pago à vista', color: '#1D1D1F' },
-  { id: 'cirurgia_agendada', label: 'Cirurgia agendada', color: '#5856D6' },
-  { id: 'perdida', label: 'Perdida', color: '#AEAEB2' },
-  { id: 'retomada', label: 'Retomada futura', color: '#BF5AF2' },
+const STAGES: { id: PipelineStage; label: string; color: string; emoji: string }[] = [
+  { id: 'orc_enviado',       label: 'Orçamento enviado', color: '#FF9500', emoji: '📋' },
+  { id: 'sinal_pago',        label: 'Sinal pago',        color: '#5856D6', emoji: '💰' },
+  { id: 'cirurgia_agendada', label: 'Cirurgia agendada', color: '#28A745', emoji: '✂️' },
+  { id: 'perdida',           label: 'Perdida',           color: '#FF3B30', emoji: '❌' },
 ];
 
 interface MayraPipelineProps {
@@ -48,7 +41,7 @@ export default function MayraPipeline({
     phone: '',
     procedure: '',
     value: '',
-    stage: 'consulta_agendada',
+    stage: 'orc_enviado',
     notes: '',
   });
 
@@ -82,7 +75,7 @@ export default function MayraPipeline({
       stage: newCard.stage,
       notes: newCard.notes.trim() || undefined,
     });
-    setNewCard({ patientName: '', phone: '', procedure: '', value: '', stage: 'consulta_agendada', notes: '' });
+    setNewCard({ patientName: '', phone: '', procedure: '', value: '', stage: 'orc_enviado', notes: '' });
     setShowAddModal(false);
   }
 

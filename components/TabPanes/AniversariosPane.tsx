@@ -1,14 +1,16 @@
 'use client';
 
 import { useMemo } from 'react';
-import type { Surgery, AmigoLiveData } from '@/lib/data-model';
+import type { Surgery, AmigoLiveData, Patient } from '@/lib/data-model';
 import { computeAnniversaries, formatDue } from '@/lib/anniversary';
 import WhatsAppButton from '../WhatsAppButton';
+import FollowUpScheduler from '../FollowUpScheduler';
 
 interface AniversariosPaneProps {
   cir25: Surgery[];
   cir26: Surgery[];
   amigoData: AmigoLiveData;
+  patients?: Patient[];
 }
 
 function Section({ title, icon, children }: { title: string; icon: string; children: React.ReactNode }) {
@@ -29,9 +31,22 @@ const MS_COLORS: Record<number, { color: string; bg: string }> = {
   12: { color: '#28A745', bg: '#E6F7EC' },
 };
 
-export default function AniversariosPane({ cir25, cir26, amigoData }: AniversariosPaneProps) {
+export default function AniversariosPane({ cir25, cir26, amigoData, patients = [] }: AniversariosPaneProps) {
   const today = useMemo(() => new Date(), []);
   const todayStr = today.toISOString().split('T')[0];
+
+  // Build phone lookup by patient name (lowercase)
+  const phoneByName = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const p of patients) {
+      if (p.phone) map.set(p.name.toLowerCase().trim(), p.phone);
+    }
+    return map;
+  }, [patients]);
+
+  function getPhone(name: string): string {
+    return phoneByName.get(name.toLowerCase().trim()) ?? '';
+  }
 
   // Surgery anniversaries — 90-day window
   const anivs25 = useMemo(() => computeAnniversaries(cir25, 2025, today, 90), [cir25, today]);
@@ -64,6 +79,7 @@ export default function AniversariosPane({ cir25, cir26, amigoData }: Aniversari
   function AnnivCard({ a }: { a: ReturnType<typeof computeAnniversaries>[0] }) {
     const pal = MS_COLORS[a.milestoneMonths] ?? { color: '#86868B', bg: '#F2F2F7' };
     const urgent = a.daysUntil >= 0 && a.daysUntil <= 3;
+    const phone = getPhone(a.patientName);
     return (
       <div style={{
         padding: '12px 14px', borderRadius: '12px', background: urgent ? pal.bg : '#F9F9FB',
@@ -81,15 +97,19 @@ export default function AniversariosPane({ cir25, cir26, amigoData }: Aniversari
             Cirurgia: {a.surgeryDate}/{a.surgeryYear}
           </div>
         </div>
-        <div style={{ textAlign: 'right', flexShrink: 0 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px', flexShrink: 0 }}>
           <span style={{
             display: 'inline-block', padding: '3px 10px', borderRadius: '99px',
             background: pal.bg, color: pal.color, fontSize: '0.72rem', fontWeight: 800,
           }}>
             {a.milestoneLabel}
           </span>
-          <div style={{ fontSize: '0.75rem', fontWeight: 700, color: a.daysUntil === 0 ? '#FF3B30' : a.daysUntil > 0 && a.daysUntil <= 7 ? '#FF9500' : pal.color, marginTop: '4px' }}>
+          <div style={{ fontSize: '0.75rem', fontWeight: 700, color: a.daysUntil === 0 ? '#FF3B30' : a.daysUntil > 0 && a.daysUntil <= 7 ? '#FF9500' : pal.color }}>
             {formatDue(a.daysUntil)}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            {phone && <WhatsAppButton phone={phone} size="sm" variant="icon" />}
+            <FollowUpScheduler patientName={a.patientName} phone={phone} />
           </div>
         </div>
       </div>

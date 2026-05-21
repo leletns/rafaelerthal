@@ -57,7 +57,7 @@ export function generateFollowUpNotifications(
   staleCutoff.setDate(staleCutoff.getDate() - 7);
 
   for (const card of pipeline) {
-    if (card.stage === 'nao_fechou' || card.stage === 'orc_apresentado') {
+    if (card.stage === 'orc_enviado') {
       const updated = new Date(card.updatedAt);
       if (updated < staleCutoff) {
         notifications.push({
