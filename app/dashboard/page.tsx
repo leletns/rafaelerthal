@@ -19,7 +19,7 @@ import OrcamentosPane from '@/components/TabPanes/OrcamentosPane';
 import { getBaseData, sheetsFirstMerge } from '@/lib/merge-data';
 import { mergePatientRecords } from '@/lib/normalize-patient';
 import { getAuthToken, safeStorage, SNAPSHOT_KEY } from '@/lib/safe-storage';
-import type { DashboardData, Notification } from '@/lib/data-model';
+import type { DashboardData, Notification, AmigoLiveData } from '@/lib/data-model';
 
 // Tab names match the original HTML exactly
 const TABS = [
@@ -54,6 +54,7 @@ export default function DashboardPage() {
   const [notifications, setNotifications] = useState<Notification[]>(INITIAL_NOTIFICATIONS);
   const [syncing, setSyncing] = useState(true);
   const [data, setData] = useState<DashboardData>(getBaseData);
+  const [amigoData, setAmigoData] = useState<AmigoLiveData>({ attendances: [], birthdays: [] });
 
   // Load snapshot on client then sync with Sheets
   useEffect(() => {
@@ -106,7 +107,43 @@ export default function DashboardPage() {
       }
     }
 
+    async function syncAmigo() {
+      try {
+        const res = await fetch('/api/amigo/sync', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) return;
+        const json = await res.json();
+        if (!cancelled && json?.data) {
+          setAmigoData({
+            attendances: json.data.attendances ?? [],
+            birthdays:   json.data.birthdays   ?? [],
+            syncedAt:    json.timestamp,
+          });
+          // Add birthday notifications
+          const todayStr = new Date().toISOString().split('T')[0];
+          const bdays = (json.data.birthdays ?? []) as Array<{name:string;phone?:string}>;
+          if (bdays.length > 0) {
+            setNotifications(prev => [
+              ...bdays.map((b, i) => ({
+                id: `bday_${Date.now()}_${i}`,
+                type: 'birthday' as const,
+                title: '🎂 Aniversário hoje',
+                body: `${b.name}${b.phone ? ` · ${b.phone}` : ''}`,
+                date: todayStr,
+                read: false,
+              })),
+              ...prev,
+            ]);
+          }
+        }
+      } catch {
+        // AmigoClinic offline — ignore silently
+      }
+    }
+
     syncSheets();
+    syncAmigo();
     return () => { cancelled = true; };
   }, [router]);
 
@@ -136,7 +173,7 @@ export default function DashboardPage() {
       case 'consultas':
         return <ConsultasPane cons25={data.cons25} cons26={data.cons26} />;
       case 'pacientes':
-        return <PacientesPane patients={patients} />;
+        return <PacientesPane patients={patients} amigoAttendances={amigoData.attendances} />;
       case 'pipeline':
         return <PipelinePane />;
       case 'ranking':

@@ -1,16 +1,17 @@
 'use client';
 
 import { useState } from 'react';
-import type { Patient } from '@/lib/data-model';
+import type { Patient, AmigoAttendanceItem } from '@/lib/data-model';
 import PatientProfileModal from '../PatientProfileModal';
 import WhatsAppButton from '../WhatsAppButton';
 import { formatCurrency } from '@/lib/dashboard-calculations';
 
 interface PacientesPaneProps {
   patients: Patient[];
+  amigoAttendances?: AmigoAttendanceItem[];
 }
 
-export default function PacientesPane({ patients }: PacientesPaneProps) {
+export default function PacientesPane({ patients, amigoAttendances }: PacientesPaneProps) {
   const [search, setSearch] = useState('');
   const [filterCanal, setFilterCanal] = useState('');
   const [selected, setSelected] = useState<Patient | null>(null);
@@ -31,7 +32,7 @@ export default function PacientesPane({ patients }: PacientesPaneProps) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-      <PatientProfileModal patient={selected} onClose={() => setSelected(null)} />
+      <PatientProfileModal patient={selected} onClose={() => setSelected(null)} amigoAttendances={amigoAttendances} />
 
       {/* Controls */}
       <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>

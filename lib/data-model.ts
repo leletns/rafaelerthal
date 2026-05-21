@@ -145,3 +145,33 @@ export interface DashboardData {
   cons25_mes?: number[];
   cons26_mes?: number[];
 }
+
+// -------------------------------------------------------
+// AmigoClinic live data — fetched from /api/amigo/sync
+// -------------------------------------------------------
+export interface AmigoAttendanceItem {
+  id: string;
+  patientId?: string;
+  patientName?: string;
+  doctorName?: string;
+  date: string;
+  time?: string;
+  procedure?: string;
+  status?: string;
+  notes?: string;
+  [key: string]: unknown;
+}
+
+export interface AmigoBirthdayItem {
+  id: string;
+  name: string;
+  birthDate?: string;
+  phone?: string;
+  [key: string]: unknown;
+}
+
+export interface AmigoLiveData {
+  attendances: AmigoAttendanceItem[];
+  birthdays:   AmigoBirthdayItem[];
+  syncedAt?:   string;
+}
