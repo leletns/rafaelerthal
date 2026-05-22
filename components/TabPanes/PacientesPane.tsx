@@ -15,90 +15,134 @@ interface PacientesPaneProps {
 type FilterType = 'all' | 'surgery' | 'consult';
 
 export default function PacientesPane({ patients, amigoAttendances }: PacientesPaneProps) {
-  const [search, setSearch] = useState('');
+  const [search, setSearch]         = useState('');
   const [filterCanal, setFilterCanal] = useState('');
-  const [filterType, setFilterType] = useState<FilterType>('all');
-  const [selected, setSelected] = useState<Patient | null>(null);
+  const [filterType, setFilterType]  = useState<FilterType>('all');
+  const [selected, setSelected]      = useState<Patient | null>(null);
 
   const canais = Array.from(new Set(patients.filter((p) => p.canal).map((p) => p.canal!))).sort();
 
-  const searched = patients.filter((p) => {
-    const matchSearch = !search ||
-      p.name.toLowerCase().includes(search.toLowerCase()) ||
+  // Apply type filter FIRST so counts in the pill are based on canal-filtered data
+  const canalFiltered = patients.filter((p) => !filterCanal || p.canal === filterCanal);
+
+  const withSurgeries = canalFiltered.filter((p) => p.surgeries.length > 0);
+  const consultsOnly  = canalFiltered.filter((p) => p.surgeries.length === 0 && p.consultations.length > 0);
+
+  const typeFiltered =
+    filterType === 'surgery' ? withSurgeries :
+    filterType === 'consult' ? consultsOnly  :
+    canalFiltered;
+
+  const filtered = typeFiltered.filter((p) => {
+    if (!search) return true;
+    const q = search.toLowerCase();
+    return (
+      p.name.toLowerCase().includes(q) ||
       p.phone.includes(search) ||
-      (p.city || '').toLowerCase().includes(search.toLowerCase());
-    const matchCanal = !filterCanal || p.canal === filterCanal;
-    return matchSearch && matchCanal;
+      (p.city || '').toLowerCase().includes(q)
+    );
   });
 
-  const withSurgeries = searched.filter((p) => p.surgeries.length > 0);
-  const consultsOnly  = searched.filter((p) => p.surgeries.length === 0 && p.consultations.length > 0);
-
-  const filtered = filterType === 'surgery'
-    ? withSurgeries
-    : filterType === 'consult'
-    ? consultsOnly
-    : searched;
+  const filterOptions: { key: FilterType; label: string; count: number }[] = [
+    { key: 'all',     label: 'Todos',          count: canalFiltered.length },
+    { key: 'surgery', label: 'Com cirurgia',    count: withSurgeries.length },
+    { key: 'consult', label: 'Só consulta',     count: consultsOnly.length },
+  ];
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
       <PatientProfileModal patient={selected} onClose={() => setSelected(null)} amigoAttendances={amigoAttendances} />
 
-      {/* Search + canal filter */}
-      <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
+      {/* ── PRIMARY FILTER ── */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(3, 1fr)',
+        background: '#F2F2F7',
+        borderRadius: '14px',
+        padding: '4px',
+        gap: '4px',
+      }}>
+        {filterOptions.map(({ key, label, count }) => {
+          const active = filterType === key;
+          return (
+            <button
+              key={key}
+              onClick={() => setFilterType(key)}
+              style={{
+                padding: '10px 8px',
+                borderRadius: '11px',
+                border: 'none',
+                cursor: 'pointer',
+                fontFamily: 'inherit',
+                background: active ? '#fff' : 'transparent',
+                boxShadow: active ? '0 1px 6px rgba(0,0,0,0.12)' : 'none',
+                transition: 'all 0.15s',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '2px',
+              }}
+            >
+              <span style={{
+                fontSize: '1.15rem',
+                fontWeight: 800,
+                color: active
+                  ? (key === 'surgery' ? '#28A745' : key === 'consult' ? '#5856D6' : '#007AFF')
+                  : '#AEAEB2',
+                lineHeight: 1,
+              }}>
+                {count}
+              </span>
+              <span style={{
+                fontSize: '0.72rem',
+                fontWeight: active ? 700 : 500,
+                color: active ? '#1D1D1F' : '#86868B',
+                lineHeight: 1,
+              }}>
+                {label}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* ── SEARCH + CANAL ── */}
+      <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
         <input
           type="text"
-          placeholder="Buscar paciente, telefone ou cidade..."
+          placeholder="Buscar por nome, telefone ou cidade…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           style={{
-            flex: 1, minWidth: '200px', padding: '8px 14px',
-            borderRadius: '10px', border: '1.5px solid #E5E5EA',
-            fontSize: '0.85rem', fontFamily: 'inherit', background: '#F9F9FB',
+            flex: 1, minWidth: '200px',
+            padding: '9px 14px',
+            borderRadius: '10px',
+            border: '1.5px solid #E5E5EA',
+            fontSize: '0.85rem',
+            fontFamily: 'inherit',
+            background: '#F9F9FB',
+            outline: 'none',
           }}
         />
         <select
           value={filterCanal}
           onChange={(e) => setFilterCanal(e.target.value)}
-          style={{ padding: '8px 12px', borderRadius: '10px', border: '1.5px solid #E5E5EA', fontSize: '0.85rem', fontFamily: 'inherit', background: '#F9F9FB' }}
+          style={{
+            padding: '9px 12px',
+            borderRadius: '10px',
+            border: '1.5px solid #E5E5EA',
+            fontSize: '0.82rem',
+            fontFamily: 'inherit',
+            background: '#F9F9FB',
+            color: filterCanal ? '#1D1D1F' : '#86868B',
+          }}
         >
           <option value="">Todos os canais</option>
           {canais.map((c) => <option key={c} value={c}>{c}</option>)}
         </select>
       </div>
 
-      {/* Segmented filter: Todos / Com Cirurgia / Só Consulta */}
-      <div className="seg" style={{ alignSelf: 'flex-start' }}>
-        {([
-          { key: 'all'     as FilterType, label: `Todos (${searched.length})` },
-          { key: 'surgery' as FilterType, label: `✂️ Com Cirurgia (${withSurgeries.length})` },
-          { key: 'consult' as FilterType, label: `📋 Só Consulta (${consultsOnly.length})` },
-        ]).map(({ key, label }) => (
-          <button
-            key={key}
-            className={`sb${filterType === key ? ' on' : ''}`}
-            onClick={() => setFilterType(key)}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-
-      {/* Stats chips */}
-      <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-        {[
-          { label: 'Exibindo',     value: String(filtered.length),       color: '#007AFF' },
-          { label: 'Com cirurgia', value: String(withSurgeries.length),  color: '#28A745' },
-          { label: 'Só consulta',  value: String(consultsOnly.length),   color: '#FF9500' },
-        ].map(({ label, value, color }) => (
-          <div key={label} style={{ background: `${color}10`, border: `1.5px solid ${color}30`, borderRadius: '10px', padding: '8px 12px', minWidth: '90px' }}>
-            <div style={{ fontSize: '1.1rem', fontWeight: 800, color }}>{value}</div>
-            <div style={{ fontSize: '0.68rem', color: '#86868B', fontWeight: 600, marginTop: '2px' }}>{label}</div>
-          </div>
-        ))}
-      </div>
-
-      {/* Table */}
+      {/* ── TABLE ── */}
       <div style={{ background: '#fff', borderRadius: '18px', boxShadow: '0 2px 16px rgba(0,0,0,0.07)', overflow: 'hidden' }}>
         <div className="ts">
           <table>
@@ -117,14 +161,14 @@ export default function PacientesPane({ patients, amigoAttendances }: PacientesP
             <tbody>
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={8} style={{ textAlign: 'center', color: '#86868B', padding: '32px' }}>
+                  <td colSpan={8} style={{ textAlign: 'center', color: '#86868B', padding: '40px 16px', fontSize: '0.9rem' }}>
                     Nenhum paciente encontrado
                   </td>
                 </tr>
               ) : (
                 filtered.map((p) => {
-                  const revenue = p.surgeries.reduce((acc, s) => acc + s.v, 0);
-                  const hasSurgery = p.surgeries.length > 0;
+                  const revenue  = p.surgeries.reduce((acc, s) => acc + s.v, 0);
+                  const hasSurg  = p.surgeries.length > 0;
                   return (
                     <tr key={p.id}>
                       <td>
@@ -138,7 +182,7 @@ export default function PacientesPane({ patients, amigoAttendances }: PacientesP
                         >
                           {p.name}
                         </button>
-                        {hasSurgery && (
+                        {hasSurg && (
                           <div style={{ fontSize: '10px', color: '#86868B', marginTop: '2px' }}>
                             {p.surgeries.map(s => s.c).slice(0, 2).join(', ')}
                             {p.surgeries.length > 2 && ` +${p.surgeries.length - 2}`}
@@ -150,16 +194,15 @@ export default function PacientesPane({ patients, amigoAttendances }: PacientesP
                       </td>
                       <td style={{ color: '#86868B', fontSize: '12px' }}>{p.city || '—'}</td>
                       <td>
-                        {p.canal ? (
-                          <span className="badge badge-blue">{p.canal}</span>
-                        ) : <span style={{ color: '#AEAEB2' }}>—</span>}
+                        {p.canal
+                          ? <span className="badge badge-blue">{p.canal}</span>
+                          : <span style={{ color: '#AEAEB2' }}>—</span>}
                       </td>
                       <td style={{ textAlign: 'center' }}>
-                        {hasSurgery ? (
+                        {hasSurg ? (
                           <span style={{
                             display: 'inline-block', background: '#E6F7EC', color: '#28A745',
-                            fontWeight: 800, fontSize: '12px', borderRadius: '8px',
-                            padding: '2px 8px', minWidth: '24px',
+                            fontWeight: 800, fontSize: '12px', borderRadius: '8px', padding: '2px 8px',
                           }}>
                             {p.surgeries.length}
                           </span>
@@ -169,8 +212,7 @@ export default function PacientesPane({ patients, amigoAttendances }: PacientesP
                         {p.consultations.length > 0 ? (
                           <span style={{
                             display: 'inline-block', background: '#EEECFF', color: '#5856D6',
-                            fontWeight: 700, fontSize: '12px', borderRadius: '8px',
-                            padding: '2px 8px', minWidth: '24px',
+                            fontWeight: 700, fontSize: '12px', borderRadius: '8px', padding: '2px 8px',
                           }}>
                             {p.consultations.length}
                           </span>
@@ -192,6 +234,13 @@ export default function PacientesPane({ patients, amigoAttendances }: PacientesP
             </tbody>
           </table>
         </div>
+        {filtered.length > 0 && (
+          <div style={{ padding: '10px 18px', fontSize: '0.75rem', color: '#86868B', borderTop: '1px solid #F2F2F7' }}>
+            {filtered.length} paciente{filtered.length !== 1 ? 's' : ''} exibido{filtered.length !== 1 ? 's' : ''}
+            {search && ` · busca: "${search}"`}
+            {filterCanal && ` · canal: ${filterCanal}`}
+          </div>
+        )}
       </div>
     </div>
   );

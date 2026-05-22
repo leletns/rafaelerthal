@@ -50,23 +50,62 @@ export default function ResumoPane({
   // Funil summary (3 stages)
   const funnelData = computeFunnelData(cons, cir);
 
-  // Geo summary — top cities from operated patients
-  const cidadesAll = { ...cidades25, ...cidades26 };
-  // Merge both years
+  // Geo summary — top cities from operated patients (both years merged)
   const cidadesMerged: Record<string, number> = {};
   for (const [k, v] of Object.entries(cidades25)) cidadesMerged[k] = (cidadesMerged[k] || 0) + v;
   for (const [k, v] of Object.entries(cidades26)) cidadesMerged[k] = (cidadesMerged[k] || 0) + v;
-  const intlTotal = [...Object.values(intl25), ...Object.values(intl26)].reduce((a, b) => a + b, 0);
+
+  // International: merge both years (keys = country names)
+  const intlMerged: Record<string, number> = {};
+  for (const [k, v] of Object.entries(intl25)) intlMerged[k] = (intlMerged[k] || 0) + v;
+  for (const [k, v] of Object.entries(intl26)) intlMerged[k] = (intlMerged[k] || 0) + v;
+  const intlEntries = Object.entries(intlMerged).sort(([,a],[,b]) => b - a);
+  const intlTotal   = intlEntries.reduce((s, [,v]) => s + v, 0);
+
   const topCidades = Object.entries(cidadesMerged)
     .filter(([k]) => k.toLowerCase() !== 'internacional')
     .sort(([,a],[,b]) => b - a)
     .slice(0, 5);
 
+  // Orçamentos summary — quick conversion snapshot for the selected year
+  function nameTokensOrc(name: string): string[] {
+    const stop = new Set(['dos','das','des','de','da','do','di','e']);
+    return name.toLowerCase().trim().normalize('NFD').replace(/[̀-ͯ]/g, '')
+      .split(/\s+/).filter(t => t.length > 2 && !stop.has(t));
+  }
+  function isSamePersonOrc(a: string, b: string): boolean {
+    const tokA = new Set(nameTokensOrc(a));
+    return nameTokensOrc(b).filter(t => tokA.has(t)).length >= 2;
+  }
+  const uniqueConsulted = (() => {
+    const seen: string[] = [];
+    for (const c of cons) {
+      if (!seen.some(n => isSamePersonOrc(n, c.p))) seen.push(c.p);
+    }
+    return seen.length;
+  })();
+  const uniqueOperated = (() => {
+    const seen: string[] = [];
+    for (const s of cir) {
+      if (!seen.some(n => isSamePersonOrc(n, s.p))) seen.push(s.p);
+    }
+    return seen.length;
+  })();
+  const potenciaisCount = (() => {
+    const cirNames = cir.map(s => s.p);
+    const seen: string[] = [];
+    for (const c of cons) {
+      if (cirNames.some(cn => isSamePersonOrc(cn, c.p))) continue;
+      if (!seen.some(n => isSamePersonOrc(n, c.p))) seen.push(c.p);
+    }
+    return seen.length;
+  })();
+  const conversionRate = uniqueConsulted > 0
+    ? Math.round((uniqueOperated / uniqueConsulted) * 100) : 0;
+
   // Funil bar colors
   const funnelColors = ['#007AFF', '#5856D6', '#28A745'];
   const funnelMax = funnelData[0]?.value || 1;
-
-  void cidadesAll;
 
   return (
     <div>
@@ -261,7 +300,7 @@ export default function ResumoPane({
       {topCidades.length > 0 && (
         <div className="card">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-            <div className="card-ttl" style={{ margin: 0 }}>🗺️ Origem das pacientes operadas</div>
+            <div className="card-ttl" style={{ margin: 0 }}>Origem das pacientes operadas</div>
             {onTabChange && (
               <button
                 onClick={() => onTabChange('geo')}
@@ -271,8 +310,9 @@ export default function ResumoPane({
               </button>
             )}
           </div>
-          <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
-            <div style={{ flex: '1 1 200px' }}>
+          <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', alignItems: 'flex-start' }}>
+            {/* Top domestic cities */}
+            <div style={{ flex: '1 1 180px', minWidth: '150px' }}>
               {topCidades.map(([cidade, count], i) => {
                 const total = Object.values(cidadesMerged).reduce((a, b) => a + b, 0);
                 const pct = total > 0 ? Math.round(count / total * 100) : 0;
@@ -291,21 +331,77 @@ export default function ResumoPane({
                 );
               })}
             </div>
+
+            {/* International breakdown — per country */}
             {intlTotal > 0 && (
-              <div style={{
-                flexShrink: 0, background: '#F0F7FF', borderRadius: '10px',
-                padding: '10px 14px', display: 'flex', alignItems: 'center', gap: '8px',
-              }}>
-                <span style={{ fontSize: '1.2rem' }}>🌍</span>
-                <div>
-                  <div style={{ fontWeight: 800, fontSize: '1.1rem', color: '#007AFF' }}>{intlTotal}</div>
-                  <div style={{ fontSize: '0.7rem', color: '#86868B', fontWeight: 600 }}>internacionais</div>
+              <div style={{ flexShrink: 0, minWidth: '130px' }}>
+                <div style={{ fontSize: '11px', fontWeight: 700, color: '#86868B', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Internacional · {intlTotal}
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  {intlEntries.map(([country, count]) => (
+                    <div
+                      key={country}
+                      style={{
+                        padding: '6px 10px',
+                        background: '#F0F7FF',
+                        borderRadius: '8px',
+                        border: '1.5px solid #007AFF20',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        gap: '10px',
+                      }}
+                    >
+                      <span style={{ fontWeight: 600, fontSize: '0.78rem', color: '#1D1D1F' }}>{country}</span>
+                      <span style={{ fontWeight: 800, fontSize: '0.82rem', color: '#007AFF' }}>{count}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
           </div>
         </div>
       )}
+
+      {/* ── Orçamentos Summary ────────────────────── */}
+      <div className="card">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+          <div className="card-ttl" style={{ margin: 0 }}>Conversão &amp; Orçamentos · {year}</div>
+          {onTabChange && (
+            <button
+              onClick={() => onTabChange('orcamentos')}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#007AFF', fontSize: '0.78rem', fontWeight: 600, fontFamily: 'inherit', padding: 0 }}
+            >
+              Ver detalhes →
+            </button>
+          )}
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', marginBottom: '12px' }}>
+          {[
+            { label: 'Pacientes atendidas', value: uniqueConsulted, color: '#007AFF', bg: '#E5F1FF' },
+            { label: 'Fecharam cirurgia',   value: uniqueOperated,  color: '#28A745', bg: '#E6F7EC' },
+            { label: 'Potenciais',          value: potenciaisCount, color: '#5856D6', bg: '#F0F0FF' },
+          ].map(({ label, value, color, bg }) => (
+            <div
+              key={label}
+              style={{
+                background: bg, borderRadius: '10px', padding: '12px 10px',
+                textAlign: 'center',
+              }}
+            >
+              <div style={{ fontSize: '1.5rem', fontWeight: 800, color, lineHeight: 1 }}>{value}</div>
+              <div style={{ fontSize: '0.68rem', color: '#86868B', fontWeight: 600, marginTop: '4px', lineHeight: 1.2 }}>{label}</div>
+            </div>
+          ))}
+        </div>
+        <div style={{ height: '8px', background: '#F2F2F7', borderRadius: '4px', overflow: 'hidden' }}>
+          <div style={{ height: '100%', width: `${conversionRate}%`, background: '#28A745', borderRadius: '4px', transition: 'width 0.4s ease' }} />
+        </div>
+        <div style={{ marginTop: '6px', fontSize: '11.5px', color: '#86868B', fontWeight: 500 }}>
+          Taxa de conversão: <strong style={{ color: '#28A745' }}>{conversionRate}%</strong>
+        </div>
+      </div>
     </div>
   );
 }

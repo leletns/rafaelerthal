@@ -28,11 +28,11 @@ const TABS = [
   { id: 'pacientes',    label: 'Pacientes' },
   { id: 'ranking',      label: 'Ranking' },
   { id: 'equipe',       label: 'Equipe' },
-  { id: 'orcamentos',   label: 'Orçamentos' },
-  { id: 'funil',        label: 'Funil' },
   { id: 'comp',         label: 'Comparativo' },
   { id: 'aniversarios', label: 'Aniversários', highlight: true },
 ];
+// Note: 'funil', 'orcamentos' and 'geo' are not in the nav but remain available
+// via onTabChange ('Ver detalhes' links in Visão Geral summaries)
 
 const INITIAL_NOTIFICATIONS: Notification[] = [
   {
