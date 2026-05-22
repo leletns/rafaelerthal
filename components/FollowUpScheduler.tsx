@@ -26,6 +26,104 @@ function saveAll(items: ScheduledFollowUp[]) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
 }
 
+const WEEKDAYS = ['D','S','T','Q','Q','S','S'];
+const MONTH_NAMES_PT = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+interface MiniCalendarProps {
+  value: string; // YYYY-MM-DD
+  onChange: (date: string) => void;
+}
+
+function MiniCalendar({ value, onChange }: MiniCalendarProps) {
+  const [viewYear, setViewYear] = useState(() => {
+    if (value) return parseInt(value.split('-')[0]);
+    return new Date().getFullYear();
+  });
+  const [viewMonth, setViewMonth] = useState(() => {
+    if (value) return parseInt(value.split('-')[1]) - 1;
+    return new Date().getMonth();
+  });
+
+  const today = new Date();
+  const todayStr = today.toISOString().split('T')[0];
+
+  const firstDay = new Date(viewYear, viewMonth, 1).getDay();
+  const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+
+  function prevMonth() {
+    if (viewMonth === 0) { setViewMonth(11); setViewYear(y => y - 1); }
+    else setViewMonth(m => m - 1);
+  }
+  function nextMonth() {
+    if (viewMonth === 11) { setViewMonth(0); setViewYear(y => y + 1); }
+    else setViewMonth(m => m + 1);
+  }
+
+  const cells: (number | null)[] = [];
+  for (let i = 0; i < firstDay; i++) cells.push(null);
+  for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+
+  return (
+    <div style={{ userSelect: 'none' }}>
+      {/* Month nav */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+        <button
+          type="button"
+          onClick={prevMonth}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#86868B', fontSize: '14px', padding: '2px 6px', borderRadius: '6px' }}
+        >‹</button>
+        <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#1D1D1F' }}>
+          {MONTH_NAMES_PT[viewMonth]} {viewYear}
+        </span>
+        <button
+          type="button"
+          onClick={nextMonth}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#86868B', fontSize: '14px', padding: '2px 6px', borderRadius: '6px' }}
+        >›</button>
+      </div>
+
+      {/* Day headers */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '1px', marginBottom: '2px' }}>
+        {WEEKDAYS.map((d, i) => (
+          <div key={i} style={{ textAlign: 'center', fontSize: '0.6rem', fontWeight: 700, color: '#AEAEB2', padding: '2px 0' }}>{d}</div>
+        ))}
+      </div>
+
+      {/* Day cells */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '1px' }}>
+        {cells.map((day, idx) => {
+          if (day === null) return <div key={idx} />;
+          const dateStr = `${viewYear}-${String(viewMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+          const isSelected = dateStr === value;
+          const isToday = dateStr === todayStr;
+          const isPast = dateStr < todayStr;
+          return (
+            <button
+              key={idx}
+              type="button"
+              onClick={() => onChange(dateStr)}
+              style={{
+                padding: '4px 0',
+                borderRadius: '6px',
+                border: 'none',
+                cursor: isPast ? 'default' : 'pointer',
+                background: isSelected ? '#007AFF' : isToday ? '#E5F1FF' : 'none',
+                color: isSelected ? '#fff' : isPast ? '#AEAEB2' : isToday ? '#007AFF' : '#1D1D1F',
+                fontSize: '0.72rem',
+                fontWeight: isSelected || isToday ? 700 : 400,
+                textAlign: 'center',
+                transition: 'background 0.1s',
+              }}
+            >
+              {day}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 interface FollowUpSchedulerProps {
   patientName: string;
   phone?: string;
@@ -35,6 +133,7 @@ export default function FollowUpScheduler({ patientName, phone = '' }: FollowUpS
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<ScheduledFollowUp[]>([]);
   const [date, setDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [showCalendar, setShowCalendar] = useState(true);
   const [hour, setHour] = useState('09');
   const [period, setPeriod] = useState<'AM' | 'PM'>('AM');
   const [note, setNote] = useState('');
@@ -45,9 +144,13 @@ export default function FollowUpScheduler({ patientName, phone = '' }: FollowUpS
     setItems(loadAll().filter(i => i.patientName === patientName));
   }, [patientName]);
 
-  // Find existing follow-up for this patient
   const myItems = items.filter(i => i.patientName === patientName);
   const hasScheduled = myItems.length > 0;
+
+  function handleDatePick(d: string) {
+    setDate(d);
+    setShowCalendar(false); // collapse calendar on selection
+  }
 
   function handleSave() {
     const id = `fu_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
@@ -57,8 +160,10 @@ export default function FollowUpScheduler({ patientName, phone = '' }: FollowUpS
     saveAll(all);
     setItems([newItem]);
     setSaved(true);
-    setTimeout(() => setSaved(false), 1500);
-    setOpen(false);
+    setTimeout(() => {
+      setSaved(false);
+      setOpen(false);
+    }, 800);
   }
 
   function handleDelete(id: string) {
@@ -67,11 +172,18 @@ export default function FollowUpScheduler({ patientName, phone = '' }: FollowUpS
     setItems(all.filter(i => i.patientName === patientName));
   }
 
+  // Format date for display
+  function formatDate(d: string) {
+    const parts = d.split('-');
+    if (parts.length !== 3) return d;
+    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  }
+
   return (
     <div style={{ position: 'relative', display: 'inline-block' }}>
       {/* ⏰ trigger button */}
       <button
-        onClick={() => setOpen(o => !o)}
+        onClick={() => { setOpen(o => !o); setShowCalendar(true); }}
         title="Agendar follow-up"
         style={{
           background: hasScheduled ? '#E5F1FF' : 'none',
@@ -107,18 +219,21 @@ export default function FollowUpScheduler({ patientName, phone = '' }: FollowUpS
             style={{ position: 'fixed', inset: 0, zIndex: 99 }}
             onClick={() => setOpen(false)}
           />
-          <div style={{
-            position: 'absolute',
-            top: '110%',
-            right: 0,
-            zIndex: 100,
-            background: '#fff',
-            borderRadius: '14px',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
-            padding: '14px',
-            width: '240px',
-            border: '1.5px solid #E5E5EA',
-          }}>
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              position: 'absolute',
+              top: '110%',
+              right: 0,
+              zIndex: 100,
+              background: '#fff',
+              borderRadius: '14px',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
+              padding: '14px',
+              width: '230px',
+              border: '1.5px solid #E5E5EA',
+            }}
+          >
             <div style={{ fontWeight: 700, fontSize: '0.8rem', color: '#1D1D1F', marginBottom: '10px' }}>
               ⏰ Follow-up — {patientName}
             </div>
@@ -128,7 +243,7 @@ export default function FollowUpScheduler({ patientName, phone = '' }: FollowUpS
               <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 8px', background: '#E5F1FF', borderRadius: '8px', marginBottom: '8px' }}>
                 <div>
                   <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#007AFF' }}>
-                    {item.date.slice(5).replace('-', '/')} às {item.hour}h {item.period}
+                    {formatDate(item.date)} às {item.hour}h {item.period}
                   </div>
                   {item.note && <div style={{ fontSize: '0.68rem', color: '#86868B' }}>{item.note}</div>}
                 </div>
@@ -141,16 +256,31 @@ export default function FollowUpScheduler({ patientName, phone = '' }: FollowUpS
               </div>
             ))}
 
-            {/* Date */}
+            {/* Date toggle button (shows selected date, click to reopen calendar) */}
             <div style={{ marginBottom: '8px' }}>
-              <label style={{ display: 'block', fontSize: '0.68rem', fontWeight: 600, color: '#86868B', marginBottom: '3px' }}>Data</label>
-              <input
-                type="date"
-                value={date}
-                onChange={e => setDate(e.target.value)}
-                style={{ width: '100%', padding: '6px 8px', borderRadius: '7px', border: '1.5px solid #E5E5EA', fontSize: '0.8rem', fontFamily: 'inherit', background: '#F9F9FB' }}
-              />
+              <label style={{ display: 'block', fontSize: '0.68rem', fontWeight: 600, color: '#86868B', marginBottom: '4px' }}>Data</label>
+              <button
+                type="button"
+                onClick={() => setShowCalendar(v => !v)}
+                style={{
+                  width: '100%', padding: '6px 10px', borderRadius: '8px',
+                  border: '1.5px solid #E5E5EA', background: '#F9F9FB',
+                  fontSize: '0.8rem', fontFamily: 'inherit', color: '#1D1D1F',
+                  cursor: 'pointer', textAlign: 'left', fontWeight: 600,
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                }}
+              >
+                <span>{formatDate(date)}</span>
+                <span style={{ fontSize: '10px', color: '#AEAEB2' }}>{showCalendar ? '▲' : '▼'}</span>
+              </button>
             </div>
+
+            {/* Mini calendar (collapsible) */}
+            {showCalendar && (
+              <div style={{ marginBottom: '8px', padding: '8px', background: '#F9F9FB', borderRadius: '10px', border: '1.5px solid #E5E5EA' }}>
+                <MiniCalendar value={date} onChange={handleDatePick} />
+              </div>
+            )}
 
             {/* Time */}
             <div style={{ display: 'flex', gap: '6px', marginBottom: '8px' }}>

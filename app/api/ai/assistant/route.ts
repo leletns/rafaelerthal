@@ -29,25 +29,64 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { message, history } = body as {
+    const { message, history, attachment } = body as {
       message: string;
       history?: { role: 'user' | 'assistant'; content: string }[];
+      attachment?: { base64: string; mediaType: string; name?: string };
     };
 
-    if (!message?.trim()) {
-      return NextResponse.json({ error: 'Message required' }, { status: 400 });
+    if (!message?.trim() && !attachment) {
+      return NextResponse.json({ error: 'Message or attachment required' }, { status: 400 });
     }
 
     const systemPrompt = buildSystemPrompt(cir25_lista, cir26_lista, cons25_lista, cons26_lista);
 
-    const messages: { role: 'user' | 'assistant'; content: string }[] = [
-      ...(history || []),
-      { role: 'user', content: message },
+    // Build history messages (text-only)
+    const historyMessages: Anthropic.MessageParam[] = (history || []).map(m => ({
+      role: m.role,
+      content: m.content,
+    }));
+
+    // Build current user message — with or without attachment
+    let currentContent: Anthropic.MessageParam['content'];
+
+    if (attachment) {
+      // Determine media type — support images only for vision (PDFs treated as text fallback)
+      const isImage = attachment.mediaType.startsWith('image/');
+
+      if (isImage) {
+        // Vision message with image block + text
+        currentContent = [
+          {
+            type: 'image',
+            source: {
+              type: 'base64',
+              media_type: attachment.mediaType as 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp',
+              data: attachment.base64,
+            },
+          },
+          {
+            type: 'text',
+            text: message?.trim() || 'Analise este arquivo e forneça um resumo detalhado em português.',
+          },
+        ];
+      } else {
+        // Non-image file — just mention the filename in the message
+        const fileName = attachment.name || 'arquivo';
+        currentContent = `${message?.trim() || ''}\n\n[Arquivo anexado: ${fileName} — PDF/documento não pode ser visualizado diretamente, mas você pode descrever o que está procurando.]`.trim();
+      }
+    } else {
+      currentContent = message.trim();
+    }
+
+    const messages: Anthropic.MessageParam[] = [
+      ...historyMessages,
+      { role: 'user', content: currentContent },
     ];
 
     const response = await client.messages.create({
-      model: 'claude-opus-4-5',
-      max_tokens: 1024,
+      model: 'claude-sonnet-4-6',
+      max_tokens: 2048,
       system: systemPrompt,
       messages,
     });

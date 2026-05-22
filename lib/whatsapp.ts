@@ -1,20 +1,32 @@
 // ============================================================
 // WHATSAPP - Phone normalization and WhatsApp link generation
+// Supports international DDI detection
 // ============================================================
 
 export function normalizePhone(phone: string): string {
-  const digits = phone.replace(/\D/g, '');
+  // Strip leading + or 00 before digit-only stripping
+  const stripped = phone.trim().replace(/^\+/, '').replace(/^00/, '');
+  const digits = stripped.replace(/\D/g, '');
 
-  // Already has country code
+  if (!digits) return '';
+
+  // Already has a non-Brazilian country code (length >= 12 and doesn't start with 55)
+  // e.g. +1-555-1234567 → 15551234567 (11 digits, starts with 1)
+  if (digits.length >= 12 && !digits.startsWith('55')) {
+    return digits; // international, use as-is
+  }
+
+  // Already has Brazilian country code
   if (digits.startsWith('55') && digits.length >= 12) {
     return digits;
   }
 
-  // Brazilian number without country code
+  // Brazilian mobile (11 digits: DDD + 9-digit cell) or landline (10 digits)
   if (digits.length === 11 || digits.length === 10) {
     return `55${digits}`;
   }
 
+  // Short international number without country code — use as-is
   return digits;
 }
 

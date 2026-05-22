@@ -25,13 +25,6 @@ interface PatientRank {
 
 const COLORS = ['#007AFF','#5856D6','#FF9500','#28A745','#FF3B30','#AF52DE','#FF6B35','#00C7BE'];
 
-function sortByDate(list: Surgery[], year: number): Surgery[] {
-  return [...list].sort((a, b) => {
-    const [da, ma] = a.d.split('/').map(Number);
-    const [db, mb] = b.d.split('/').map(Number);
-    return new Date(year, mb - 1, db).getTime() - new Date(year, ma - 1, da).getTime();
-  });
-}
 
 export default function RankingPane({ cir25, cir26, cons25, cons26 }: RankingPaneProps) {
   const [year,    setYear]    = useState<2025 | 2026 | 'all'>('all');
@@ -46,13 +39,6 @@ export default function RankingPane({ cir25, cir26, cons25, cons26 }: RankingPan
     () => year === 2025 ? cons25 : year === 2026 ? cons26 : [...cons25, ...cons26],
     [year, cons25, cons26]
   );
-
-  const cir26sorted = useMemo(() => sortByDate(cir26, 2026), [cir26]);
-  const cir25sorted = useMemo(() => sortByDate(cir25, 2025), [cir25]);
-
-  // Most-recent surgery banner
-  const ultimaCir  = cir26sorted[0] ?? cir25sorted[0] ?? null;
-  const ultimaYear = cir26sorted.length > 0 ? 2026 : 2025;
 
   // ── Patient map (all patients including v=0) ─────────────
   const patientMap = useMemo(() => {
@@ -126,33 +112,6 @@ export default function RankingPane({ cir25, cir26, cons25, cons26 }: RankingPan
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-
-      {/* ── Última cirurgia banner ─────────────────────── */}
-      {ultimaCir && (
-        <div style={{
-          background: 'linear-gradient(135deg, #007AFF, #5856D6)',
-          borderRadius: '18px', padding: '18px 22px', color: '#fff',
-          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          gap: '12px', flexWrap: 'wrap',
-        }}>
-          <div>
-            <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', opacity: 0.8 }}>
-              Última cirurgia realizada · {ultimaYear}
-            </div>
-            <div style={{ fontSize: '1.1rem', fontWeight: 800, marginTop: '4px' }}>{ultimaCir.p}</div>
-            <div style={{ fontSize: '0.82rem', opacity: 0.9, marginTop: '2px' }}>{ultimaCir.c}</div>
-            <div style={{ fontSize: '0.75rem', opacity: 0.7, marginTop: '4px' }}>{ultimaCir.d} · {ultimaCir.cl}</div>
-          </div>
-          <div style={{ textAlign: 'right' }}>
-            {ultimaCir.v > 0 && (
-              <div style={{ fontSize: '1.4rem', fontWeight: 800 }}>{formatCurrency(ultimaCir.v)}</div>
-            )}
-            <div style={{ fontSize: '0.72rem', opacity: 0.8, marginTop: '4px' }}>
-              {cir.length} cirurgia{cir.length !== 1 ? 's' : ''} · {cons.length} consulta{cons.length !== 1 ? 's' : ''}
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* ── Controls ──────────────────────────────────── */}
       <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>

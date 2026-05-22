@@ -3,14 +3,14 @@ import { attendances, patients, places, events } from '@/lib/amigo-client';
 
 // -------------------------------------------------------
 // Normalize AmigoClinic field names to our data model
-// (API uses snake_case & alternate names)
 // -------------------------------------------------------
-function normalizeBirthday(p: Record<string, unknown>) {
+function normalizeBirthday(p: Record<string, unknown>, birthdayDate?: string) {
   return {
-    id:        String(p.id ?? ''),
-    name:      String(p.name ?? p.patient_name ?? ''),
-    phone:     String(p.contact_cellphone ?? p.phone ?? p.cellphone ?? ''),
-    birthDate: String(p.born ?? p.birth_date ?? p.birthDate ?? ''),
+    id:           String(p.id ?? ''),
+    name:         String(p.name ?? p.patient_name ?? ''),
+    phone:        String(p.contact_cellphone ?? p.phone ?? p.cellphone ?? ''),
+    birthDate:    String(p.born ?? p.birth_date ?? p.birthDate ?? ''),
+    birthdayDate: birthdayDate ?? null,
   };
 }
 
@@ -49,29 +49,46 @@ export async function GET(req: NextRequest) {
   const yearStart = `${new Date().getFullYear()}-01-01`;
   const today = new Date().toISOString().split('T')[0];
 
-  const [atts, birthdays, placesList, eventsList] = await Promise.allSettled([
+  // Build date range for next 15 days (today + 14)
+  const dateRange = Array.from({ length: 15 }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() + i);
+    return d.toISOString().split('T')[0];
+  });
+
+  const [atts, todayBdays, placesList, eventsList, ...upcomingBdayResults] = await Promise.allSettled([
     attendances.list({ from: yearStart }),
     patients.birthday(today),
     places.list(),
     events.list(),
+    ...dateRange.slice(1).map(d => patients.birthday(d)), // days 1–14 ahead
   ]);
+
+  // Flatten upcoming birthdays (days 1-14)
+  const upcomingBirthdays = upcomingBdayResults
+    .flatMap((r, i) =>
+      r.status === 'fulfilled'
+        ? (r.value as Record<string, unknown>[]).map(p => normalizeBirthday(p, dateRange[i + 1]))
+        : []
+    );
 
   return NextResponse.json({
     success: true,
     timestamp: new Date().toISOString(),
     data: {
       attendances: atts.status === 'fulfilled'
-        ? (atts.value as Record<string, unknown>[]).map(normalizeAttendance)
+        ? (atts.value as Record<string, unknown>[]).map(a => normalizeAttendance(a))
         : [],
-      birthdays: birthdays.status === 'fulfilled'
-        ? (birthdays.value as Record<string, unknown>[]).map(normalizeBirthday)
+      birthdays: todayBdays.status === 'fulfilled'
+        ? (todayBdays.value as Record<string, unknown>[]).map(p => normalizeBirthday(p, today))
         : [],
-      places:      placesList.status === 'fulfilled' ? placesList.value : [],
-      events:      eventsList.status === 'fulfilled' ? eventsList.value : [],
+      upcomingBirthdays,
+      places:  placesList.status === 'fulfilled' ? placesList.value : [],
+      events:  eventsList.status === 'fulfilled' ? eventsList.value : [],
     },
     errors: {
       attendances: atts.status === 'rejected' ? (atts.reason as Error).message : null,
-      birthdays:   birthdays.status === 'rejected' ? (birthdays.reason as Error).message : null,
+      birthdays:   todayBdays.status === 'rejected' ? (todayBdays.reason as Error).message : null,
       places:      placesList.status === 'rejected' ? (placesList.reason as Error).message : null,
       events:      eventsList.status === 'rejected' ? (eventsList.reason as Error).message : null,
     },

@@ -8,6 +8,7 @@ import { formatCurrency } from '@/lib/dashboard-calculations';
 const STAGES: { id: PipelineStage; label: string; color: string; emoji: string }[] = [
   { id: 'orc_enviado',       label: 'Orçamento enviado', color: '#FF9500', emoji: '📋' },
   { id: 'sinal_pago',        label: 'Sinal pago',        color: '#5856D6', emoji: '💰' },
+  { id: 'followup',          label: 'Follow-up',         color: '#007AFF', emoji: '📞' },
   { id: 'cirurgia_agendada', label: 'Cirurgia agendada', color: '#28A745', emoji: '✂️' },
   { id: 'perdida',           label: 'Perdida',           color: '#FF3B30', emoji: '❌' },
 ];

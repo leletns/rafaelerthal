@@ -6,8 +6,6 @@ import DashboardLayout from '@/components/DashboardLayout';
 import Tabs from '@/components/Tabs';
 import AssistantChat from '@/components/AssistantChat';
 import ResumoPane from '@/components/TabPanes/ResumoPane';
-import CirurgiasPane from '@/components/TabPanes/CirurgiasPane';
-import ConsultasPane from '@/components/TabPanes/ConsultasPane';
 import PacientesPane from '@/components/TabPanes/PacientesPane';
 import PipelinePane from '@/components/TabPanes/PipelinePane';
 import RankingPane from '@/components/TabPanes/RankingPane';
@@ -22,19 +20,15 @@ import { mergePatientRecords } from '@/lib/normalize-patient';
 import { getAuthToken, safeStorage, SNAPSHOT_KEY } from '@/lib/safe-storage';
 import type { DashboardData, Notification, AmigoLiveData, PipelineCard } from '@/lib/data-model';
 
-// Tab names match the original HTML exactly
 const TABS = [
   { id: 'resumo',      label: 'Visão Geral' },
   { id: 'pipeline',    label: '💼 Comercial', highlight: true },
-  { id: 'cirurgias',   label: 'Cirurgias' },
-  { id: 'consultas',   label: 'Consultas' },
   { id: 'pacientes',   label: 'Pacientes' },
   { id: 'ranking',     label: 'Ranking' },
   { id: 'equipe',      label: 'Equipe' },
   { id: 'orcamentos',  label: 'Orçamentos' },
   { id: 'funil',       label: 'Funil' },
-  { id: 'geo',         label: 'Origem' },
-  { id: 'comp',        label: '2025 × 2026' },
+  { id: 'comp',        label: 'COMPARATIVO' },
   { id: 'aniversarios', label: '🎂 Aniversários', highlight: true },
 ];
 
@@ -58,7 +52,6 @@ export default function DashboardPage() {
   const [amigoData, setAmigoData] = useState<AmigoLiveData>({ attendances: [], birthdays: [] });
   const [pipelineFromSheets, setPipelineFromSheets] = useState<PipelineCard[] | null>(null);
 
-  // Load snapshot on client then sync with Sheets
   useEffect(() => {
     const snap = safeStorage.get<DashboardData | null>(SNAPSHOT_KEY, null);
     if (snap) setData(snap);
@@ -76,25 +69,17 @@ export default function DashboardPage() {
         const res = await fetch('/api/sheets/pull', {
           headers: { Authorization: `Bearer ${token}` },
         });
-
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
         const json = await res.json();
         const remote = json?.data as Record<string, unknown> | undefined;
-
         if (!cancelled && remote) {
           const merged = sheetsFirstMerge(getBaseData(), remote);
           setData(merged);
           safeStorage.set(SNAPSHOT_KEY, merged);
-          // Extract pipeline cards from Sheets if available
           const sheetsCards = extractPipeline(remote);
-          if (sheetsCards && sheetsCards.length > 0) {
-            setPipelineFromSheets(sheetsCards);
-          }
-
+          if (sheetsCards && sheetsCards.length > 0) setPipelineFromSheets(sheetsCards);
           const totalCir  = (merged.cir25?.length  ?? 0) + (merged.cir26?.length  ?? 0);
           const totalCons = (merged.cons25?.length ?? 0) + (merged.cons26?.length ?? 0);
-
           setNotifications((prev) => [
             {
               id: `sync_${Date.now()}`,
@@ -123,11 +108,11 @@ export default function DashboardPage() {
         const json = await res.json();
         if (!cancelled && json?.data) {
           setAmigoData({
-            attendances: json.data.attendances ?? [],
-            birthdays:   json.data.birthdays   ?? [],
-            syncedAt:    json.timestamp,
+            attendances:      json.data.attendances      ?? [],
+            birthdays:        json.data.birthdays        ?? [],
+            upcomingBirthdays: json.data.upcomingBirthdays ?? [],
+            syncedAt:         json.timestamp,
           });
-          // Add birthday notifications
           const todayStr = new Date().toISOString().split('T')[0];
           const bdays = (json.data.birthdays ?? []) as Array<{name:string;phone?:string}>;
           if (bdays.length > 0) {
@@ -151,7 +136,6 @@ export default function DashboardPage() {
 
     syncSheets();
     syncAmigo();
-    // Poll AmigoClinic every 5 minutes for real-time updates
     const amigoPollId = setInterval(syncAmigo, 5 * 60 * 1000);
     return () => { cancelled = true; clearInterval(amigoPollId); };
   }, [router]);
@@ -174,11 +158,15 @@ export default function DashboardPage() {
   function renderTabContent() {
     switch (activeTab) {
       case 'resumo':
-        return <ResumoPane cir25={data.cir25} cir26={data.cir26} cons25={data.cons25} cons26={data.cons26} canal25={data.canal25} canal26={data.canal26} fx25={data.fx25} fx26={data.fx26} />;
-      case 'cirurgias':
-        return <CirurgiasPane cir25={data.cir25} cir26={data.cir26} />;
-      case 'consultas':
-        return <ConsultasPane cons25={data.cons25} cons26={data.cons26} />;
+        return <ResumoPane
+          cir25={data.cir25} cir26={data.cir26}
+          cons25={data.cons25} cons26={data.cons26}
+          canal25={data.canal25} canal26={data.canal26}
+          fx25={data.fx25} fx26={data.fx26}
+          cidades25={data.cidades25} cidades26={data.cidades26}
+          intl25={data.intl25} intl26={data.intl26}
+          onTabChange={setActiveTab}
+        />;
       case 'pacientes':
         return <PacientesPane patients={patients} amigoAttendances={amigoData.attendances} />;
       case 'pipeline':
@@ -194,7 +182,7 @@ export default function DashboardPage() {
       case 'equipe':
         return <EquipePane />;
       case 'orcamentos':
-        return <OrcamentosPane orc25={data.orc25} orc26={data.orc26} />;
+        return <OrcamentosPane orc25={data.orc25} orc26={data.orc26} cons25={data.cons25} cons26={data.cons26} cir25={data.cir25} cir26={data.cir26} />;
       case 'aniversarios':
         return <AniversariosPane cir25={data.cir25} cir26={data.cir26} amigoData={amigoData} patients={patients} />;
       default:
@@ -210,15 +198,10 @@ export default function DashboardPage() {
       syncing={syncing}
       patients={patients}
     >
-      {/* Tabs */}
       <Tabs tabs={TABS} activeTab={activeTab} onChange={setActiveTab} />
-
-      {/* Content — fadein on tab change */}
       <div key={activeTab} style={{ animation: 'fadeIn 0.25s ease both' }}>
         {renderTabContent()}
       </div>
-
-      {/* Floating AI assistant */}
       <AssistantChat />
     </DashboardLayout>
   );

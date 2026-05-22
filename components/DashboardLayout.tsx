@@ -167,6 +167,20 @@ export default function DashboardLayout({
       <main style={{ maxWidth: '1180px', margin: '0 auto', padding: '40px 28px 80px' }}>
         {children}
       </main>
+
+      {/* Footer */}
+      <footer style={{
+        textAlign: 'center',
+        padding: '20px 28px',
+        fontSize: '11px',
+        color: '#AEAEB2',
+        borderTop: '1px solid #E5E5EA',
+        background: '#fff',
+        letterSpacing: '0.02em',
+      }}>
+        © 2026 Blue Clínica Médica e Cirúrgica · Todos os direitos reservados · Desenvolvido por{' '}
+        <span style={{ fontWeight: 600, color: '#86868B' }}>Letícia Nascimento</span>
+      </footer>
     </div>
   );
 }

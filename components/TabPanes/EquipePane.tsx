@@ -208,36 +208,104 @@ export default function EquipePane() {
     if (!member) return;
     const mrs = receipts.filter(r => r.memberKey === memberKey);
     const month = new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
-    const lines = [
-      `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
-      `  𝗯. Blue Clínica Médica e Cirúrgica`,
-      `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
-      ``,
-      `Olá ${member.name},`,
-      ``,
-      `Esses foram seus recebimentos em ${month}:`,
-      ``,
-      ...mrs.map((r, i) => [
-        `${i + 1}. ${r.filename}`,
-        `   Data: ${r.data ?? '—'}`,
-        `   Valor: ${r.valor ?? '—'}`,
-        r.pagador ? `   Paciente: ${r.pagador}` : '',
-        `   Enviado em: ${new Date(r.uploadedAt).toLocaleDateString('pt-BR')}`,
-        '',
-      ].filter(Boolean).join('\n')),
-      `Total de recebimentos: ${mrs.length}`,
-      ``,
-      `Atenciosamente,`,
-      `Equipe Blue Clínica`,
-    ].join('\n');
+    const totalValor = mrs.filter(r => r.valor).length;
 
-    const blob = new Blob([lines], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `recebimentos_${member.key}_${month.replace(' ', '_')}.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
+    const rowsHtml = mrs.map((r, i) => `
+      <tr>
+        <td>${i + 1}</td>
+        <td>${r.filename}</td>
+        <td>${r.data ?? '—'}</td>
+        <td style="font-weight:700;color:#28A745">${r.valor ?? '—'}</td>
+        <td>${r.pagador ?? '—'}</td>
+        <td>${new Date(r.uploadedAt).toLocaleDateString('pt-BR')}</td>
+      </tr>
+    `).join('');
+
+    const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Relatório — ${member.name} — ${month}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #1D1D1F; padding: 40px; background: #fff; }
+    .header { display: flex; align-items: center; gap: 20px; padding-bottom: 24px; border-bottom: 2px solid #007AFF; margin-bottom: 28px; }
+    .logo { font-size: 48px; font-weight: 200; color: #007AFF; letter-spacing: -4px; font-family: 'Montserrat', sans-serif; }
+    .clinic-name { font-size: 20px; font-weight: 800; color: #1D1D1F; }
+    .clinic-sub { font-size: 12px; color: #86868B; margin-top: 2px; }
+    .member-box { background: ${member.color}10; border-left: 4px solid ${member.color}; padding: 14px 18px; border-radius: 0 10px 10px 0; margin-bottom: 24px; }
+    .member-name { font-size: 18px; font-weight: 800; color: #1D1D1F; }
+    .member-role { font-size: 12px; color: ${member.color}; font-weight: 600; margin-top: 2px; }
+    .member-month { font-size: 13px; color: #86868B; margin-top: 4px; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 24px; }
+    thead { background: #F5F5F7; }
+    th { padding: 10px 12px; text-align: left; font-size: 11px; font-weight: 700; color: #86868B; text-transform: uppercase; letter-spacing: 0.05em; }
+    td { padding: 10px 12px; font-size: 13px; border-bottom: 1px solid #F2F2F7; }
+    tr:last-child td { border-bottom: none; }
+    .summary { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 8px; }
+    .summary-card { background: #F5F5F7; border-radius: 10px; padding: 12px 18px; }
+    .summary-val { font-size: 22px; font-weight: 800; color: #007AFF; }
+    .summary-lbl { font-size: 11px; color: #86868B; font-weight: 600; margin-top: 2px; }
+    .footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid #E5E5EA; font-size: 11px; color: #AEAEB2; text-align: center; }
+    @media print {
+      body { padding: 20px; }
+      .no-print { display: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">b.</div>
+    <div>
+      <div class="clinic-name">Blue Clínica Médica e Cirúrgica</div>
+      <div class="clinic-sub">Dr. Rafael Erthal · Relatório de Recebimentos</div>
+    </div>
+  </div>
+
+  <div class="member-box">
+    <div class="member-name">${member.emoji} ${member.name}</div>
+    <div class="member-role">${member.role}</div>
+    <div class="member-month">Período: ${month}</div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Arquivo</th>
+        <th>Data</th>
+        <th>Valor</th>
+        <th>Paciente</th>
+        <th>Importado em</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${rowsHtml || '<tr><td colspan="6" style="text-align:center;color:#86868B;padding:20px">Nenhum comprovante</td></tr>'}
+    </tbody>
+  </table>
+
+  <div class="summary">
+    <div class="summary-card">
+      <div class="summary-val">${mrs.length}</div>
+      <div class="summary-lbl">Total de comprovantes</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-val">${totalValor}</div>
+      <div class="summary-lbl">Com valor identificado</div>
+    </div>
+  </div>
+
+  <div class="footer">
+    © 2026 Blue Clínica Médica e Cirúrgica · Desenvolvido por Letícia Nascimento
+  </div>
+</body>
+</html>`;
+
+    const win = window.open('', '_blank');
+    if (!win) { alert('Por favor, permita pop-ups para este site para ver a pré-visualização.'); return; }
+    win.document.write(html);
+    win.document.close();
+    win.onload = () => win.print();
   }
 
   return (
@@ -340,7 +408,7 @@ export default function EquipePane() {
                       onClick={(e) => { e.stopPropagation(); handleExport(m.key); }}
                       style={{ flex: 1, background: '#F2F2F7', border: 'none', borderRadius: '8px', padding: '6px', fontSize: '11px', fontWeight: 700, color: '#1D1D1F', cursor: 'pointer' }}
                     >
-                      📤 Exportar relatório
+                      🖨️ Imprimir / PDF
                     </button>
                   )}
                 </div>
@@ -362,7 +430,7 @@ export default function EquipePane() {
                 onClick={() => handleExport(selected!)}
                 style={{ background: selectedMember.color, color: '#fff', border: 'none', borderRadius: '8px', padding: '6px 14px', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}
               >
-                📤 Exportar relatório do mês
+                🖨️ Imprimir / PDF
               </button>
             )}
           </div>
