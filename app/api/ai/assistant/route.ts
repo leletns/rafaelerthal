@@ -70,10 +70,26 @@ export async function POST(req: NextRequest) {
             text: message?.trim() || 'Analise este arquivo e forneça um resumo detalhado em português.',
           },
         ];
+      } else if (attachment.mediaType === 'application/pdf') {
+        // PDF: use Anthropic document block (native PDF support)
+        currentContent = [
+          {
+            type: 'document',
+            source: {
+              type: 'base64',
+              media_type: 'application/pdf',
+              data: attachment.base64,
+            },
+          } as unknown as { type: 'text'; text: string },
+          {
+            type: 'text',
+            text: message?.trim() || 'Analise este documento e forneça um resumo detalhado em português.',
+          },
+        ];
       } else {
-        // Non-image file — just mention the filename in the message
+        // Other unsupported file types
         const fileName = attachment.name || 'arquivo';
-        currentContent = `${message?.trim() || ''}\n\n[Arquivo anexado: ${fileName} — PDF/documento não pode ser visualizado diretamente, mas você pode descrever o que está procurando.]`.trim();
+        currentContent = `${message?.trim() || ''}\n\n[Arquivo: ${fileName} — tipo ${attachment.mediaType}. Descreva o conteúdo em texto para que eu possa ajudar.]`.trim();
       }
     } else {
       currentContent = message.trim();

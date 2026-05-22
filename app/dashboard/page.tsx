@@ -22,16 +22,16 @@ import { getAuthToken, safeStorage, SNAPSHOT_KEY } from '@/lib/safe-storage';
 import type { DashboardData, Notification, AmigoLiveData, PipelineCard } from '@/lib/data-model';
 
 const TABS = [
-  { id: 'resumo',      label: 'Visão Geral' },
-  { id: 'pipeline',    label: '💼 Comercial', highlight: true },
-  { id: 'agenda',      label: '📅 Agenda' },
-  { id: 'pacientes',   label: 'Pacientes' },
-  { id: 'ranking',     label: 'Ranking' },
-  { id: 'equipe',      label: 'Equipe' },
-  { id: 'orcamentos',  label: 'Orçamentos' },
-  { id: 'funil',       label: 'Funil' },
-  { id: 'comp',        label: 'COMPARATIVO' },
-  { id: 'aniversarios', label: '🎂 Aniversários', highlight: true },
+  { id: 'resumo',       label: 'Visão Geral' },
+  { id: 'pipeline',     label: 'Comercial', highlight: true },
+  { id: 'agenda',       label: 'Agenda' },
+  { id: 'pacientes',    label: 'Pacientes' },
+  { id: 'ranking',      label: 'Ranking' },
+  { id: 'equipe',       label: 'Equipe' },
+  { id: 'orcamentos',   label: 'Orçamentos' },
+  { id: 'funil',        label: 'Funil' },
+  { id: 'comp',         label: 'Comparativo' },
+  { id: 'aniversarios', label: 'Aniversários', highlight: true },
 ];
 
 const INITIAL_NOTIFICATIONS: Notification[] = [

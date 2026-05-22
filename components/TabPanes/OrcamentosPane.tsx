@@ -30,10 +30,6 @@ export default function OrcamentosPane({
   const cons = year === 2025 ? cons25 : cons26;
   const cir  = year === 2025 ? cir25  : cir26;
 
-  const fechouRate    = data.total > 0 ? Math.round((data.fechou   / data.total) * 100) : 0;
-  const naoRate       = data.total > 0 ? Math.round((data.nao      / data.total) * 100) : 0;
-  const planoRate     = data.total > 0 ? Math.round((data.plano    / data.total) * 100) : 0;
-
   // Build patient lists from raw data
   const patientLists = useMemo(() => {
     const cirSlugs = new Set(cir.map(s => slugify(s.p)));
@@ -75,13 +71,24 @@ export default function OrcamentosPane({
     return { fechouList, naoList, planoList, potenciaisList };
   }, [cons, cir]);
 
+  // ── Derived counts from actual patient data (consistent with expandable lists) ──
+  const derivedTotal = cons.length; // total consultations for this year
+
+  const fechouCount    = patientLists.fechouList.length;
+  const naoCount       = patientLists.naoList.length;
+  const planoCount     = patientLists.planoList.length;
   const potenciaisCount = patientLists.potenciaisList.length;
 
+  const fechouRate    = derivedTotal > 0 ? Math.round((fechouCount   / derivedTotal) * 100) : 0;
+  const naoRate       = derivedTotal > 0 ? Math.round((naoCount      / derivedTotal) * 100) : 0;
+  const planoRate     = derivedTotal > 0 ? Math.round((planoCount    / derivedTotal) * 100) : 0;
+  const potRate       = derivedTotal > 0 ? Math.round((potenciaisCount / derivedTotal) * 100) : 0;
+
   const categories = [
-    { key: 'fechou'    as CategoryKey, label: 'Fechou cirurgia', value: data.fechou,   color: '#28A745', bg: '#E6F7EC', rate: fechouRate, list: patientLists.fechouList },
-    { key: 'nao'       as CategoryKey, label: 'Não fechou',       value: data.nao,      color: '#FF3B30', bg: '#FFE5E3', rate: naoRate,    list: patientLists.naoList },
-    { key: 'plano'     as CategoryKey, label: 'Plano de saúde',   value: data.plano,    color: '#FF9500', bg: '#FFF3E0', rate: planoRate,  list: patientLists.planoList },
-    { key: 'potenciais'as CategoryKey, label: 'Potenciais',        value: potenciaisCount, color: '#5856D6', bg: '#F0F0FF', rate: data.total > 0 ? Math.round(potenciaisCount / data.total * 100) : 0, list: patientLists.potenciaisList },
+    { key: 'fechou'    as CategoryKey, label: 'Fechou cirurgia', value: fechouCount,     color: '#28A745', bg: '#E6F7EC', rate: fechouRate,  list: patientLists.fechouList },
+    { key: 'nao'       as CategoryKey, label: 'Não fechou',       value: naoCount,        color: '#FF3B30', bg: '#FFE5E3', rate: naoRate,     list: patientLists.naoList },
+    { key: 'plano'     as CategoryKey, label: 'Plano de saúde',   value: planoCount,      color: '#FF9500', bg: '#FFF3E0', rate: planoRate,   list: patientLists.planoList },
+    { key: 'potenciais'as CategoryKey, label: 'Potenciais',        value: potenciaisCount, color: '#5856D6', bg: '#F0F0FF', rate: potRate,     list: patientLists.potenciaisList },
   ];
 
   function toggle(key: CategoryKey) {
@@ -104,8 +111,8 @@ export default function OrcamentosPane({
 
       {/* Total */}
       <div style={{ background: '#E5F1FF', borderRadius: '12px', padding: '14px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#007AFF' }}>Total de atendimentos</span>
-        <span style={{ fontSize: '1.8rem', fontWeight: 800, color: '#007AFF' }}>{data.total}</span>
+        <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#007AFF' }}>Total de consultas realizadas</span>
+        <span style={{ fontSize: '1.8rem', fontWeight: 800, color: '#007AFF' }}>{derivedTotal}</span>
       </div>
 
       {/* Clickable category cards */}
@@ -179,7 +186,7 @@ export default function OrcamentosPane({
       {/* Conversion insight */}
       <div style={{ background: '#E6F7EC', borderRadius: '14px', padding: '16px', border: '1.5px solid #28A74540' }}>
         <p style={{ margin: 0, fontSize: '0.85rem', color: '#1D7A33', fontWeight: 600 }}>
-          ✅ Taxa de conversão: <strong>{fechouRate}%</strong> dos {data.total} atendimentos se tornaram cirurgias em {year}
+          Taxa de conversão: <strong>{fechouRate}%</strong> dos {derivedTotal} atendimentos se tornaram cirurgias em {year}
         </p>
       </div>
     </div>

@@ -65,15 +65,43 @@ Retorne APENAS JSON válido neste formato exato (sem markdown, sem explicações
 }`,
         },
       ];
+    } else if (mediaType === 'application/pdf') {
+      // PDF: use Anthropic document block (native PDF support)
+      textContent = [
+        {
+          type: 'document',
+          source: { type: 'base64', media_type: 'application/pdf', data: base64 },
+        } as unknown as { type: 'text'; text: string },
+        {
+          type: 'text',
+          text: `Você é um assistente OCR para a Clínica Blue. Analise este comprovante/documento PDF e extraia as informações EXATAMENTE como aparecem.
+
+REGRAS CRÍTICAS:
+- Extraia SOMENTE o que aparece literalmente no documento. NÃO invente, NÃO infira, NÃO alucine dados.
+- Se um campo não estiver visível, retorne null para esse campo.
+- O "favorecido" é quem RECEBE o dinheiro. O "pagador" é quem ENVIOU.
+- Leia o nome do favorecido com atenção — pode ser uma clínica (ex: "Perfeita Saúde"), médico, instrumentadora.
+
+Retorne APENAS JSON válido neste formato (sem markdown, sem explicações):
+{
+  "valor": "R$ X.XXX,XX ou null",
+  "data": "DD/MM/YYYY ou null",
+  "favorecido": "nome exato do destinatário, ou null",
+  "chavePix": "chave PIX, CPF, CNPJ ou conta, ou null",
+  "pagador": "nome do pagador, ou null",
+  "tipo": "PIX|TED|DOC|Boleto|Outro",
+  "raw": "transcrição completa do texto visível no documento"
+}`,
+        },
+      ];
     } else {
-      // Non-image: treat as text extraction from filename description
+      // Other file types
       textContent = [
         {
           type: 'text',
-          text: `Arquivo: ${filename || 'documento'}. Tipo: ${mediaType}. Base64: ${base64.substring(0, 200)}...
-
+          text: `Arquivo: ${filename || 'documento'}. Tipo: ${mediaType}.
 Extraia as informações de pagamento e retorne JSON:
-{"valor":"","data":"","favorecido":"","chavePix":"","pagador":null,"tipo":"Outro","raw":"Arquivo não suportado para OCR visual"}`,
+{"valor":null,"data":null,"favorecido":null,"chavePix":null,"pagador":null,"tipo":"Outro","raw":"Tipo de arquivo não suportado para OCR visual. Por favor use imagem (PNG/JPG) ou PDF."}`,
         },
       ];
     }

@@ -152,7 +152,7 @@ export default function FollowUpScheduler({ patientName, phone = '' }: FollowUpS
     setShowCalendar(false); // collapse calendar on selection
   }
 
-  function handleSave() {
+  async function handleSave() {
     const id = `fu_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
     const newItem: ScheduledFollowUp = { id, patientName, phone, date, hour, period, note: note.trim() || undefined };
     const all = loadAll().filter(i => !(i.patientName === patientName));
@@ -160,6 +160,40 @@ export default function FollowUpScheduler({ patientName, phone = '' }: FollowUpS
     saveAll(all);
     setItems([newItem]);
     setSaved(true);
+
+    // ── Browser notification ────────────────────────────────────
+    if ('Notification' in window) {
+      const perm = await Notification.requestPermission();
+      if (perm === 'granted') {
+        // Immediate confirmation
+        const dateFormatted = date.split('-').reverse().join('/');
+        new Notification('⏰ Follow-up agendado!', {
+          body: `${patientName} — ${dateFormatted} às ${hour}h ${period}${newItem.note ? ' · ' + newItem.note : ''}`,
+          tag: `followup_confirm_${id}`,
+        });
+
+        // If scheduled for today, fire a timed notification at the exact time
+        const todayIso = new Date().toISOString().split('T')[0];
+        if (date === todayIso) {
+          let h24 = parseInt(hour, 10);
+          if (period === 'PM' && h24 !== 12) h24 += 12;
+          if (period === 'AM' && h24 === 12) h24 = 0;
+          const scheduledMs = new Date();
+          scheduledMs.setHours(h24, 0, 0, 0);
+          const delay = scheduledMs.getTime() - Date.now();
+          if (delay > 0) {
+            setTimeout(() => {
+              new Notification('⏰ Follow-up agora!', {
+                body: `${patientName}${newItem.note ? ' — ' + newItem.note : ''}`,
+                tag: `followup_due_${id}`,
+              });
+            }, delay);
+          }
+        }
+      }
+    }
+    // ─────────────────────────────────────────────────────────────
+
     setTimeout(() => {
       setSaved(false);
       setOpen(false);
