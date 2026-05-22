@@ -15,6 +15,7 @@ import CompPane from '@/components/TabPanes/CompPane';
 import EquipePane from '@/components/TabPanes/EquipePane';
 import AniversariosPane from '@/components/TabPanes/AniversariosPane';
 import OrcamentosPane from '@/components/TabPanes/OrcamentosPane';
+import AgendaPane from '@/components/TabPanes/AgendaPane';
 import { getBaseData, sheetsFirstMerge, extractPipeline } from '@/lib/merge-data';
 import { mergePatientRecords } from '@/lib/normalize-patient';
 import { getAuthToken, safeStorage, SNAPSHOT_KEY } from '@/lib/safe-storage';
@@ -23,6 +24,7 @@ import type { DashboardData, Notification, AmigoLiveData, PipelineCard } from '@
 const TABS = [
   { id: 'resumo',      label: 'Visão Geral' },
   { id: 'pipeline',    label: '💼 Comercial', highlight: true },
+  { id: 'agenda',      label: '📅 Agenda' },
   { id: 'pacientes',   label: 'Pacientes' },
   { id: 'ranking',     label: 'Ranking' },
   { id: 'equipe',      label: 'Equipe' },
@@ -50,6 +52,7 @@ export default function DashboardPage() {
   const [syncing, setSyncing] = useState(true);
   const [data, setData] = useState<DashboardData>(getBaseData);
   const [amigoData, setAmigoData] = useState<AmigoLiveData>({ attendances: [], birthdays: [] });
+  const [amigoConfigured, setAmigoConfigured] = useState(true); // optimistic; set false if key missing
   const [pipelineFromSheets, setPipelineFromSheets] = useState<PipelineCard[] | null>(null);
 
   useEffect(() => {
@@ -106,7 +109,13 @@ export default function DashboardPage() {
         });
         if (!res.ok) return;
         const json = await res.json();
-        if (!cancelled && json?.data) {
+        if (!cancelled) {
+          if (!json?.data) {
+            // API key not configured
+            setAmigoConfigured(false);
+            return;
+          }
+          setAmigoConfigured(true);
           setAmigoData({
             attendances:      json.data.attendances      ?? [],
             birthdays:        json.data.birthdays        ?? [],
@@ -167,6 +176,8 @@ export default function DashboardPage() {
           intl25={data.intl25} intl26={data.intl26}
           onTabChange={setActiveTab}
         />;
+      case 'agenda':
+        return <AgendaPane attendances={amigoData.attendances ?? []} amigoConfigured={amigoConfigured} />;
       case 'pacientes':
         return <PacientesPane patients={patients} amigoAttendances={amigoData.attendances} />;
       case 'pipeline':

@@ -65,22 +65,30 @@ export default function AniversariosPane({ cir25, cir26, amigoData, patients = [
   const upcomingAnivs = allAnivs.filter(a => a.daysUntil > 30 && a.daysUntil <= 90);
   const pastAnivs     = allAnivs.filter(a => a.daysUntil < 0 && a.daysUntil >= -30);
 
-  // AmigoClinic birthdays
-  const birthdays         = amigoData.birthdays ?? [];
-  const upcomingBirthdays = (amigoData.upcomingBirthdays ?? []).filter(b => {
-    if (!b.birthdayDate) return false;
-    const d = daysUntilBirthday(b.birthdayDate);
-    return d > 0 && d <= 14;
-  });
-
-  // Operated patient slugs for birthday badge
+  // Operated patient slugs — computed FIRST so birthday filters can use it
   const operatedSlugs = useMemo(() => {
     const set = new Set<string>();
     [...cir25, ...cir26].forEach(s => set.add(s.p.toLowerCase().trim()));
     return set;
   }, [cir25, cir26]);
 
-  // Today's appointments
+  // AmigoClinic birthdays — ONLY for patients who operated
+  const birthdays = useMemo(() =>
+    (amigoData.birthdays ?? []).filter(b => operatedSlugs.has(b.name.toLowerCase().trim())),
+    [amigoData.birthdays, operatedSlugs]
+  );
+
+  const upcomingBirthdays = useMemo(() =>
+    (amigoData.upcomingBirthdays ?? []).filter(b => {
+      if (!b.birthdayDate) return false;
+      if (!operatedSlugs.has(b.name.toLowerCase().trim())) return false; // only operated patients
+      const d = daysUntilBirthday(b.birthdayDate);
+      return d > 0 && d <= 14;
+    }),
+    [amigoData.upcomingBirthdays, operatedSlugs]
+  );
+
+  // Today's AmigoClinic appointments
   const todayAppts = (amigoData.attendances ?? []).filter(a => {
     if (!a.date) return false;
     if (a.date.startsWith(todayStr)) return true;
