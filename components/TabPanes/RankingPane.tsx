@@ -118,7 +118,7 @@ export default function RankingPane({ cir25, cir26, cons25, cons26 }: RankingPan
         <div className="seg">
           {(['pacientes', 'procedimentos', 'recentes'] as Section[]).map((s) => (
             <button key={s} className={`sb${section === s ? ' on' : ''}`} onClick={() => setSection(s)}>
-              {s === 'pacientes' ? '🏆 Pacientes' : s === 'procedimentos' ? '🔬 Procedimentos' : '🗓 Recentes'}
+              {s === 'pacientes' ? 'Pacientes' : s === 'procedimentos' ? 'Procedimentos' : 'Recentes'}
             </button>
           ))}
         </div>

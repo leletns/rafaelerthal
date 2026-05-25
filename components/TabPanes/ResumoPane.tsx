@@ -239,7 +239,7 @@ export default function ResumoPane({
           <div className="ins-list" style={{ marginTop: '4px' }}>
             {topProc && (
               <div className="ins">
-                <span>🏆</span>
+                <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#FFD700', flexShrink: 0, marginTop: 3 }} />
                 <div>
                   <strong>Proc. mais realizado:</strong> {topProc.procedure}
                   <br /><span style={{ color: '#86868B' }}>{topProc.count}× · {formatCurrency(topProc.revenue)}</span>
@@ -247,11 +247,11 @@ export default function ResumoPane({
               </div>
             )}
             <div className="ins">
-              <span>📅</span>
+              <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#28A745', flexShrink: 0, marginTop: 3 }} />
               <div><strong>Cirurgias em {year}:</strong> {cir.length}<br /><span style={{ color: '#86868B' }}>Receita: {formatCurrency(totalRev)}</span></div>
             </div>
             <div className="ins">
-              <span>📊</span>
+              <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#007AFF', flexShrink: 0, marginTop: 3 }} />
               <div><strong>Consultas em {year}:</strong> {cons.length}<br /><span style={{ color: '#86868B' }}>Taxa de conversão: {conversion}%</span></div>
             </div>
           </div>
@@ -262,7 +262,7 @@ export default function ResumoPane({
       {funnelData.length > 0 && (
         <div className="card" style={{ marginBottom: '14px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-            <div className="card-ttl" style={{ margin: 0 }}>📊 Funil de conversão · {year}</div>
+            <div className="card-ttl" style={{ margin: 0 }}>Funil de conversão · {year}</div>
             {onTabChange && (
               <button
                 onClick={() => onTabChange('funil')}

@@ -82,7 +82,7 @@ export default function CompPane({ cir25, cir26, cons25, cons26 }: CompPaneProps
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
         <div>
           <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: '#1D1D1F' }}>
-            COMPARATIVO — {periodLabel}
+            Comparativo — {periodLabel}
           </h3>
           <p style={{ margin: '2px 0 0', fontSize: '0.75rem', color: '#86868B' }}>
             Mesmo período: Jan–{currentMonthName} de cada ano

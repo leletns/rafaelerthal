@@ -114,7 +114,7 @@ export default function AgendaPane({ attendances, amigoConfigured = true }: Agen
           <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', opacity: 0.85 }}>
             Clínica Blue · AmigoClinic
           </div>
-          <div style={{ fontSize: '1.1rem', fontWeight: 800, marginTop: '4px' }}>📅 Agenda de Consultas</div>
+          <div style={{ fontSize: '1.1rem', fontWeight: 800, marginTop: '4px' }}>Agenda de Consultas</div>
           <div style={{ fontSize: '0.8rem', opacity: 0.9, marginTop: '2px' }}>
             {amigoConfigured
               ? `${attendances.length} atendimentos carregados`
@@ -276,7 +276,7 @@ export default function AgendaPane({ attendances, amigoConfigured = true }: Agen
         {selectedDay && (
           <div style={{ background: '#fff', borderRadius: '18px', padding: '20px', boxShadow: '0 2px 16px rgba(0,0,0,0.07)' }}>
             <div style={{ fontWeight: 700, fontSize: '0.9rem', color: '#1D1D1F', marginBottom: '12px' }}>
-              📋 {new Date(selectedDay + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
+              {new Date(selectedDay + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
               <span style={{ marginLeft: '8px', fontWeight: 400, fontSize: '0.78rem', color: '#86868B' }}>
                 {selectedAppts.length} atendimento{selectedAppts.length !== 1 ? 's' : ''}
               </span>
@@ -284,8 +284,7 @@ export default function AgendaPane({ attendances, amigoConfigured = true }: Agen
 
             {selectedAppts.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '24px 0', color: '#AEAEB2' }}>
-                <div style={{ fontSize: '1.4rem', marginBottom: '6px' }}>📅</div>
-                <div style={{ fontSize: '0.8rem' }}>Nenhum atendimento neste dia</div>
+                <div style={{ fontSize: '0.8rem', color: '#AEAEB2' }}>Nenhum atendimento neste dia</div>
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>

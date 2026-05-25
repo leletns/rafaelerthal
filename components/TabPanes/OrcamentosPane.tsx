@@ -213,7 +213,7 @@ export default function OrcamentosPane({
               <div style={{ fontSize: '0.72rem', color, fontWeight: 700, marginTop: '4px' }}>{label}</div>
               <div style={{ fontSize: '0.68rem', color: '#86868B', marginTop: '2px' }}>{r}% dos atendimentos</div>
               <div style={{ fontSize: '0.68rem', color, marginTop: '6px', fontWeight: 600 }}>
-                {expanded === key ? '▲ fechar' : `▼ ver ${list.length} pacientes`}
+                {expanded === key ? '▲ fechar' : `▼ ver ${value} pacientes`}
               </div>
             </button>
 
