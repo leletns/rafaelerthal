@@ -124,6 +124,63 @@ function MiniCalendar({ value, onChange }: MiniCalendarProps) {
   );
 }
 
+// ── NotifBanner — explains notification status & how to fix it ────────────────
+function NotifBanner({
+  perm,
+  onAllow,
+}: {
+  perm: NotificationPermission | 'unsupported';
+  onAllow: () => void;
+}) {
+  if (perm === 'granted') {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '5px 8px', borderRadius: '7px', marginBottom: '8px', background: '#E6F7EC', border: '1px solid #28A74530', fontSize: '0.67rem', color: '#1D7A33' }}>
+        <span>🔔</span>
+        <span style={{ fontWeight: 600 }}>Notificações ativas — você receberá alertas</span>
+      </div>
+    );
+  }
+
+  if (perm === 'unsupported') {
+    return (
+      <div style={{ padding: '6px 8px', borderRadius: '7px', marginBottom: '8px', background: '#F2F2F7', border: '1px solid #E5E5EA', fontSize: '0.67rem', color: '#86868B' }}>
+        <span style={{ fontWeight: 700 }}>📵 Notificações não suportadas</span>
+        <div style={{ marginTop: '2px' }}>No iOS, adicione o site à tela inicial e abra pelo ícone.</div>
+      </div>
+    );
+  }
+
+  if (perm === 'denied') {
+    return (
+      <div style={{ padding: '6px 8px', borderRadius: '7px', marginBottom: '8px', background: '#FFE5E3', border: '1px solid #FF3B3030', fontSize: '0.67rem', color: '#CC0000' }}>
+        <span style={{ fontWeight: 700 }}>🔕 Notificações bloqueadas</span>
+        <div style={{ marginTop: '3px', lineHeight: 1.4 }}>
+          Para ativar: clique no <strong>🔒 cadeado</strong> ou <strong>ⓘ</strong> na barra do navegador → <strong>Notificações → Permitir</strong>.
+        </div>
+      </div>
+    );
+  }
+
+  // 'default' — not yet asked or dismissed
+  return (
+    <div style={{ padding: '6px 8px', borderRadius: '7px', marginBottom: '8px', background: '#FFF3E0', border: '1px solid #FF950030', fontSize: '0.67rem', color: '#B85C00' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span style={{ fontWeight: 700 }}>🔔 Ativar notificações</span>
+        <button
+          type="button"
+          onClick={onAllow}
+          style={{ background: '#FF9500', color: '#fff', border: 'none', borderRadius: '5px', padding: '3px 8px', fontSize: '0.67rem', cursor: 'pointer', fontWeight: 700, whiteSpace: 'nowrap' }}
+        >
+          Permitir
+        </button>
+      </div>
+      <div style={{ marginTop: '2px', lineHeight: 1.4 }}>
+        Clique em <strong>Permitir</strong> para receber alertas no dia do follow-up.
+      </div>
+    </div>
+  );
+}
+
 interface FollowUpSchedulerProps {
   patientName: string;
   phone?: string;
@@ -138,13 +195,17 @@ export default function FollowUpScheduler({ patientName, phone = '' }: FollowUpS
   const [period, setPeriod] = useState<'AM' | 'PM'>('AM');
   const [note, setNote] = useState('');
   const [saved, setSaved] = useState(false);
-  const [notifPerm, setNotifPerm] = useState<NotificationPermission>('default');
-  const permAsked = useRef(false);
+  const [notifPerm, setNotifPerm] = useState<NotificationPermission | 'unsupported'>('default');
+  const askedRef = useRef(false);
 
   // Load from localStorage + read current notif permission
   useEffect(() => {
     setItems(loadAll().filter(i => i.patientName === patientName));
-    if ('Notification' in window) setNotifPerm(Notification.permission);
+    if (!('Notification' in window)) {
+      setNotifPerm('unsupported');
+    } else {
+      setNotifPerm(Notification.permission);
+    }
   }, [patientName]);
 
   const myItems = items.filter(i => i.patientName === patientName);
@@ -155,7 +216,7 @@ export default function FollowUpScheduler({ patientName, phone = '' }: FollowUpS
     setShowCalendar(false); // collapse calendar on selection
   }
 
-  async function handleSave() {
+  function handleSave() {
     const id = `fu_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
     const newItem: ScheduledFollowUp = { id, patientName, phone, date, hour, period, note: note.trim() || undefined };
     const all = loadAll().filter(i => !(i.patientName === patientName));
@@ -166,7 +227,9 @@ export default function FollowUpScheduler({ patientName, phone = '' }: FollowUpS
 
     // ── Browser notification ────────────────────────────────────
     if ('Notification' in window) {
-      const perm = await Notification.requestPermission();
+      // Permission should already have been granted when popover opened.
+      // Only fire notifications if actually granted — don't request again here.
+      const perm = Notification.permission;
       if (perm === 'granted') {
         // Immediate confirmation
         const dateFormatted = date.split('-').reverse().join('/');
@@ -225,12 +288,16 @@ export default function FollowUpScheduler({ patientName, phone = '' }: FollowUpS
           setOpen(opening);
           if (opening) {
             setShowCalendar(true);
-            // Request permission proactively when popover opens
-            if ('Notification' in window && Notification.permission === 'default' && !permAsked.current) {
-              permAsked.current = true;
-              Notification.requestPermission().then(p => setNotifPerm(p));
-            } else if ('Notification' in window) {
+            // Sync current permission state
+            if (!('Notification' in window)) {
+              setNotifPerm('unsupported');
+            } else {
               setNotifPerm(Notification.permission);
+              // Proactively request if still 'default' and we haven't asked yet
+              if (Notification.permission === 'default' && !askedRef.current) {
+                askedRef.current = true;
+                Notification.requestPermission().then(p => setNotifPerm(p));
+              }
             }
           }
         }}
@@ -289,34 +356,10 @@ export default function FollowUpScheduler({ patientName, phone = '' }: FollowUpS
             </div>
 
             {/* Notification permission status */}
-            {'Notification' in window && (
-              <div style={{
-                display: 'flex', alignItems: 'center', gap: '5px',
-                padding: '5px 8px', borderRadius: '7px', marginBottom: '8px',
-                background: notifPerm === 'granted' ? '#E6F7EC' : notifPerm === 'denied' ? '#FFE5E3' : '#FFF3E0',
-                border: `1px solid ${notifPerm === 'granted' ? '#28A74530' : notifPerm === 'denied' ? '#FF3B3030' : '#FF950030'}`,
-                fontSize: '0.68rem',
-                color: notifPerm === 'granted' ? '#1D7A33' : notifPerm === 'denied' ? '#CC0000' : '#B85C00',
-              }}>
-                <span>{notifPerm === 'granted' ? '🔔' : notifPerm === 'denied' ? '🔕' : '🔔'}</span>
-                <span style={{ fontWeight: 600 }}>
-                  {notifPerm === 'granted'
-                    ? 'Notificações ativas'
-                    : notifPerm === 'denied'
-                      ? 'Notificações bloqueadas pelo navegador'
-                      : 'Aguardando permissão de notificação…'}
-                </span>
-                {notifPerm === 'default' && (
-                  <button
-                    type="button"
-                    onClick={() => Notification.requestPermission().then(p => setNotifPerm(p))}
-                    style={{ marginLeft: 'auto', background: '#FF9500', color: '#fff', border: 'none', borderRadius: '4px', padding: '2px 6px', fontSize: '0.65rem', cursor: 'pointer', fontWeight: 700 }}
-                  >
-                    Permitir
-                  </button>
-                )}
-              </div>
-            )}
+            <NotifBanner perm={notifPerm} onAllow={() => {
+              if (!('Notification' in window)) return;
+              Notification.requestPermission().then(p => setNotifPerm(p));
+            }} />
 
             {/* Existing scheduled items */}
             {myItems.map(item => (

@@ -145,16 +145,31 @@ export default function DashboardPage() {
             setAmigoConfigured(false);
             setSyncState(s => ({
               ...s, amigo: 'unconfigured',
-              amigoMsg: 'Configure AMIGOCLINIC_API_KEY no .env.local',
+              amigoMsg: 'Configure AMIGOCLINIC_API_KEY no painel do Vercel',
             }));
             return;
           }
           setAmigoConfigured(true);
           const attCount = (json.data.attendances ?? []).length;
-          setSyncState(s => ({
-            ...s, amigo: 'ok',
-            amigoMsg: `${attCount} atendimento${attCount !== 1 ? 's' : ''}`,
-          }));
+
+          // Detect API errors from the errors field
+          const errEntries: [string, string][] = Object.entries(json.errors ?? {})
+            .filter(([, v]) => v !== null) as [string, string][];
+          const hasApiError = errEntries.length > 0;
+
+          if (hasApiError && attCount === 0) {
+            // All calls failed — show the first error message
+            const [errKey, errMsg] = errEntries[0];
+            setSyncState(s => ({
+              ...s, amigo: 'error',
+              amigoMsg: `${errKey}: ${errMsg}`,
+            }));
+          } else {
+            setSyncState(s => ({
+              ...s, amigo: 'ok',
+              amigoMsg: `${attCount} atendimento${attCount !== 1 ? 's' : ''}`,
+            }));
+          }
           setAmigoData({
             attendances:       json.data.attendances       ?? [],
             birthdays:         json.data.birthdays         ?? [],
