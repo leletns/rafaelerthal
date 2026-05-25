@@ -105,20 +105,6 @@ export default function DashboardLayout({
     applyTheme(next);
   }
 
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
-
-  useEffect(() => {
-    const stored = getStoredTheme();
-    setTheme(stored);
-    applyTheme(stored);
-  }, []);
-
-  function toggleTheme() {
-    const next = theme === 'light' ? 'dark' : 'light';
-    setTheme(next);
-    applyTheme(next);
-  }
-
   function handleLogout() {
     clearAuthToken();
     router.replace('/login');

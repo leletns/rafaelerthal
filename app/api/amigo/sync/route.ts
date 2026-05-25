@@ -1,34 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { attendances, patients, places, events, doctors, calendar } from '@/lib/amigo-client';
+import { attendances, patients, places, events } from '@/lib/amigo-client';
 
-/** Normalise a raw AmigoClinic patient/birthday record to our schema */
-function normalizeBirthday(p: Record<string, unknown>) {
-  return {
-    id:        p.id,
-    name:      p.name ?? p.patient_name ?? '',
-    phone:     p.contact_cellphone ?? p.phone ?? p.cellphone ?? null,
-    birthDate: p.born ?? p.birth_date ?? p.birthDate ?? null,
-  };
-}
-
-/** Normalise a raw AmigoClinic attendance record to our schema */
-function normalizeAttendance(a: Record<string, unknown>) {
-  return {
-    id:          a.id,
-    patientId:   a.patient_id ?? a.patientId ?? null,
-    patientName: a.patient_name ?? a.patientName ?? a.name ?? null,
-    doctorName:  a.doctor_name ?? a.doctorName ?? null,
-    date:        a.date ?? a.scheduled_date ?? null,
-    time:        a.time ?? a.scheduled_time ?? a.hour ?? null,
-    procedure:   a.procedure ?? a.event_name ?? a.type ?? null,
-    status:      a.status ?? null,
-    notes:       a.notes ?? a.observation ?? null,
-  };
-}
-
-// -------------------------------------------------------
-// Normalize AmigoClinic field names to our data model
-// -------------------------------------------------------
+// ── Normalize AmigoClinic field names to our data model ──────────────────────
 function normalizeBirthday(p: Record<string, unknown>, birthdayDate?: string) {
   return {
     id:           String(p.id ?? ''),
@@ -42,7 +15,7 @@ function normalizeBirthday(p: Record<string, unknown>, birthdayDate?: string) {
 function normalizeAttendance(a: Record<string, unknown>) {
   return {
     id:          String(a.id ?? ''),
-    patientId:   String(a.patient_id ?? a.patientId ?? ''),
+    patientId:   String(a.patient_id   ?? a.patientId   ?? ''),
     patientName: String(a.patient_name ?? a.patientName ?? a.name ?? ''),
     doctorName:  String(a.doctor_name  ?? a.doctorName  ?? ''),
     date:        String(a.date ?? a.scheduled_date ?? ''),

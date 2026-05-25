@@ -407,7 +407,7 @@ export default function EquipePane() {
                   </label>
                   {mReceipts.length > 0 && (
                     <button
-                      onClick={(e) => { e.stopPropagation(); handleExport(m.key); }}
+                      onClick={(e) => { e.stopPropagation(); handleExportExcel(m.key); }}
                       style={{ flex: 1, background: '#F2F2F7', border: 'none', borderRadius: '8px', padding: '6px', fontSize: '11px', fontWeight: 700, color: '#1D1D1F', cursor: 'pointer' }}
                     >
                       🖨️ Imprimir / PDF
@@ -429,7 +429,7 @@ export default function EquipePane() {
             </div>
             {memberReceipts.length > 0 && (
               <button
-                onClick={() => handleExport(selected!)}
+                onClick={() => handleExportExcel(selected!)}
                 style={{ background: selectedMember.color, color: '#fff', border: 'none', borderRadius: '8px', padding: '6px 14px', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}
               >
                 🖨️ Imprimir / PDF

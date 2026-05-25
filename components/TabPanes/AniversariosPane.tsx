@@ -153,7 +153,7 @@ export default function AniversariosPane({ cir25, cir26, amigoData, patients = [
           </div>
           <div style={{ display: 'flex', gap: '6px', alignItems: 'center', marginTop: '6px' }}>
             {phone && <WhatsAppButton phone={phone} size="sm" variant="icon" />}
-            <FollowUpScheduler patientId={a.patientName} patientName={a.patientName} />
+            <FollowUpScheduler patientName={a.patientName} phone={phone} />
           </div>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '5px', flexShrink: 0 }}>
