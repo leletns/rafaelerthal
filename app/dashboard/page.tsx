@@ -15,7 +15,6 @@ import CompPane from '@/components/TabPanes/CompPane';
 import EquipePane from '@/components/TabPanes/EquipePane';
 import AniversariosPane from '@/components/TabPanes/AniversariosPane';
 import OrcamentosPane from '@/components/TabPanes/OrcamentosPane';
-import AgendaPane from '@/components/TabPanes/AgendaPane';
 import { getBaseData, sheetsFirstMerge, extractPipeline } from '@/lib/merge-data';
 import { mergePatientRecords } from '@/lib/normalize-patient';
 import { getAuthToken, safeStorage, SNAPSHOT_KEY } from '@/lib/safe-storage';
@@ -24,7 +23,6 @@ import type { DashboardData, Notification, AmigoLiveData, PipelineCard } from '@
 const TABS = [
   { id: 'resumo',       label: 'Visão Geral' },
   { id: 'pipeline',     label: 'Comercial', highlight: true },
-  { id: 'agenda',       label: 'Agenda' },
   { id: 'pacientes',    label: 'Pacientes' },
   { id: 'ranking',      label: 'Ranking' },
   { id: 'equipe',       label: 'Equipe' },
@@ -60,8 +58,7 @@ export default function DashboardPage() {
   const [notifications, setNotifications] = useState<Notification[]>(INITIAL_NOTIFICATIONS);
   const [syncing, setSyncing] = useState(true);
   const [data, setData] = useState<DashboardData>(getBaseData);
-  const [amigoData, setAmigoData] = useState<AmigoLiveData>({ attendances: [], birthdays: [] });
-  const [amigoConfigured, setAmigoConfigured] = useState(true);
+  const [amigoData, setAmigoData] = useState<AmigoLiveData>({ birthdays: [] });
   const [pipelineFromSheets, setPipelineFromSheets] = useState<PipelineCard[] | null>(null);
   const [syncState, setSyncState] = useState<SyncState>({
     sheets: 'syncing', sheetsMsg: '',
@@ -141,49 +138,48 @@ export default function DashboardPage() {
         }
         const json = await res.json();
         if (!cancelled) {
+          // No API key configured
           if (!json?.data) {
-            setAmigoConfigured(false);
             setSyncState(s => ({
               ...s, amigo: 'unconfigured',
-              amigoMsg: 'Configure AMIGOCLINIC_API_KEY no painel do Vercel',
+              amigoMsg: 'Configure AMIGOCLINIC_API_KEY no Vercel',
             }));
             return;
           }
-          setAmigoConfigured(true);
-          const attCount = (json.data.attendances ?? []).length;
 
-          // Detect API errors — use firstError from server or build from errors map
-          const firstError: string | null =
-            json.firstError ??
-            (Object.entries(json.errors ?? {}).find(([, v]) => v !== null)?.[1] as string ?? null);
-          const hasApiError = !!firstError && attCount === 0;
+          const todayBdays  = (json.data.birthdays         ?? []) as import('@/lib/data-model').AmigoBirthdayItem[];
+          const upcoming    = (json.data.upcomingBirthdays ?? []);
+          const totalBdays  = todayBdays.length + upcoming.length;
 
-          if (hasApiError) {
-            setSyncState(s => ({ ...s, amigo: 'error', amigoMsg: firstError! }));
+          if (json.firstError) {
+            setSyncState(s => ({ ...s, amigo: 'error', amigoMsg: json.firstError }));
           } else {
             setSyncState(s => ({
               ...s, amigo: 'ok',
-              amigoMsg: `${attCount} atendimento${attCount !== 1 ? 's' : ''}`,
+              amigoMsg: totalBdays > 0
+                ? `${totalBdays} aniversário${totalBdays !== 1 ? 's' : ''} nos próx. 15 dias`
+                : 'sem aniversários hoje',
             }));
           }
+
           setAmigoData({
-            attendances:       json.data.attendances       ?? [],
-            birthdays:         json.data.birthdays         ?? [],
-            upcomingBirthdays: json.data.upcomingBirthdays ?? [],
+            birthdays:         todayBdays,
+            upcomingBirthdays: upcoming,
             syncedAt:          json.timestamp,
           });
+
+          // Push today's birthdays as notifications
           const todayStr = new Date().toISOString().split('T')[0];
-          const bdays = (json.data.birthdays ?? []) as Array<{name:string;phone?:string}>;
-          if (bdays.length > 0) {
+          if (todayBdays.length > 0) {
             setNotifications(prev => [
-              ...bdays.map((b, i) => ({
+              ...todayBdays.map((b, i) => ({
                 id: `bday_${Date.now()}_${i}`,
                 type: 'birthday' as const,
-                title: 'Aniversário hoje',
+                title: '🎂 Aniversário hoje',
                 body: `${b.name}${b.phone ? ` · ${b.phone}` : ''}`,
                 date: todayStr,
                 read: false,
-              })),
+              } satisfies import('@/lib/data-model').Notification)),
               ...prev,
             ]);
           }
@@ -229,10 +225,8 @@ export default function DashboardPage() {
           intl25={data.intl25} intl26={data.intl26}
           onTabChange={setActiveTab}
         />;
-      case 'agenda':
-        return <AgendaPane attendances={amigoData.attendances ?? []} amigoConfigured={amigoConfigured} />;
       case 'pacientes':
-        return <PacientesPane patients={patients} amigoAttendances={amigoData.attendances} />;
+        return <PacientesPane patients={patients} />;
       case 'pipeline':
         return <PipelinePane initialCards={pipelineFromSheets ?? undefined} cons26={data.cons26} cir26={data.cir26} />;
       case 'ranking':

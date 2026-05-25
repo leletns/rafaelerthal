@@ -166,8 +166,8 @@ export interface AmigoBirthdayItem {
 }
 
 export interface AmigoLiveData {
-  attendances:      AmigoAttendanceItem[];
-  birthdays:        AmigoBirthdayItem[];   // today's birthdays
+  attendances?:     AmigoAttendanceItem[];  // kept for backward compat, no longer synced
+  birthdays:        AmigoBirthdayItem[];    // today's birthdays
   upcomingBirthdays?: AmigoBirthdayItem[]; // next 14 days
   syncedAt?:        string;
 }

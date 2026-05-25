@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import type { Patient, AmigoAttendanceItem } from '@/lib/data-model';
+import type { Patient } from '@/lib/data-model';
 import PatientProfileModal from '../PatientProfileModal';
 import WhatsAppButton from '../WhatsAppButton';
 import FollowUpScheduler from '../FollowUpScheduler';
@@ -9,7 +9,6 @@ import { formatCurrency } from '@/lib/dashboard-calculations';
 
 interface PacientesPaneProps {
   patients: Patient[];
-  amigoAttendances?: AmigoAttendanceItem[];
 }
 
 type FilterType = 'all' | 'surgery' | 'consult';
@@ -20,7 +19,7 @@ const CHIP_COLORS: Record<FilterType, { active: string; bg: string; activeBg: st
   consult: { active: '#5856D6', bg: '#F2F2F7', activeBg: '#EEECFF' },
 };
 
-export default function PacientesPane({ patients, amigoAttendances }: PacientesPaneProps) {
+export default function PacientesPane({ patients }: PacientesPaneProps) {
   const [search, setSearch]         = useState('');
   const [filterType, setFilterType] = useState<FilterType>('all');
   const [selected, setSelected]     = useState<Patient | null>(null);
@@ -72,7 +71,7 @@ export default function PacientesPane({ patients, amigoAttendances }: PacientesP
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-      <PatientProfileModal patient={selected} onClose={() => setSelected(null)} amigoAttendances={amigoAttendances} />
+      <PatientProfileModal patient={selected} onClose={() => setSelected(null)} />
 
       {/* ── TIPO DE PACIENTE ── */}
       <div style={{ display: 'flex', gap: '8px' }}>

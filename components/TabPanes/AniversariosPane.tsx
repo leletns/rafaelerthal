@@ -103,18 +103,6 @@ export default function AniversariosPane({ cir25, cir26, amigoData, patients = [
     [amigoData.upcomingBirthdays]
   );
 
-  // Today's AmigoClinic appointments
-  const todayAppts = (amigoData.attendances ?? []).filter(a => {
-    if (!a.date) return false;
-    if (a.date.startsWith(todayStr)) return true;
-    const parts = a.date.split('/');
-    if (parts.length === 3) {
-      const iso = `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
-      return iso === todayStr;
-    }
-    return false;
-  });
-
   // ── Web Notifications ────────────────────────────
   useEffect(() => {
     if (!('Notification' in window)) return;
@@ -212,7 +200,7 @@ export default function AniversariosPane({ cir25, cir26, amigoData, patients = [
     );
   }
 
-  const hasAnything = allAnivs.length > 0 || birthdays.length > 0 || todayAppts.length > 0 || upcomingBirthdays.length > 0;
+  const hasAnything = allAnivs.length > 0 || birthdays.length > 0 || upcomingBirthdays.length > 0;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -238,25 +226,6 @@ export default function AniversariosPane({ cir25, cir26, amigoData, patients = [
           <div style={{ fontSize: '0.72rem', opacity: 0.85 }}>eventos hoje</div>
         </div>
       </div>
-
-      {/* Today's appointments */}
-      {todayAppts.length > 0 && (
-        <div className="card">
-          <div className="card-ttl">📅 Atendimentos de hoje (AmigoClinic)</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            {todayAppts.map((a, i) => (
-              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 10px', background: '#F9F9FB', borderRadius: '8px', borderLeft: '3px solid #007AFF' }}>
-                <div>
-                  <span style={{ fontWeight: 700, fontSize: '0.85rem', color: '#1D1D1F' }}>{a.patientName || '—'}</span>
-                  {a.time && <span style={{ fontSize: '0.75rem', color: '#86868B', marginLeft: '8px' }}>{a.time}</span>}
-                  {a.procedure && <div style={{ fontSize: '0.72rem', color: '#86868B' }}>{a.procedure}</div>}
-                </div>
-                {a.status && <span className="badge badge-blue" style={{ fontSize: '10px' }}>{a.status}</span>}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Today birthdays */}
       {birthdays.length > 0 && (

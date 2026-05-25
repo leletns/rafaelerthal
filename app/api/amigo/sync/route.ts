@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { attendances, patients, places, events } from '@/lib/amigo-client';
+import { patients } from '@/lib/amigo-client';
 
-// ── Normalize AmigoClinic field names to our data model ──────────────────────
+// ── Normalize AmigoClinic birthday fields ────────────────────────────────────
 function normalizeBirthday(p: Record<string, unknown>, birthdayDate?: string) {
   return {
     id:           String(p.id ?? ''),
@@ -9,20 +9,6 @@ function normalizeBirthday(p: Record<string, unknown>, birthdayDate?: string) {
     phone:        String(p.contact_cellphone ?? p.phone ?? p.cellphone ?? ''),
     birthDate:    String(p.born ?? p.birth_date ?? p.birthDate ?? ''),
     birthdayDate: birthdayDate ?? null,
-  };
-}
-
-function normalizeAttendance(a: Record<string, unknown>) {
-  return {
-    id:          String(a.id ?? ''),
-    patientId:   String(a.patient_id   ?? a.patientId   ?? ''),
-    patientName: String(a.patient_name ?? a.patientName ?? a.name ?? ''),
-    doctorName:  String(a.doctor_name  ?? a.doctorName  ?? ''),
-    date:        String(a.date ?? a.scheduled_date ?? ''),
-    time:        String(a.time ?? a.scheduled_time ?? a.hour ?? ''),
-    procedure:   String(a.procedure ?? a.event_name ?? a.type ?? ''),
-    status:      String(a.status ?? ''),
-    notes:       String(a.notes ?? a.observation ?? ''),
   };
 }
 
@@ -44,65 +30,52 @@ export async function GET(req: NextRequest) {
     });
   }
 
-  const yearStart = `${new Date().getFullYear()}-01-01`;
+  // Fetch birthdays for today + next 14 days (15 calls total)
   const today = new Date().toISOString().split('T')[0];
-
-  // Build date range for next 15 days (today + 14)
   const dateRange = Array.from({ length: 15 }, (_, i) => {
     const d = new Date();
     d.setDate(d.getDate() + i);
     return d.toISOString().split('T')[0];
   });
 
-  const [atts, todayBdays, placesList, eventsList, ...upcomingBdayResults] = await Promise.allSettled([
-    attendances.list({ from: yearStart }),
-    patients.birthday(today),
-    places.list(),
-    events.list(),
-    ...dateRange.slice(1).map(d => patients.birthday(d)), // days 1–14 ahead
-  ]);
+  const results = await Promise.allSettled(
+    dateRange.map(d => patients.birthday(d))
+  );
 
-  // Flatten upcoming birthdays (days 1-14)
-  const upcomingBirthdays = upcomingBdayResults
-    .flatMap((r, i) =>
-      r.status === 'fulfilled'
-        ? (r.value as Record<string, unknown>[]).map(p => normalizeBirthday(p, dateRange[i + 1]))
-        : []
-    );
+  const todayResult  = results[0];
+  const futureResults = results.slice(1);
 
-  const errorsMap = {
-    attendances: atts.status === 'rejected' ? (atts.reason as Error).message : null,
-    birthdays:   todayBdays.status === 'rejected' ? (todayBdays.reason as Error).message : null,
-    places:      placesList.status === 'rejected' ? (placesList.reason as Error).message : null,
-    events:      eventsList.status === 'rejected' ? (eventsList.reason as Error).message : null,
-  };
+  const todayBirthdays = todayResult.status === 'fulfilled'
+    ? (todayResult.value as Record<string, unknown>[]).map(p => normalizeBirthday(p, today))
+    : [];
 
-  // Log errors server-side for Vercel Function logs
-  const errorList = Object.entries(errorsMap).filter(([, v]) => v !== null);
-  if (errorList.length > 0) {
-    console.error('[amigo/sync] API errors:', JSON.stringify(errorsMap));
+  const upcomingBirthdays = futureResults.flatMap((r, i) =>
+    r.status === 'fulfilled'
+      ? (r.value as Record<string, unknown>[]).map(p => normalizeBirthday(p, dateRange[i + 1]))
+      : []
+  );
+
+  const firstError = todayResult.status === 'rejected'
+    ? (todayResult.reason as Error).message
+    : null;
+
+  if (firstError) {
+    console.error('[amigo/sync] birthday error:', firstError);
   }
 
-  // Build a human-readable firstError for the status pill
-  const firstError = errorList.length > 0
-    ? `${errorList[0][0]}: ${errorList[0][1]}`
-    : null;
+  const totalBirthdays = todayBirthdays.length + upcomingBirthdays.length;
 
   return NextResponse.json({
     success: true,
     timestamp: new Date().toISOString(),
     firstError,
     data: {
-      attendances: atts.status === 'fulfilled'
-        ? (atts.value as Record<string, unknown>[]).map(a => normalizeAttendance(a))
-        : [],
-      birthdays: todayBdays.status === 'fulfilled'
-        ? (todayBdays.value as Record<string, unknown>[]).map(p => normalizeBirthday(p, today))
-        : [],
+      birthdays:         todayBirthdays,
       upcomingBirthdays,
-      places:  placesList.status === 'fulfilled' ? placesList.value : [],
-      events:  eventsList.status === 'fulfilled' ? eventsList.value : [],
     },
-    errors: errorsMap,
+    meta: {
+      totalBirthdays,
+      daysChecked: 15,
+    },
   });
 }
