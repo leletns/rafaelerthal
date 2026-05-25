@@ -38,44 +38,64 @@ function StatusPill({
   pulse?: boolean;
 }) {
   const s = STATUS_STYLE[status];
-  const [tip, setTip] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+
+  // Inline sub-text to show next to the label
+  let sub: string | null = null;
+  if (status === 'syncing') sub = 'sincronizando…';
+  else if (status === 'ok' && msg) sub = msg;
+  else if ((status === 'error' || status === 'unconfigured') && msg) {
+    // Truncate long error messages for the pill; full text on tap/click
+    sub = msg.length > 28 ? msg.slice(0, 28) + '…' : msg;
+  }
 
   return (
-    <div
-      style={{ position: 'relative', display: 'inline-flex' }}
-      onMouseEnter={() => msg && setTip(true)}
-      onMouseLeave={() => setTip(false)}
-    >
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: '5px',
-        padding: '3px 8px', borderRadius: '20px',
-        background: s.bg, border: `1.5px solid ${s.border}`,
-        cursor: msg ? 'default' : 'default',
-      }}>
+    <div style={{ position: 'relative', display: 'inline-flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+      <div
+        onClick={() => msg && (status === 'error' || status === 'unconfigured') && setExpanded(e => !e)}
+        style={{
+          display: 'flex', alignItems: 'center', gap: '5px',
+          padding: '3px 8px', borderRadius: '20px',
+          background: s.bg, border: `1.5px solid ${s.border}`,
+          cursor: (status === 'error' || status === 'unconfigured') && msg ? 'pointer' : 'default',
+        }}
+      >
         <div style={{
           width: 7, height: 7, borderRadius: '50%', background: s.dot, flexShrink: 0,
           ...(pulse && status === 'syncing' ? { animation: 'pulse 1.2s ease-in-out infinite' } : {}),
         }} />
         <span style={{ fontSize: '11px', fontWeight: 600, color: s.text, whiteSpace: 'nowrap' }}>
           {label}
-          {status === 'ok' && msg ? (
-            <span style={{ fontWeight: 400, marginLeft: '4px', opacity: 0.75 }}>· {msg}</span>
-          ) : status === 'syncing' ? (
-            <span style={{ fontWeight: 400, marginLeft: '4px', opacity: 0.75 }}>· sincronizando…</span>
-          ) : null}
+          {sub && (
+            <span style={{ fontWeight: 400, marginLeft: '4px', opacity: 0.8 }}>· {sub}</span>
+          )}
         </span>
       </div>
-      {/* Tooltip — only on error/unconfigured/pending with a message */}
-      {tip && msg && status !== 'ok' && status !== 'syncing' && (
-        <div style={{
-          position: 'absolute', top: 'calc(100% + 6px)', right: 0, zIndex: 200,
-          background: '#1D1D1F', color: '#fff', borderRadius: '8px',
-          padding: '7px 12px', fontSize: '11px',
-          boxShadow: '0 4px 16px rgba(0,0,0,0.22)', pointerEvents: 'none',
-          maxWidth: '280px', wordBreak: 'break-word',
-        }}>
-          {msg}
-        </div>
+
+      {/* Expanded error panel — shown on tap/click (works on mobile too) */}
+      {expanded && msg && (
+        <>
+          <div
+            style={{ position: 'fixed', inset: 0, zIndex: 199 }}
+            onClick={() => setExpanded(false)}
+          />
+          <div style={{
+            position: 'absolute', top: 'calc(100% + 6px)', right: 0, zIndex: 200,
+            background: '#1D1D1F', color: '#fff', borderRadius: '10px',
+            padding: '10px 14px', fontSize: '11px', lineHeight: 1.5,
+            boxShadow: '0 4px 20px rgba(0,0,0,0.28)',
+            maxWidth: '300px', wordBreak: 'break-word',
+            whiteSpace: 'pre-wrap',
+          }}>
+            <div style={{ fontWeight: 700, marginBottom: '4px', color: STATUS_STYLE[status].dot }}>
+              {label} — {status === 'error' ? 'Erro' : 'Não configurado'}
+            </div>
+            {msg}
+            <div style={{ marginTop: '6px', opacity: 0.6, fontSize: '10px' }}>
+              Toque fora para fechar
+            </div>
+          </div>
+        </>
       )}
     </div>
   );

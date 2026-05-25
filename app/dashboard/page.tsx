@@ -152,18 +152,14 @@ export default function DashboardPage() {
           setAmigoConfigured(true);
           const attCount = (json.data.attendances ?? []).length;
 
-          // Detect API errors from the errors field
-          const errEntries: [string, string][] = Object.entries(json.errors ?? {})
-            .filter(([, v]) => v !== null) as [string, string][];
-          const hasApiError = errEntries.length > 0;
+          // Detect API errors — use firstError from server or build from errors map
+          const firstError: string | null =
+            json.firstError ??
+            (Object.entries(json.errors ?? {}).find(([, v]) => v !== null)?.[1] as string ?? null);
+          const hasApiError = !!firstError && attCount === 0;
 
-          if (hasApiError && attCount === 0) {
-            // All calls failed — show the first error message
-            const [errKey, errMsg] = errEntries[0];
-            setSyncState(s => ({
-              ...s, amigo: 'error',
-              amigoMsg: `${errKey}: ${errMsg}`,
-            }));
+          if (hasApiError) {
+            setSyncState(s => ({ ...s, amigo: 'error', amigoMsg: firstError! }));
           } else {
             setSyncState(s => ({
               ...s, amigo: 'ok',

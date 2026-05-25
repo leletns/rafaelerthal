@@ -70,9 +70,28 @@ export async function GET(req: NextRequest) {
         : []
     );
 
+  const errorsMap = {
+    attendances: atts.status === 'rejected' ? (atts.reason as Error).message : null,
+    birthdays:   todayBdays.status === 'rejected' ? (todayBdays.reason as Error).message : null,
+    places:      placesList.status === 'rejected' ? (placesList.reason as Error).message : null,
+    events:      eventsList.status === 'rejected' ? (eventsList.reason as Error).message : null,
+  };
+
+  // Log errors server-side for Vercel Function logs
+  const errorList = Object.entries(errorsMap).filter(([, v]) => v !== null);
+  if (errorList.length > 0) {
+    console.error('[amigo/sync] API errors:', JSON.stringify(errorsMap));
+  }
+
+  // Build a human-readable firstError for the status pill
+  const firstError = errorList.length > 0
+    ? `${errorList[0][0]}: ${errorList[0][1]}`
+    : null;
+
   return NextResponse.json({
     success: true,
     timestamp: new Date().toISOString(),
+    firstError,
     data: {
       attendances: atts.status === 'fulfilled'
         ? (atts.value as Record<string, unknown>[]).map(a => normalizeAttendance(a))
@@ -84,11 +103,6 @@ export async function GET(req: NextRequest) {
       places:  placesList.status === 'fulfilled' ? placesList.value : [],
       events:  eventsList.status === 'fulfilled' ? eventsList.value : [],
     },
-    errors: {
-      attendances: atts.status === 'rejected' ? (atts.reason as Error).message : null,
-      birthdays:   todayBdays.status === 'rejected' ? (todayBdays.reason as Error).message : null,
-      places:      placesList.status === 'rejected' ? (placesList.reason as Error).message : null,
-      events:      eventsList.status === 'rejected' ? (eventsList.reason as Error).message : null,
-    },
+    errors: errorsMap,
   });
 }
