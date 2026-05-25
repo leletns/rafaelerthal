@@ -3,8 +3,8 @@
 import { useState } from 'react';
 import KPICards from '../KPICards';
 import { RevenueBarChart, MonthlySurgeriesChart } from '../Charts';
-import { computeKPIs, computeMonthlyData, computeRevenueByMonth, computeTopProcedures, formatCurrency } from '@/lib/dashboard-calculations';
-import type { Surgery, Consultation, CanalStats, FxStats } from '@/lib/data-model';
+import { computeKPIs, computeMonthlyData, computeRevenueByMonth, computeTopProcedures, computeFunnelData, formatCurrency } from '@/lib/dashboard-calculations';
+import type { Surgery, Consultation, CanalStats, FxStats, CidadeStats, IntlStats } from '@/lib/data-model';
 
 interface ResumoPaneProps {
   cir25: Surgery[];
@@ -15,31 +15,101 @@ interface ResumoPaneProps {
   canal26: CanalStats;
   fx25: FxStats;
   fx26: FxStats;
+  cidades25?: CidadeStats;
+  cidades26?: CidadeStats;
+  intl25?: IntlStats;
+  intl26?: IntlStats;
+  onTabChange?: (tab: string) => void;
 }
 
 const COLORS = ['#007AFF', '#5856D6', '#FF9500', '#28A745', '#FF3B30', '#AF52DE', '#FF6B35', '#00C7BE'];
 
-export default function ResumoPane({ cir25, cir26, cons25, cons26, canal25, canal26, fx25, fx26 }: ResumoPaneProps) {
+export default function ResumoPane({
+  cir25, cir26, cons25, cons26,
+  canal25, canal26, fx25, fx26,
+  cidades25 = {}, cidades26 = {},
+  intl25 = {}, intl26 = {},
+  onTabChange,
+}: ResumoPaneProps) {
   const [year, setYear] = useState<2025 | 2026>(new Date().getFullYear() >= 2026 ? 2026 : 2025);
 
-  const kpis     = computeKPIs(cir25, cir26, cons25, cons26);
-  const cir      = year === 2025 ? cir25   : cir26;
-  const cons     = year === 2025 ? cons25  : cons26;
-  const rev      = computeRevenueByMonth(cir);
-  const monthly  = computeMonthlyData(cir, cons);
-  const procs    = computeTopProcedures(cir);
+  const kpis      = computeKPIs(cir25, cir26, cons25, cons26);
+  const cir       = year === 2025 ? cir25  : cir26;
+  const cons      = year === 2025 ? cons25 : cons26;
+  const rev       = computeRevenueByMonth(cir);
+  const monthly   = computeMonthlyData(cir, cons);
+  const procs     = computeTopProcedures(cir);
   const canalData = year === 2025 ? canal25 : canal26;
   const fxData    = year === 2025 ? fx25    : fx26;
 
-  // Insights
-  const topProc = procs[0];
-  const totalRev = cir.reduce((s, c) => s + c.v, 0);
+  const totalRev  = cir.reduce((s, c) => s + c.v, 0);
   const avgTicket = cir.length > 0 ? totalRev / cir.length : 0;
   const conversion = cons.length > 0 ? (cir.length / cons.length * 100).toFixed(1) : '0';
+  const topProc   = procs[0];
+
+  // Funil summary (3 stages)
+  const funnelData = computeFunnelData(cons, cir);
+
+  // Geo summary — top cities from operated patients (both years merged)
+  const cidadesMerged: Record<string, number> = {};
+  for (const [k, v] of Object.entries(cidades25)) cidadesMerged[k] = (cidadesMerged[k] || 0) + v;
+  for (const [k, v] of Object.entries(cidades26)) cidadesMerged[k] = (cidadesMerged[k] || 0) + v;
+
+  // International: merge both years (keys = country names)
+  const intlMerged: Record<string, number> = {};
+  for (const [k, v] of Object.entries(intl25)) intlMerged[k] = (intlMerged[k] || 0) + v;
+  for (const [k, v] of Object.entries(intl26)) intlMerged[k] = (intlMerged[k] || 0) + v;
+  const intlEntries = Object.entries(intlMerged).sort(([,a],[,b]) => b - a);
+  const intlTotal   = intlEntries.reduce((s, [,v]) => s + v, 0);
+
+  const topCidades = Object.entries(cidadesMerged)
+    .filter(([k]) => k.toLowerCase() !== 'internacional')
+    .sort(([,a],[,b]) => b - a)
+    .slice(0, 5);
+
+  // Orçamentos summary — quick conversion snapshot for the selected year
+  function nameTokensOrc(name: string): string[] {
+    const stop = new Set(['dos','das','des','de','da','do','di','e']);
+    return name.toLowerCase().trim().normalize('NFD').replace(/[̀-ͯ]/g, '')
+      .split(/\s+/).filter(t => t.length > 2 && !stop.has(t));
+  }
+  function isSamePersonOrc(a: string, b: string): boolean {
+    const tokA = new Set(nameTokensOrc(a));
+    return nameTokensOrc(b).filter(t => tokA.has(t)).length >= 2;
+  }
+  const uniqueConsulted = (() => {
+    const seen: string[] = [];
+    for (const c of cons) {
+      if (!seen.some(n => isSamePersonOrc(n, c.p))) seen.push(c.p);
+    }
+    return seen.length;
+  })();
+  const uniqueOperated = (() => {
+    const seen: string[] = [];
+    for (const s of cir) {
+      if (!seen.some(n => isSamePersonOrc(n, s.p))) seen.push(s.p);
+    }
+    return seen.length;
+  })();
+  const potenciaisCount = (() => {
+    const cirNames = cir.map(s => s.p);
+    const seen: string[] = [];
+    for (const c of cons) {
+      if (cirNames.some(cn => isSamePersonOrc(cn, c.p))) continue;
+      if (!seen.some(n => isSamePersonOrc(n, c.p))) seen.push(c.p);
+    }
+    return seen.length;
+  })();
+  const conversionRate = uniqueConsulted > 0
+    ? Math.round((uniqueOperated / uniqueConsulted) * 100) : 0;
+
+  // Funil bar colors
+  const funnelColors = ['#007AFF', '#5856D6', '#28A745'];
+  const funnelMax = funnelData[0]?.value || 1;
 
   return (
     <div>
-      {/* Year segmented control */}
+      {/* Year toggle */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
         <h2 style={{ fontSize: '15px', fontWeight: 700, color: '#1D1D1F' }}>
           Visão Geral · {year}
@@ -55,10 +125,10 @@ export default function ResumoPane({ cir25, cir26, cons25, cons26, canal25, cana
         </div>
       </div>
 
-      {/* KPI row — 6 cards like original */}
+      {/* KPI row */}
       <KPICards kpis={kpis} year={year} />
 
-      {/* g2: monthly charts */}
+      {/* Monthly charts */}
       <div className="g2">
         <div className="card">
           <div className="card-ttl">Atendimentos por mês</div>
@@ -74,9 +144,8 @@ export default function ResumoPane({ cir25, cir26, cons25, cons26, canal25, cana
         </div>
       </div>
 
-      {/* g3: canal / faixa / ticket */}
+      {/* Canal / Faixa / Ticket */}
       <div className="g3">
-        {/* Tipo de cirurgia */}
         <div className="card">
           <div className="card-ttl">Tipos de cirurgia</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '4px' }}>
@@ -84,9 +153,7 @@ export default function ResumoPane({ cir25, cir26, cons25, cons26, canal25, cana
               <div key={procedure} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: COLORS[i % COLORS.length], flexShrink: 0 }} />
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: '11.5px', fontWeight: 600, color: '#1D1D1F', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {procedure}
-                  </div>
+                  <div style={{ fontSize: '11.5px', fontWeight: 600, color: '#1D1D1F', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{procedure}</div>
                   <div style={{ fontSize: '10.5px', color: '#86868B' }}>{count}× · {formatCurrency(revenue)}</div>
                 </div>
               </div>
@@ -95,7 +162,6 @@ export default function ResumoPane({ cir25, cir26, cons25, cons26, canal25, cana
           </div>
         </div>
 
-        {/* Canal */}
         <div className="card">
           <div className="card-ttl">Como os pacientes chegam</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '4px' }}>
@@ -117,7 +183,6 @@ export default function ResumoPane({ cir25, cir26, cons25, cons26, canal25, cana
           </div>
         </div>
 
-        {/* Faixa etária */}
         <div className="card">
           <div className="card-ttl">Faixa etária</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '4px' }}>
@@ -140,9 +205,8 @@ export default function ResumoPane({ cir25, cir26, cons25, cons26, canal25, cana
         </div>
       </div>
 
-      {/* g3: stats cards */}
+      {/* Stats cards */}
       <div className="g3">
-        {/* Ticket médio */}
         <div className="card">
           <div className="card-ttl">Valor médio por cirurgia</div>
           <div style={{ marginTop: '8px' }}>
@@ -155,7 +219,6 @@ export default function ResumoPane({ cir25, cir26, cons25, cons26, canal25, cana
           </div>
         </div>
 
-        {/* Conversão */}
         <div className="card">
           <div className="card-ttl">Taxa de conversão</div>
           <div style={{ marginTop: '8px' }}>
@@ -171,13 +234,12 @@ export default function ResumoPane({ cir25, cir26, cons25, cons26, canal25, cana
           </div>
         </div>
 
-        {/* Destaques */}
         <div className="card">
           <div className="card-ttl">Destaques</div>
           <div className="ins-list" style={{ marginTop: '4px' }}>
             {topProc && (
               <div className="ins">
-                <span>🏆</span>
+                <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#FFD700', flexShrink: 0, marginTop: 3 }} />
                 <div>
                   <strong>Proc. mais realizado:</strong> {topProc.procedure}
                   <br /><span style={{ color: '#86868B' }}>{topProc.count}× · {formatCurrency(topProc.revenue)}</span>
@@ -185,20 +247,159 @@ export default function ResumoPane({ cir25, cir26, cons25, cons26, canal25, cana
               </div>
             )}
             <div className="ins">
-              <span>📅</span>
-              <div>
-                <strong>Cirurgias em {year}:</strong> {cir.length}
-                <br /><span style={{ color: '#86868B' }}>Receita: {formatCurrency(totalRev)}</span>
-              </div>
+              <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#28A745', flexShrink: 0, marginTop: 3 }} />
+              <div><strong>Cirurgias em {year}:</strong> {cir.length}<br /><span style={{ color: '#86868B' }}>Receita: {formatCurrency(totalRev)}</span></div>
             </div>
             <div className="ins">
-              <span>📊</span>
-              <div>
-                <strong>Consultas em {year}:</strong> {cons.length}
-                <br /><span style={{ color: '#86868B' }}>Taxa de conversão: {conversion}%</span>
-              </div>
+              <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#007AFF', flexShrink: 0, marginTop: 3 }} />
+              <div><strong>Consultas em {year}:</strong> {cons.length}<br /><span style={{ color: '#86868B' }}>Taxa de conversão: {conversion}%</span></div>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* ── Funil Summary ──────────────────────────── */}
+      {funnelData.length > 0 && (
+        <div className="card" style={{ marginBottom: '14px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+            <div className="card-ttl" style={{ margin: 0 }}>Funil de conversão · {year}</div>
+            {onTabChange && (
+              <button
+                onClick={() => onTabChange('funil')}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#007AFF', fontSize: '0.78rem', fontWeight: 600, fontFamily: 'inherit', padding: 0 }}
+              >
+                Ver detalhes →
+              </button>
+            )}
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {funnelData.map((stage, i) => (
+              <div key={stage.label}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginBottom: '4px' }}>
+                  <span style={{ fontWeight: 600, color: '#1D1D1F' }}>{stage.label}</span>
+                  <span style={{ fontWeight: 700, color: funnelColors[i] }}>
+                    {stage.value} <span style={{ fontWeight: 400, color: '#86868B' }}>({stage.pct}%)</span>
+                  </span>
+                </div>
+                <div style={{ height: '7px', background: '#F2F2F7', borderRadius: '4px', overflow: 'hidden' }}>
+                  <div style={{
+                    height: '100%',
+                    width: `${Math.round((stage.value / funnelMax) * 100)}%`,
+                    background: funnelColors[i],
+                    borderRadius: '4px',
+                    transition: 'width 0.4s ease',
+                  }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Geo / Origem Summary ───────────────────── */}
+      {topCidades.length > 0 && (
+        <div className="card">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+            <div className="card-ttl" style={{ margin: 0 }}>Origem das pacientes operadas</div>
+            {onTabChange && (
+              <button
+                onClick={() => onTabChange('geo')}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#007AFF', fontSize: '0.78rem', fontWeight: 600, fontFamily: 'inherit', padding: 0 }}
+              >
+                Ver detalhes →
+              </button>
+            )}
+          </div>
+          <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', alignItems: 'flex-start' }}>
+            {/* Top domestic cities */}
+            <div style={{ flex: '1 1 180px', minWidth: '150px' }}>
+              {topCidades.map(([cidade, count], i) => {
+                const total = Object.values(cidadesMerged).reduce((a, b) => a + b, 0);
+                const pct = total > 0 ? Math.round(count / total * 100) : 0;
+                return (
+                  <div key={cidade} style={{ marginBottom: '8px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginBottom: '3px' }}>
+                      <span style={{ fontWeight: 600, color: '#1D1D1F' }}>{cidade}</span>
+                      <span style={{ fontWeight: 700, color: COLORS[i % COLORS.length] }}>
+                        {count} <span style={{ fontWeight: 400, color: '#86868B' }}>({pct}%)</span>
+                      </span>
+                    </div>
+                    <div style={{ height: '5px', background: '#F2F2F7', borderRadius: '3px', overflow: 'hidden' }}>
+                      <div style={{ height: '100%', width: `${pct}%`, background: COLORS[i % COLORS.length], borderRadius: '3px' }} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* International breakdown — per country */}
+            {intlTotal > 0 && (
+              <div style={{ flexShrink: 0, minWidth: '130px' }}>
+                <div style={{ fontSize: '11px', fontWeight: 700, color: '#86868B', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Internacional · {intlTotal}
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  {intlEntries.map(([country, count]) => (
+                    <div
+                      key={country}
+                      style={{
+                        padding: '6px 10px',
+                        background: '#F0F7FF',
+                        borderRadius: '8px',
+                        border: '1.5px solid #007AFF20',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        gap: '10px',
+                      }}
+                    >
+                      <span style={{ fontWeight: 600, fontSize: '0.78rem', color: '#1D1D1F' }}>{country}</span>
+                      <span style={{ fontWeight: 800, fontSize: '0.82rem', color: '#007AFF' }}>{count}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── Orçamentos Summary ────────────────────── */}
+      <div className="card">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+          <div className="card-ttl" style={{ margin: 0 }}>Conversão &amp; Orçamentos · {year}</div>
+          {onTabChange && (
+            <button
+              onClick={() => onTabChange('orcamentos')}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#007AFF', fontSize: '0.78rem', fontWeight: 600, fontFamily: 'inherit', padding: 0 }}
+            >
+              Ver detalhes →
+            </button>
+          )}
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', marginBottom: '12px' }}>
+          {[
+            { label: 'Pacientes atendidas', value: uniqueConsulted, color: '#007AFF', bg: '#E5F1FF' },
+            { label: 'Fecharam cirurgia',   value: uniqueOperated,  color: '#28A745', bg: '#E6F7EC' },
+            { label: 'Potenciais',          value: potenciaisCount, color: '#5856D6', bg: '#F0F0FF' },
+          ].map(({ label, value, color, bg }) => (
+            <div
+              key={label}
+              style={{
+                background: bg, borderRadius: '10px', padding: '12px 10px',
+                textAlign: 'center',
+              }}
+            >
+              <div style={{ fontSize: '1.5rem', fontWeight: 800, color, lineHeight: 1 }}>{value}</div>
+              <div style={{ fontSize: '0.68rem', color: '#86868B', fontWeight: 600, marginTop: '4px', lineHeight: 1.2 }}>{label}</div>
+            </div>
+          ))}
+        </div>
+        <div style={{ height: '8px', background: '#F2F2F7', borderRadius: '4px', overflow: 'hidden' }}>
+          <div style={{ height: '100%', width: `${conversionRate}%`, background: '#28A745', borderRadius: '4px', transition: 'width 0.4s ease' }} />
+        </div>
+        <div style={{ marginTop: '6px', fontSize: '11.5px', color: '#86868B', fontWeight: 500 }}>
+          Taxa de conversão: <strong style={{ color: '#28A745' }}>{conversionRate}%</strong>
         </div>
       </div>
     </div>

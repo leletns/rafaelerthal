@@ -43,6 +43,7 @@ export interface Patient {
 export type PipelineStage =
   | 'orc_enviado'
   | 'sinal_pago'
+  | 'followup'
   | 'cirurgia_agendada'
   | 'perdida';
 
@@ -159,12 +160,14 @@ export interface AmigoBirthdayItem {
   id: string;
   name: string;
   birthDate?: string;
+  birthdayDate?: string;  // YYYY-MM-DD: date of their birthday this year (for upcoming birthdays)
   phone?: string;
   [key: string]: unknown;
 }
 
 export interface AmigoLiveData {
-  attendances: AmigoAttendanceItem[];
-  birthdays:   AmigoBirthdayItem[];
-  syncedAt?:   string;
+  attendances:      AmigoAttendanceItem[];
+  birthdays:        AmigoBirthdayItem[];   // today's birthdays
+  upcomingBirthdays?: AmigoBirthdayItem[]; // next 14 days
+  syncedAt?:        string;
 }

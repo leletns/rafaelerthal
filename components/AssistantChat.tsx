@@ -9,25 +9,52 @@ interface Message {
   content: string;
 }
 
+interface AttachedFile {
+  base64: string;
+  mediaType: string;
+  name: string;
+}
+
 export default function AssistantChat() {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [attachedFile, setAttachedFile] = useState<AttachedFile | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result as string;
+      const base64 = dataUrl.split(',')[1];
+      setAttachedFile({ base64, mediaType: file.type, name: file.name });
+    };
+    reader.readAsDataURL(file);
+
+    // reset input so same file can be re-selected
+    if (fileRef.current) fileRef.current.value = '';
+  }
+
   async function sendMessage(e: React.FormEvent) {
     e.preventDefault();
     const text = input.trim();
-    if (!text || loading) return;
+    if ((!text && !attachedFile) || loading) return;
 
-    const newMessages: Message[] = [...messages, { role: 'user', content: text }];
+    const displayText = text || (attachedFile ? `📎 ${attachedFile.name}` : '');
+    const newMessages: Message[] = [...messages, { role: 'user', content: displayText }];
     setMessages(newMessages);
     setInput('');
+    const fileToSend = attachedFile;
+    setAttachedFile(null);
     setLoading(true);
 
     try {
@@ -39,8 +66,9 @@ export default function AssistantChat() {
           'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
-          message: text,
+          message: text || 'Analise o arquivo anexado.',
           history: messages,
+          attachment: fileToSend ? { base64: fileToSend.base64, mediaType: fileToSend.mediaType, name: fileToSend.name } : undefined,
         }),
       });
 
@@ -151,7 +179,7 @@ export default function AssistantChat() {
               {messages.length === 0 && (
                 <div>
                   <div style={{ textAlign: 'center', color: '#86868B', fontSize: '0.8rem', marginBottom: '16px' }}>
-                    Olá! Pergunte qualquer coisa sobre seus dados clínicos.
+                    Olá! Pergunte qualquer coisa sobre seus dados clínicos, ou anexe um arquivo 📎
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     {suggestedQuestions.map((q) => (
@@ -213,11 +241,72 @@ export default function AssistantChat() {
               <div ref={messagesEndRef} />
             </div>
 
+            {/* Attached file preview */}
+            {attachedFile && (
+              <div style={{
+                padding: '6px 16px',
+                borderTop: '1px solid #E5E5EA',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                background: '#F9F9FB',
+              }}>
+                <span style={{ fontSize: '14px' }}>📎</span>
+                <span style={{ flex: 1, fontSize: '0.75rem', color: '#1D1D1F', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {attachedFile.name}
+                </span>
+                <button
+                  onClick={() => setAttachedFile(null)}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#AEAEB2', fontSize: '12px', padding: '2px' }}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = '#FF3B30')}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = '#AEAEB2')}
+                >✕</button>
+              </div>
+            )}
+
             {/* Input */}
             <form
               onSubmit={sendMessage}
-              style={{ padding: '12px 16px', borderTop: '1px solid #E5E5EA', display: 'flex', gap: '8px' }}
+              style={{ padding: '12px 16px', borderTop: '1px solid #E5E5EA', display: 'flex', gap: '8px', alignItems: 'center' }}
             >
+              {/* Hidden file input */}
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/*,application/pdf"
+                style={{ display: 'none' }}
+                onChange={handleFileSelect}
+              />
+
+              {/* Paperclip button */}
+              <button
+                type="button"
+                onClick={() => fileRef.current?.click()}
+                title="Anexar arquivo"
+                style={{
+                  padding: '8px',
+                  borderRadius: '8px',
+                  border: '1.5px solid #E5E5EA',
+                  background: attachedFile ? '#E5F1FF' : '#F9F9FB',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: attachedFile ? '#007AFF' : '#86868B',
+                  flexShrink: 0,
+                  transition: 'all 0.15s',
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = '#E5F1FF'; e.currentTarget.style.color = '#007AFF'; }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = attachedFile ? '#E5F1FF' : '#F9F9FB';
+                  e.currentTarget.style.color = attachedFile ? '#007AFF' : '#86868B';
+                }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+                </svg>
+              </button>
+
               <input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
@@ -236,13 +325,13 @@ export default function AssistantChat() {
               />
               <button
                 type="submit"
-                disabled={loading || !input.trim()}
+                disabled={loading || (!input.trim() && !attachedFile)}
                 style={{
                   padding: '10px 14px',
                   borderRadius: '10px',
-                  background: loading || !input.trim() ? '#99C9FF' : '#007AFF',
+                  background: (loading || (!input.trim() && !attachedFile)) ? '#99C9FF' : '#007AFF',
                   border: 'none',
-                  cursor: loading || !input.trim() ? 'not-allowed' : 'pointer',
+                  cursor: (loading || (!input.trim() && !attachedFile)) ? 'not-allowed' : 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',

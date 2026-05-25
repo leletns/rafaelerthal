@@ -12,72 +12,178 @@ interface PacientesPaneProps {
   amigoAttendances?: AmigoAttendanceItem[];
 }
 
+type FilterType = 'all' | 'surgery' | 'consult';
+
+const CHIP_COLORS: Record<FilterType, { active: string; bg: string; activeBg: string }> = {
+  all:     { active: '#007AFF', bg: '#F2F2F7', activeBg: '#E5F1FF' },
+  surgery: { active: '#28A745', bg: '#F2F2F7', activeBg: '#E6F7EC' },
+  consult: { active: '#5856D6', bg: '#F2F2F7', activeBg: '#EEECFF' },
+};
+
 export default function PacientesPane({ patients, amigoAttendances }: PacientesPaneProps) {
-  const [search, setSearch] = useState('');
+  const [search, setSearch]           = useState('');
   const [filterCanal, setFilterCanal] = useState('');
-  const [selected, setSelected] = useState<Patient | null>(null);
+  const [filterType, setFilterType]   = useState<FilterType>('all');
+  const [selected, setSelected]       = useState<Patient | null>(null);
 
-  const canais = Array.from(new Set(patients.filter((p) => p.canal).map((p) => p.canal!))).sort();
+  const canais = Array.from(new Set(patients.filter(p => p.canal).map(p => p.canal!))).sort();
 
-  const filtered = patients.filter((p) => {
-    const matchSearch = !search ||
-      p.name.toLowerCase().includes(search.toLowerCase()) ||
+  // Type filter first, then canal, then search
+  const byType =
+    filterType === 'surgery' ? patients.filter(p => p.surgeries.length > 0) :
+    filterType === 'consult' ? patients.filter(p => p.surgeries.length === 0 && p.consultations.length > 0) :
+    patients;
+
+  const byCanal = byType.filter(p => !filterCanal || p.canal === filterCanal);
+
+  const filtered = byCanal.filter(p => {
+    if (!search) return true;
+    const q = search.toLowerCase();
+    return (
+      p.name.toLowerCase().includes(q) ||
       p.phone.includes(search) ||
-      (p.city || '').toLowerCase().includes(search.toLowerCase());
-    const matchCanal = !filterCanal || p.canal === filterCanal;
-    return matchSearch && matchCanal;
+      (p.city || '').toLowerCase().includes(q)
+    );
   });
 
-  const withSurgeries = filtered.filter((p) => p.surgeries.length > 0);
-  const consultsOnly = filtered.filter((p) => p.surgeries.length === 0 && p.consultations.length > 0);
+  // Counts based on full list (no canal / no search filter so chips are stable)
+  const countAll     = patients.length;
+  const countSurgery = patients.filter(p => p.surgeries.length > 0).length;
+  const countConsult = patients.filter(p => p.surgeries.length === 0 && p.consultations.length > 0).length;
+
+  const typeOptions: { key: FilterType; label: string; count: number }[] = [
+    { key: 'all',     label: 'Todos',       count: countAll },
+    { key: 'surgery', label: 'Com cirurgia', count: countSurgery },
+    { key: 'consult', label: 'Só consulta',  count: countConsult },
+  ];
+
+  // Shared chip style factory
+  function chipStyle(active: boolean, color: string, activeBg: string): React.CSSProperties {
+    return {
+      display: 'inline-flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      padding: '9px 16px',
+      borderRadius: '12px',
+      border: `1.5px solid ${active ? color : 'transparent'}`,
+      background: active ? activeBg : '#F2F2F7',
+      cursor: 'pointer',
+      fontFamily: 'inherit',
+      transition: 'all 0.15s',
+      gap: '2px',
+      whiteSpace: 'nowrap' as const,
+    };
+  }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
       <PatientProfileModal patient={selected} onClose={() => setSelected(null)} amigoAttendances={amigoAttendances} />
 
-      {/* Controls */}
-      <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
-        <input
-          type="text"
-          placeholder="Buscar paciente, telefone ou cidade..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          style={{
-            flex: 1,
-            minWidth: '200px',
-            padding: '8px 14px',
-            borderRadius: '10px',
-            border: '1.5px solid #E5E5EA',
-            fontSize: '0.85rem',
-            fontFamily: 'inherit',
-            background: '#F9F9FB',
-          }}
-        />
-        <select
-          value={filterCanal}
-          onChange={(e) => setFilterCanal(e.target.value)}
-          style={{ padding: '8px 12px', borderRadius: '10px', border: '1.5px solid #E5E5EA', fontSize: '0.85rem', fontFamily: 'inherit', background: '#F9F9FB' }}
-        >
-          <option value="">Todos os canais</option>
-          {canais.map((c) => <option key={c} value={c}>{c}</option>)}
-        </select>
+      {/* ── TIPO DE PACIENTE ── */}
+      <div style={{ display: 'flex', gap: '8px' }}>
+        {typeOptions.map(({ key, label, count }) => {
+          const active  = filterType === key;
+          const { active: color, activeBg } = CHIP_COLORS[key];
+          return (
+            <button
+              key={key}
+              onClick={() => setFilterType(key)}
+              style={chipStyle(active, color, activeBg)}
+            >
+              <span style={{
+                fontSize: '1.1rem',
+                fontWeight: 800,
+                color: active ? color : '#AEAEB2',
+                lineHeight: 1,
+              }}>
+                {count}
+              </span>
+              <span style={{
+                fontSize: '0.7rem',
+                fontWeight: active ? 700 : 500,
+                color: active ? color : '#86868B',
+                lineHeight: 1,
+              }}>
+                {label}
+              </span>
+            </button>
+          );
+        })}
       </div>
 
-      {/* Stats */}
-      <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-        {[
-          { label: 'Total de pacientes', value: String(filtered.length), color: '#007AFF' },
-          { label: 'Com cirurgia', value: String(withSurgeries.length), color: '#28A745' },
-          { label: 'Só consulta', value: String(consultsOnly.length), color: '#FF9500' },
-        ].map(({ label, value, color }) => (
-          <div key={label} style={{ background: `${color}10`, border: `1.5px solid ${color}30`, borderRadius: '10px', padding: '10px 14px', minWidth: '100px' }}>
-            <div style={{ fontSize: '1.2rem', fontWeight: 800, color }}>{value}</div>
-            <div style={{ fontSize: '0.7rem', color: '#86868B', fontWeight: 600, marginTop: '2px' }}>{label}</div>
-          </div>
-        ))}
-      </div>
+      {/* ── CANAL — mesma estética de chip ── */}
+      {canais.length > 0 && (
+        <div style={{
+          display: 'flex',
+          gap: '6px',
+          flexWrap: 'wrap',
+        }}>
+          {/* "Todos" canal chip */}
+          <button
+            onClick={() => setFilterCanal('')}
+            style={{
+              padding: '6px 14px',
+              borderRadius: '20px',
+              border: `1.5px solid ${!filterCanal ? '#007AFF' : 'transparent'}`,
+              background: !filterCanal ? '#E5F1FF' : '#F2F2F7',
+              color: !filterCanal ? '#007AFF' : '#86868B',
+              fontWeight: !filterCanal ? 700 : 500,
+              fontSize: '0.78rem',
+              fontFamily: 'inherit',
+              cursor: 'pointer',
+              transition: 'all 0.15s',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            Todos os canais
+          </button>
+          {canais.map(canal => {
+            const active = filterCanal === canal;
+            return (
+              <button
+                key={canal}
+                onClick={() => setFilterCanal(active ? '' : canal)}
+                style={{
+                  padding: '6px 14px',
+                  borderRadius: '20px',
+                  border: `1.5px solid ${active ? '#007AFF' : 'transparent'}`,
+                  background: active ? '#E5F1FF' : '#F2F2F7',
+                  color: active ? '#007AFF' : '#86868B',
+                  fontWeight: active ? 700 : 500,
+                  fontSize: '0.78rem',
+                  fontFamily: 'inherit',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {canal}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
-      {/* Table */}
+      {/* ── BUSCA ── */}
+      <input
+        type="text"
+        placeholder="Buscar por nome, telefone ou cidade…"
+        value={search}
+        onChange={e => setSearch(e.target.value)}
+        style={{
+          width: '100%',
+          padding: '9px 14px',
+          borderRadius: '10px',
+          border: '1.5px solid #E5E5EA',
+          fontSize: '0.85rem',
+          fontFamily: 'inherit',
+          background: '#F9F9FB',
+          outline: 'none',
+          boxSizing: 'border-box',
+        }}
+      />
+
+      {/* ── TABELA ── */}
       <div style={{ background: '#fff', borderRadius: '18px', boxShadow: '0 2px 16px rgba(0,0,0,0.07)', overflow: 'hidden' }}>
         <div className="ts">
           <table>
@@ -96,90 +202,77 @@ export default function PacientesPane({ patients, amigoAttendances }: PacientesP
             <tbody>
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={8} style={{ textAlign: 'center', color: '#86868B', padding: '32px' }}>
+                  <td colSpan={8} style={{ textAlign: 'center', color: '#86868B', padding: '40px 16px', fontSize: '0.9rem' }}>
                     Nenhum paciente encontrado
                   </td>
                 </tr>
               ) : (
-                filtered.map((p) => {
+                filtered.map(p => {
                   const revenue = p.surgeries.reduce((acc, s) => acc + s.v, 0);
-                  const hasSurgery = p.surgeries.length > 0;
+                  const hasSurg = p.surgeries.length > 0;
                   return (
                     <tr key={p.id}>
                       <td>
                         <button
                           onClick={() => setSelected(p)}
                           style={{
-                            background: 'none',
-                            border: 'none',
-                            cursor: 'pointer',
-                            fontWeight: 700,
-                            color: '#007AFF',
-                            fontSize: '13px',
-                            fontFamily: 'inherit',
-                            padding: 0,
-                            textAlign: 'left',
+                            background: 'none', border: 'none', cursor: 'pointer',
+                            fontWeight: 700, color: '#007AFF', fontSize: '13px',
+                            fontFamily: 'inherit', padding: 0, textAlign: 'left',
                           }}
                         >
                           {p.name}
                         </button>
-                        {hasSurgery && (
+                        {hasSurg && (
                           <div style={{ fontSize: '10px', color: '#86868B', marginTop: '2px' }}>
-                            {p.surgeries.map(s => s.c).slice(0,2).join(', ')}
+                            {p.surgeries.map(s => s.c).slice(0, 2).join(', ')}
                             {p.surgeries.length > 2 && ` +${p.surgeries.length - 2}`}
                           </div>
                         )}
                       </td>
                       <td>
-                        <span style={{ color: '#86868B', fontSize: '12px', fontFamily: 'monospace' }}>{p.phone || '—'}</span>
+                        <span style={{ color: '#86868B', fontSize: '12px', fontFamily: 'monospace' }}>
+                          {p.phone || '—'}
+                        </span>
                       </td>
                       <td style={{ color: '#86868B', fontSize: '12px' }}>{p.city || '—'}</td>
                       <td>
-                        {p.canal ? (
-                          <span className="badge badge-blue">{p.canal}</span>
-                        ) : <span style={{ color: '#AEAEB2' }}>—</span>}
+                        {p.canal
+                          ? <span className="badge badge-blue">{p.canal}</span>
+                          : <span style={{ color: '#AEAEB2' }}>—</span>}
                       </td>
                       <td style={{ textAlign: 'center' }}>
-                        {hasSurgery ? (
+                        {hasSurg ? (
                           <span style={{
-                            display: 'inline-block',
-                            background: '#E6F7EC',
-                            color: '#28A745',
-                            fontWeight: 800,
-                            fontSize: '12px',
-                            borderRadius: '8px',
-                            padding: '2px 8px',
-                            minWidth: '24px',
+                            display: 'inline-block', background: '#E6F7EC', color: '#28A745',
+                            fontWeight: 800, fontSize: '12px', borderRadius: '8px', padding: '2px 8px',
                           }}>
                             {p.surgeries.length}
                           </span>
-                        ) : (
-                          <span style={{ color: '#AEAEB2' }}>—</span>
-                        )}
+                        ) : <span style={{ color: '#AEAEB2' }}>—</span>}
                       </td>
                       <td style={{ textAlign: 'center' }}>
                         {p.consultations.length > 0 ? (
                           <span style={{
-                            display: 'inline-block',
-                            background: '#EEECFF',
-                            color: '#5856D6',
-                            fontWeight: 700,
-                            fontSize: '12px',
-                            borderRadius: '8px',
-                            padding: '2px 8px',
-                            minWidth: '24px',
+                            display: 'inline-block', background: '#EEECFF', color: '#5856D6',
+                            fontWeight: 700, fontSize: '12px', borderRadius: '8px', padding: '2px 8px',
                           }}>
                             {p.consultations.length}
                           </span>
                         ) : <span style={{ color: '#AEAEB2' }}>—</span>}
                       </td>
-                      <td style={{ fontWeight: 700, color: revenue > 0 ? '#28A745' : '#AEAEB2', whiteSpace: 'nowrap', fontSize: '13px' }}>
+                      <td style={{
+                        fontWeight: 700,
+                        color: revenue > 0 ? '#28A745' : '#AEAEB2',
+                        whiteSpace: 'nowrap',
+                        fontSize: '13px',
+                      }}>
                         {revenue > 0 ? formatCurrency(revenue) : '—'}
                       </td>
                       <td>
-                        <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                           {p.phone && <WhatsAppButton phone={p.phone} size="sm" variant="icon" />}
-                          <FollowUpScheduler patientId={p.id} patientName={p.name} />
+                          <FollowUpScheduler patientName={p.name} phone={p.phone} />
                         </div>
                       </td>
                     </tr>
@@ -189,6 +282,14 @@ export default function PacientesPane({ patients, amigoAttendances }: PacientesP
             </tbody>
           </table>
         </div>
+        {filtered.length > 0 && (
+          <div style={{ padding: '10px 18px', fontSize: '0.75rem', color: '#86868B', borderTop: '1px solid #F2F2F7' }}>
+            {filtered.length} paciente{filtered.length !== 1 ? 's' : ''} exibido{filtered.length !== 1 ? 's' : ''}
+            {filterType !== 'all' && ` · ${typeOptions.find(o => o.key === filterType)?.label}`}
+            {filterCanal && ` · ${filterCanal}`}
+            {search && ` · "${search}"`}
+          </div>
+        )}
       </div>
     </div>
   );

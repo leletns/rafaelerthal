@@ -26,6 +26,33 @@ function normalizeAttendance(a: Record<string, unknown>) {
   };
 }
 
+// -------------------------------------------------------
+// Normalize AmigoClinic field names to our data model
+// -------------------------------------------------------
+function normalizeBirthday(p: Record<string, unknown>, birthdayDate?: string) {
+  return {
+    id:           String(p.id ?? ''),
+    name:         String(p.name ?? p.patient_name ?? ''),
+    phone:        String(p.contact_cellphone ?? p.phone ?? p.cellphone ?? ''),
+    birthDate:    String(p.born ?? p.birth_date ?? p.birthDate ?? ''),
+    birthdayDate: birthdayDate ?? null,
+  };
+}
+
+function normalizeAttendance(a: Record<string, unknown>) {
+  return {
+    id:          String(a.id ?? ''),
+    patientId:   String(a.patient_id ?? a.patientId ?? ''),
+    patientName: String(a.patient_name ?? a.patientName ?? a.name ?? ''),
+    doctorName:  String(a.doctor_name  ?? a.doctorName  ?? ''),
+    date:        String(a.date ?? a.scheduled_date ?? ''),
+    time:        String(a.time ?? a.scheduled_time ?? a.hour ?? ''),
+    procedure:   String(a.procedure ?? a.event_name ?? a.type ?? ''),
+    status:      String(a.status ?? ''),
+    notes:       String(a.notes ?? a.observation ?? ''),
+  };
+}
+
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get('Authorization');
   const token = authHeader?.replace('Bearer ', '');
@@ -47,62 +74,48 @@ export async function GET(req: NextRequest) {
   const yearStart = `${new Date().getFullYear()}-01-01`;
   const today = new Date().toISOString().split('T')[0];
 
-  const [atts, birthdays, placesList, eventsList, doctorsList, calendarSlots] = await Promise.allSettled([
+  // Build date range for next 15 days (today + 14)
+  const dateRange = Array.from({ length: 15 }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() + i);
+    return d.toISOString().split('T')[0];
+  });
+
+  const [atts, todayBdays, placesList, eventsList, ...upcomingBdayResults] = await Promise.allSettled([
     attendances.list({ from: yearStart }),
     patients.birthday(today),
     places.list(),
     events.list(),
-    doctors.list(),
-    calendar.slots({ date: today }),
+    ...dateRange.slice(1).map(d => patients.birthday(d)), // days 1–14 ahead
   ]);
 
-  // Next 7 days of calendar slots
-  const next7Days: string[] = [];
-  for (let i = 1; i <= 7; i++) {
-    next7Days.push(new Date(Date.now() + i * 86400000).toISOString().split('T')[0]);
-  }
-  const futureCalendar = await Promise.allSettled(
-    next7Days.map(d => calendar.slots({ date: d }))
-  );
-  const allCalendarSlots = [
-    ...(calendarSlots.status === 'fulfilled' ? (calendarSlots.value as unknown[]) : []),
-    ...futureCalendar.flatMap(r => r.status === 'fulfilled' ? (r.value as unknown[]) : []),
-  ];
-
-  const rawAtts  = atts.status === 'fulfilled'      ? (atts.value      as Record<string, unknown>[]) : [];
-  const rawBdays = birthdays.status === 'fulfilled' ? (birthdays.value as Record<string, unknown>[]) : [];
-
-  const normalizedAtts  = Array.isArray(rawAtts)  ? rawAtts.map(normalizeAttendance)  : [];
-  const normalizedBdays = Array.isArray(rawBdays) ? rawBdays.map(normalizeBirthday) : [];
-
-  // Today filter
-  const todayAtts = normalizedAtts.filter(a => {
-    if (!a.date) return false;
-    const d = String(a.date);
-    if (d.startsWith(today)) return true;
-    const parts = d.split('/');
-    if (parts.length === 3) {
-      return `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}` === today;
-    }
-    return false;
-  });
+  // Flatten upcoming birthdays (days 1-14)
+  const upcomingBirthdays = upcomingBdayResults
+    .flatMap((r, i) =>
+      r.status === 'fulfilled'
+        ? (r.value as Record<string, unknown>[]).map(p => normalizeBirthday(p, dateRange[i + 1]))
+        : []
+    );
 
   return NextResponse.json({
     success: true,
     timestamp: new Date().toISOString(),
     data: {
-      attendances:      normalizedAtts,
-      todayAttendances: todayAtts,
-      birthdays:        normalizedBdays,
-      places:           placesList.status === 'fulfilled'  ? placesList.value  : [],
-      events:           eventsList.status === 'fulfilled'  ? eventsList.value  : [],
-      doctors:          doctorsList.status === 'fulfilled' ? doctorsList.value : [],
-      calendarSlots:    allCalendarSlots,
+      attendances: atts.status === 'fulfilled'
+        ? (atts.value as Record<string, unknown>[]).map(a => normalizeAttendance(a))
+        : [],
+      birthdays: todayBdays.status === 'fulfilled'
+        ? (todayBdays.value as Record<string, unknown>[]).map(p => normalizeBirthday(p, today))
+        : [],
+      upcomingBirthdays,
+      places:  placesList.status === 'fulfilled' ? placesList.value : [],
+      events:  eventsList.status === 'fulfilled' ? eventsList.value : [],
     },
     errors: {
-      attendances: atts.status === 'rejected'         ? (atts.reason      as Error).message : null,
-      birthdays:   birthdays.status === 'rejected'    ? (birthdays.reason as Error).message : null,
-      calendar:    calendarSlots.status === 'rejected' ? (calendarSlots.reason as Error).message : null,
+      attendances: atts.status === 'rejected' ? (atts.reason as Error).message : null,
+      birthdays:   todayBdays.status === 'rejected' ? (todayBdays.reason as Error).message : null,
+      places:      placesList.status === 'rejected' ? (placesList.reason as Error).message : null,
+      events:      eventsList.status === 'rejected' ? (eventsList.reason as Error).message : null,
     },
   });
 }

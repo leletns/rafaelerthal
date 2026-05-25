@@ -2,240 +2,380 @@
 
 import { useState, useEffect } from 'react';
 
-export interface FollowUp {
-  patientId: string;
+interface ScheduledFollowUp {
+  id: string;
   patientName: string;
-  date: string;      // YYYY-MM-DD
-  time: string;      // HH:MM (24h internally, display as AM/PM)
-  note: string;
-  createdAt: string;
-  done: boolean;
+  phone: string;
+  date: string;     // YYYY-MM-DD
+  hour: string;     // "09" – "23"
+  period: 'AM' | 'PM';
+  note?: string;
 }
 
-const STORAGE_KEY = 'followups_v2';
+const STORAGE_KEY = 'followup_scheduler_v1';
 
-function loadFollowUps(): FollowUp[] {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch { return []; }
-}
-function saveFollowUps(fs: FollowUp[]) {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(fs)); } catch {}
-}
-
-function to12h(time24: string): string {
-  if (!time24) return '';
-  const [hStr, mStr] = time24.split(':');
-  const h = parseInt(hStr, 10);
-  const m = mStr ?? '00';
-  const period = h >= 12 ? 'PM' : 'AM';
-  const h12 = h % 12 || 12;
-  return `${h12}:${m} ${period}`;
+function loadAll(): ScheduledFollowUp[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '[]') as ScheduledFollowUp[];
+  } catch { return []; }
 }
 
-function formatDateBR(dateStr: string): string {
-  if (!dateStr) return '';
-  const [y, m, d] = dateStr.split('-');
-  return `${d}/${m}/${y}`;
+function saveAll(items: ScheduledFollowUp[]) {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+}
+
+const WEEKDAYS = ['D','S','T','Q','Q','S','S'];
+const MONTH_NAMES_PT = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+interface MiniCalendarProps {
+  value: string; // YYYY-MM-DD
+  onChange: (date: string) => void;
+}
+
+function MiniCalendar({ value, onChange }: MiniCalendarProps) {
+  const [viewYear, setViewYear] = useState(() => {
+    if (value) return parseInt(value.split('-')[0]);
+    return new Date().getFullYear();
+  });
+  const [viewMonth, setViewMonth] = useState(() => {
+    if (value) return parseInt(value.split('-')[1]) - 1;
+    return new Date().getMonth();
+  });
+
+  const today = new Date();
+  const todayStr = today.toISOString().split('T')[0];
+
+  const firstDay = new Date(viewYear, viewMonth, 1).getDay();
+  const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+
+  function prevMonth() {
+    if (viewMonth === 0) { setViewMonth(11); setViewYear(y => y - 1); }
+    else setViewMonth(m => m - 1);
+  }
+  function nextMonth() {
+    if (viewMonth === 11) { setViewMonth(0); setViewYear(y => y + 1); }
+    else setViewMonth(m => m + 1);
+  }
+
+  const cells: (number | null)[] = [];
+  for (let i = 0; i < firstDay; i++) cells.push(null);
+  for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+
+  return (
+    <div style={{ userSelect: 'none' }}>
+      {/* Month nav */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+        <button
+          type="button"
+          onClick={prevMonth}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#86868B', fontSize: '14px', padding: '2px 6px', borderRadius: '6px' }}
+        >‹</button>
+        <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#1D1D1F' }}>
+          {MONTH_NAMES_PT[viewMonth]} {viewYear}
+        </span>
+        <button
+          type="button"
+          onClick={nextMonth}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#86868B', fontSize: '14px', padding: '2px 6px', borderRadius: '6px' }}
+        >›</button>
+      </div>
+
+      {/* Day headers */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '1px', marginBottom: '2px' }}>
+        {WEEKDAYS.map((d, i) => (
+          <div key={i} style={{ textAlign: 'center', fontSize: '0.6rem', fontWeight: 700, color: '#AEAEB2', padding: '2px 0' }}>{d}</div>
+        ))}
+      </div>
+
+      {/* Day cells */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '1px' }}>
+        {cells.map((day, idx) => {
+          if (day === null) return <div key={idx} />;
+          const dateStr = `${viewYear}-${String(viewMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+          const isSelected = dateStr === value;
+          const isToday = dateStr === todayStr;
+          const isPast = dateStr < todayStr;
+          return (
+            <button
+              key={idx}
+              type="button"
+              onClick={() => onChange(dateStr)}
+              style={{
+                padding: '4px 0',
+                borderRadius: '6px',
+                border: 'none',
+                cursor: isPast ? 'default' : 'pointer',
+                background: isSelected ? '#007AFF' : isToday ? '#E5F1FF' : 'none',
+                color: isSelected ? '#fff' : isPast ? '#AEAEB2' : isToday ? '#007AFF' : '#1D1D1F',
+                fontSize: '0.72rem',
+                fontWeight: isSelected || isToday ? 700 : 400,
+                textAlign: 'center',
+                transition: 'background 0.1s',
+              }}
+            >
+              {day}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
 }
 
 interface FollowUpSchedulerProps {
-  patientId: string;
   patientName: string;
+  phone?: string;
 }
 
-export default function FollowUpScheduler({ patientId, patientName }: FollowUpSchedulerProps) {
+export default function FollowUpScheduler({ patientName, phone = '' }: FollowUpSchedulerProps) {
   const [open, setOpen] = useState(false);
-  const [followUps, setFollowUps] = useState<FollowUp[]>([]);
-  const [date, setDate] = useState('');
-  const [time, setTime] = useState('09:00');
+  const [items, setItems] = useState<ScheduledFollowUp[]>([]);
+  const [date, setDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [showCalendar, setShowCalendar] = useState(true);
+  const [hour, setHour] = useState('09');
+  const [period, setPeriod] = useState<'AM' | 'PM'>('AM');
   const [note, setNote] = useState('');
+  const [saved, setSaved] = useState(false);
 
+  // Load from localStorage
   useEffect(() => {
-    setFollowUps(loadFollowUps());
-  }, [open]);
+    setItems(loadAll().filter(i => i.patientName === patientName));
+  }, [patientName]);
 
-  const myFollowUps = followUps
-    .filter(f => f.patientId === patientId && !f.done)
-    .sort((a, b) => a.date.localeCompare(b.date));
+  const myItems = items.filter(i => i.patientName === patientName);
+  const hasScheduled = myItems.length > 0;
 
-  const nextFollowUp = myFollowUps[0];
-
-  // Check if due today or overdue
-  const todayStr = new Date().toISOString().split('T')[0];
-  const isDue = nextFollowUp && nextFollowUp.date <= todayStr;
-  const isOverdue = nextFollowUp && nextFollowUp.date < todayStr;
-
-  function handleSave() {
-    if (!date) return;
-    const all = loadFollowUps();
-    const newFU: FollowUp = {
-      patientId,
-      patientName,
-      date,
-      time,
-      note,
-      createdAt: new Date().toISOString(),
-      done: false,
-    };
-    const updated = [newFU, ...all];
-    saveFollowUps(updated);
-    setFollowUps(updated);
-    setDate('');
-    setTime('09:00');
-    setNote('');
-    setOpen(false);
+  function handleDatePick(d: string) {
+    setDate(d);
+    setShowCalendar(false); // collapse calendar on selection
   }
 
-  function handleDone(fu: FollowUp) {
-    const all = loadFollowUps().map(f =>
-      f.patientId === fu.patientId && f.date === fu.date && f.time === fu.time
-        ? { ...f, done: true }
-        : f
-    );
-    saveFollowUps(all);
-    setFollowUps(all);
+  async function handleSave() {
+    const id = `fu_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+    const newItem: ScheduledFollowUp = { id, patientName, phone, date, hour, period, note: note.trim() || undefined };
+    const all = loadAll().filter(i => !(i.patientName === patientName));
+    all.push(newItem);
+    saveAll(all);
+    setItems([newItem]);
+    setSaved(true);
+
+    // ── Browser notification ────────────────────────────────────
+    if ('Notification' in window) {
+      const perm = await Notification.requestPermission();
+      if (perm === 'granted') {
+        // Immediate confirmation
+        const dateFormatted = date.split('-').reverse().join('/');
+        new Notification('⏰ Follow-up agendado!', {
+          body: `${patientName} — ${dateFormatted} às ${hour}h ${period}${newItem.note ? ' · ' + newItem.note : ''}`,
+          tag: `followup_confirm_${id}`,
+        });
+
+        // If scheduled for today, fire a timed notification at the exact time
+        const todayIso = new Date().toISOString().split('T')[0];
+        if (date === todayIso) {
+          let h24 = parseInt(hour, 10);
+          if (period === 'PM' && h24 !== 12) h24 += 12;
+          if (period === 'AM' && h24 === 12) h24 = 0;
+          const scheduledMs = new Date();
+          scheduledMs.setHours(h24, 0, 0, 0);
+          const delay = scheduledMs.getTime() - Date.now();
+          if (delay > 0) {
+            setTimeout(() => {
+              new Notification('⏰ Follow-up agora!', {
+                body: `${patientName}${newItem.note ? ' — ' + newItem.note : ''}`,
+                tag: `followup_due_${id}`,
+              });
+            }, delay);
+          }
+        }
+      }
+    }
+    // ─────────────────────────────────────────────────────────────
+
+    setTimeout(() => {
+      setSaved(false);
+      setOpen(false);
+    }, 800);
+  }
+
+  function handleDelete(id: string) {
+    const all = loadAll().filter(i => i.id !== id);
+    saveAll(all);
+    setItems(all.filter(i => i.patientName === patientName));
+  }
+
+  // Format date for display
+  function formatDate(d: string) {
+    const parts = d.split('-');
+    if (parts.length !== 3) return d;
+    return `${parts[2]}/${parts[1]}/${parts[0]}`;
   }
 
   return (
-    <>
-      {/* Trigger button */}
+    <div style={{ position: 'relative', display: 'inline-block' }}>
+      {/* ⏰ trigger button */}
       <button
-        onClick={() => setOpen(true)}
-        title="Agendar retorno"
+        onClick={() => { setOpen(o => !o); setShowCalendar(true); }}
+        title="Agendar follow-up"
         style={{
-          background: nextFollowUp ? (isOverdue ? '#FFE5E3' : isDue ? '#FFF3E0' : '#E6F7EC') : '#F2F2F7',
-          border: 'none',
-          borderRadius: '8px',
-          padding: '5px 8px',
+          background: hasScheduled ? '#E5F1FF' : 'none',
+          border: hasScheduled ? '1.5px solid #007AFF40' : 'none',
           cursor: 'pointer',
-          fontSize: '13px',
-          fontWeight: 700,
-          color: nextFollowUp ? (isOverdue ? '#FF3B30' : isDue ? '#FF9500' : '#28A745') : '#86868B',
+          padding: '4px 6px',
+          borderRadius: '7px',
+          color: hasScheduled ? '#007AFF' : '#AEAEB2',
           display: 'flex',
           alignItems: 'center',
-          gap: '4px',
-          whiteSpace: 'nowrap',
-          transition: 'all .15s',
+          gap: '3px',
+          fontSize: '14px',
+          transition: 'all 0.15s',
+        }}
+        onMouseEnter={(e) => { e.currentTarget.style.background = '#E5F1FF'; e.currentTarget.style.color = '#007AFF'; }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = hasScheduled ? '#E5F1FF' : 'none';
+          e.currentTarget.style.color = hasScheduled ? '#007AFF' : '#AEAEB2';
         }}
       >
         ⏰
-        {nextFollowUp && (
-          <span style={{ fontSize: '10px' }}>
-            {formatDateBR(nextFollowUp.date)} {to12h(nextFollowUp.time)}
+        {hasScheduled && (
+          <span style={{ fontSize: '10px', fontWeight: 700, lineHeight: 1 }}>
+            {myItems[0].date.slice(5).replace('-', '/')}
           </span>
         )}
       </button>
 
-      {/* Modal */}
+      {/* Dropdown popover */}
       {open && (
-        <div
-          onClick={(e) => { if (e.target === e.currentTarget) setOpen(false); }}
-          style={{
-            position: 'fixed', inset: 0, zIndex: 9998,
-            background: 'rgba(0,0,0,0.4)', display: 'flex',
-            alignItems: 'center', justifyContent: 'center',
-            padding: '16px',
-          }}
-        >
-          <div style={{
-            background: '#fff', borderRadius: '20px',
-            padding: '24px', width: '100%', maxWidth: '380px',
-            boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
-          }}>
-            <div style={{ fontWeight: 800, fontSize: '16px', color: '#1D1D1F', marginBottom: '4px' }}>
-              ⏰ Agendar Retorno
-            </div>
-            <div style={{ fontSize: '13px', color: '#86868B', marginBottom: '18px' }}>
-              {patientName}
+        <>
+          <div
+            style={{ position: 'fixed', inset: 0, zIndex: 99 }}
+            onClick={() => setOpen(false)}
+          />
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              position: 'absolute',
+              top: '110%',
+              right: 0,
+              zIndex: 100,
+              background: '#fff',
+              borderRadius: '14px',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
+              padding: '14px',
+              width: '230px',
+              border: '1.5px solid #E5E5EA',
+            }}
+          >
+            <div style={{ fontWeight: 700, fontSize: '0.8rem', color: '#1D1D1F', marginBottom: '10px' }}>
+              ⏰ Follow-up — {patientName}
             </div>
 
-            {/* Existing follow-ups */}
-            {myFollowUps.length > 0 && (
-              <div style={{ marginBottom: '16px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <div style={{ fontSize: '11px', fontWeight: 700, color: '#86868B', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Agendados</div>
-                {myFollowUps.map((fu, i) => (
-                  <div key={i} style={{
-                    background: fu.date < todayStr ? '#FFE5E3' : fu.date === todayStr ? '#FFF3E0' : '#E6F7EC',
-                    borderRadius: '10px', padding: '8px 12px',
-                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                  }}>
-                    <div>
-                      <div style={{ fontWeight: 700, fontSize: '13px', color: '#1D1D1F' }}>
-                        {formatDateBR(fu.date)} às {to12h(fu.time)}
-                      </div>
-                      {fu.note && <div style={{ fontSize: '11px', color: '#86868B' }}>{fu.note}</div>}
-                    </div>
-                    <button
-                      onClick={() => handleDone(fu)}
-                      style={{ background: '#28A745', border: 'none', borderRadius: '8px', padding: '4px 10px', fontSize: '11px', fontWeight: 700, color: '#fff', cursor: 'pointer' }}
-                    >
-                      ✓ Feito
-                    </button>
+            {/* Existing scheduled items */}
+            {myItems.map(item => (
+              <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 8px', background: '#E5F1FF', borderRadius: '8px', marginBottom: '8px' }}>
+                <div>
+                  <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#007AFF' }}>
+                    {formatDate(item.date)} às {item.hour}h {item.period}
                   </div>
-                ))}
+                  {item.note && <div style={{ fontSize: '0.68rem', color: '#86868B' }}>{item.note}</div>}
+                </div>
+                <button
+                  onClick={() => handleDelete(item.id)}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#AEAEB2', padding: '2px', fontSize: '12px' }}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = '#FF3B30')}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = '#AEAEB2')}
+                >✕</button>
+              </div>
+            ))}
+
+            {/* Date toggle button (shows selected date, click to reopen calendar) */}
+            <div style={{ marginBottom: '8px' }}>
+              <label style={{ display: 'block', fontSize: '0.68rem', fontWeight: 600, color: '#86868B', marginBottom: '4px' }}>Data</label>
+              <button
+                type="button"
+                onClick={() => setShowCalendar(v => !v)}
+                style={{
+                  width: '100%', padding: '6px 10px', borderRadius: '8px',
+                  border: '1.5px solid #E5E5EA', background: '#F9F9FB',
+                  fontSize: '0.8rem', fontFamily: 'inherit', color: '#1D1D1F',
+                  cursor: 'pointer', textAlign: 'left', fontWeight: 600,
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                }}
+              >
+                <span>{formatDate(date)}</span>
+                <span style={{ fontSize: '10px', color: '#AEAEB2' }}>{showCalendar ? '▲' : '▼'}</span>
+              </button>
+            </div>
+
+            {/* Mini calendar (collapsible) */}
+            {showCalendar && (
+              <div style={{ marginBottom: '8px', padding: '8px', background: '#F9F9FB', borderRadius: '10px', border: '1.5px solid #E5E5EA' }}>
+                <MiniCalendar value={date} onChange={handleDatePick} />
               </div>
             )}
 
-            {/* New follow-up form */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <div style={{ fontSize: '11px', fontWeight: 700, color: '#86868B', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Novo agendamento</div>
-
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <div style={{ flex: 2 }}>
-                  <label style={{ display: 'block', fontSize: '11px', color: '#86868B', fontWeight: 600, marginBottom: '4px' }}>Data</label>
-                  <input
-                    type="date"
-                    value={date}
-                    min={todayStr}
-                    onChange={(e) => setDate(e.target.value)}
-                    style={{ width: '100%', padding: '8px 10px', border: '1.5px solid #E5E5EA', borderRadius: '8px', fontSize: '13px', fontFamily: 'inherit', boxSizing: 'border-box' }}
-                  />
-                </div>
-                <div style={{ flex: 1 }}>
-                  <label style={{ display: 'block', fontSize: '11px', color: '#86868B', fontWeight: 600, marginBottom: '4px' }}>Hora</label>
-                  <select
-                    value={time}
-                    onChange={(e) => setTime(e.target.value)}
-                    style={{ width: '100%', padding: '8px 10px', border: '1.5px solid #E5E5EA', borderRadius: '8px', fontSize: '13px', fontFamily: 'inherit', boxSizing: 'border-box' }}
-                  >
-                    {['08:00','08:30','09:00','09:30','10:00','10:30','11:00','11:30',
-                      '12:00','13:00','13:30','14:00','14:30','15:00','15:30','16:00',
-                      '16:30','17:00','17:30','18:00'].map(t => (
-                      <option key={t} value={t}>{to12h(t)}</option>
-                    ))}
-                  </select>
-                </div>
+            {/* Time */}
+            <div style={{ display: 'flex', gap: '6px', marginBottom: '8px' }}>
+              <div style={{ flex: 1 }}>
+                <label style={{ display: 'block', fontSize: '0.68rem', fontWeight: 600, color: '#86868B', marginBottom: '3px' }}>Hora</label>
+                <select
+                  value={hour}
+                  onChange={e => setHour(e.target.value)}
+                  style={{ width: '100%', padding: '6px 8px', borderRadius: '7px', border: '1.5px solid #E5E5EA', fontSize: '0.8rem', fontFamily: 'inherit', background: '#F9F9FB' }}
+                >
+                  {['06','07','08','09','10','11','12','01','02','03','04','05'].map(h => (
+                    <option key={h} value={h}>{h}</option>
+                  ))}
+                </select>
               </div>
-
               <div>
-                <label style={{ display: 'block', fontSize: '11px', color: '#86868B', fontWeight: 600, marginBottom: '4px' }}>Observação (opcional)</label>
-                <input
-                  type="text"
-                  value={note}
-                  onChange={(e) => setNote(e.target.value)}
-                  placeholder="Ex: confirmar orçamento, agendar cirurgia..."
-                  style={{ width: '100%', padding: '8px 10px', border: '1.5px solid #E5E5EA', borderRadius: '8px', fontSize: '13px', fontFamily: 'inherit', boxSizing: 'border-box' }}
-                />
-              </div>
-
-              <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
-                <button
-                  onClick={() => setOpen(false)}
-                  style={{ flex: 1, padding: '10px', background: '#F2F2F7', border: 'none', borderRadius: '10px', fontSize: '14px', fontWeight: 600, color: '#86868B', cursor: 'pointer' }}
+                <label style={{ display: 'block', fontSize: '0.68rem', fontWeight: 600, color: '#86868B', marginBottom: '3px' }}>AM/PM</label>
+                <select
+                  value={period}
+                  onChange={e => setPeriod(e.target.value as 'AM' | 'PM')}
+                  style={{ padding: '6px 8px', borderRadius: '7px', border: '1.5px solid #E5E5EA', fontSize: '0.8rem', fontFamily: 'inherit', background: '#F9F9FB' }}
                 >
-                  Cancelar
-                </button>
-                <button
-                  onClick={handleSave}
-                  disabled={!date}
-                  style={{ flex: 2, padding: '10px', background: date ? '#007AFF' : '#E5E5EA', border: 'none', borderRadius: '10px', fontSize: '14px', fontWeight: 700, color: date ? '#fff' : '#86868B', cursor: date ? 'pointer' : 'not-allowed' }}
-                >
-                  Salvar lembrete
-                </button>
+                  <option value="AM">AM</option>
+                  <option value="PM">PM</option>
+                </select>
               </div>
             </div>
+
+            {/* Note */}
+            <div style={{ marginBottom: '10px' }}>
+              <label style={{ display: 'block', fontSize: '0.68rem', fontWeight: 600, color: '#86868B', marginBottom: '3px' }}>Nota</label>
+              <input
+                type="text"
+                placeholder="Retorno pós-op, orçamento..."
+                value={note}
+                onChange={e => setNote(e.target.value)}
+                style={{ width: '100%', padding: '6px 8px', borderRadius: '7px', border: '1.5px solid #E5E5EA', fontSize: '0.8rem', fontFamily: 'inherit', background: '#F9F9FB' }}
+              />
+            </div>
+
+            <button
+              onClick={handleSave}
+              style={{
+                width: '100%',
+                padding: '8px',
+                borderRadius: '8px',
+                border: 'none',
+                background: saved ? '#28A745' : '#007AFF',
+                color: '#fff',
+                fontFamily: 'inherit',
+                fontWeight: 700,
+                fontSize: '0.82rem',
+                cursor: 'pointer',
+                transition: 'background 0.2s',
+              }}
+            >
+              {saved ? '✓ Salvo!' : 'Salvar'}
+            </button>
           </div>
-        </div>
+        </>
       )}
-    </>
+    </div>
   );
 }

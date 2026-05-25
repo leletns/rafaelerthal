@@ -42,7 +42,7 @@ function autoPopulateCards(cons26: Consultation[], cir26: Surgery[]): PipelineCa
   const cards: PipelineCard[] = [];
   const seen = new Set<string>();
 
-  // 1. Patients who had surgery → cirurgia_agendada
+  // 1. Patients who had surgery → cirurgia_agendada (surgery completed)
   for (const s of cir26) {
     const slug = s.p.toLowerCase().trim();
     if (seen.has(slug)) continue;
@@ -54,7 +54,7 @@ function autoPopulateCards(cons26: Consultation[], cir26: Surgery[]): PipelineCa
       phone: cons?.tel || '',
       procedure: s.c || '',
       value: s.v || 0,
-      stage: 'cirurgia_agendada',
+      stage: 'cirurgia_agendada' as PipelineStage,
       createdAt: now,
       updatedAt: now,
       notes: `Cirurgia: ${s.d}/${s.mes || '2026'}`,
@@ -72,7 +72,7 @@ function autoPopulateCards(cons26: Consultation[], cir26: Surgery[]): PipelineCa
       phone: c.tel || '',
       procedure: '',
       value: 0,
-      stage: 'orc_enviado',
+      stage: 'orc_enviado' as PipelineStage,
       createdAt: now,
       updatedAt: now,
       notes: `Consulta: ${c.d} · ${c.canal || ''}`,

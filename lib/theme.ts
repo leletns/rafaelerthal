@@ -1,4 +1,7 @@
-// Client-side only theme utility
+// ============================================================
+// THEME — dark/light mode persistence
+// ============================================================
+
 export function getStoredTheme(): 'light' | 'dark' {
   if (typeof window === 'undefined') return 'light';
   return (localStorage.getItem('theme') as 'light' | 'dark') ?? 'light';

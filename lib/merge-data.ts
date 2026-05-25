@@ -182,7 +182,7 @@ export function extractPipeline(remote: Record<string, unknown>): PipelineCard[]
     phone:        String(r.phone       ?? r.telefone ?? ''),
     procedure:    String(r.procedure   ?? r.procedimento ?? ''),
     value:        Number(r.value       ?? r.valor ?? 0),
-    stage:        String(r.stage       ?? r.etapa ?? 'compareceu') as import('./data-model').PipelineStage,
+    stage:        String(r.stage       ?? r.etapa ?? 'orc_enviado') as import('./data-model').PipelineStage,
     notes:        String(r.notes       ?? r.notas ?? ''),
     createdAt:    String(r.createdAt   ?? new Date().toISOString()),
     updatedAt:    String(r.updatedAt   ?? new Date().toISOString()),

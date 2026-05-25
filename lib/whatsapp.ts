@@ -1,17 +1,41 @@
 // ============================================================
 // WHATSAPP - Phone normalization and WhatsApp link generation
+// Supports international DDI detection
 // ============================================================
 
 export function normalizePhone(phone: string): string {
-  const digits = phone.replace(/\D/g, '');
+  const raw = phone.trim();
+  // If stored with explicit + prefix → already has country code, never add 55
+  const hadPlusPrefix = raw.startsWith('+');
+  const stripped = raw.replace(/^\+/, '').replace(/^00/, '');
+  const digits = stripped.replace(/\D/g, '');
 
-  // Already has country code
-  if (digits.startsWith('55') && digits.length >= 12) {
+  if (!digits) return '';
+
+  // Explicit + prefix → country code already present, use as-is
+  if (hadPlusPrefix) return digits;
+
+  // 13+ digits and starts with 55 → Brazilian with CC already
+  if (digits.startsWith('55') && digits.length >= 12) return digits;
+
+  // 12+ digits not starting with 55 → non-Brazilian international
+  if (digits.length >= 12 && !digits.startsWith('55')) return digits;
+
+  // 11-digit numbers — distinguish Brazilian mobile from international
+  // Brazilian mobiles (since 2012): DDD (2 digits) + 9 (mandatory) + 8 digits
+  // So 3rd digit MUST be '9' for a valid Brazilian mobile
+  // International 11-digit: e.g. US/Canada = 1 + 10-digit NANP number
+  if (digits.length === 11) {
+    const thirdDigit = digits[2];
+    if (thirdDigit === '9') {
+      return `55${digits}`; // Brazilian mobile pattern (DDD + 9XXXXXXXX)
+    }
+    // 3rd digit is not 9 → not a standard Brazilian mobile → treat as international
     return digits;
   }
 
-  // Brazilian number without country code
-  if (digits.length === 11 || digits.length === 10) {
+  // 10-digit: Brazilian landline (DDD + 8 digits)
+  if (digits.length === 10) {
     return `55${digits}`;
   }
 

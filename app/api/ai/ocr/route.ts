@@ -7,7 +7,7 @@ const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 const TEAM_SIGNATURES = [
   { key: 'blue',       keywords: ['21971101000','27520102-3','C6','Blue Clínica','Blue Clinica','48459860'], label: 'Blue Clínica' },
   { key: 'anest',      keywords: ['44856036000147','EP Serviços','EP Servicos'], label: 'Anestesista (EP)' },
-  { key: 'leo',        keywords: ['13604862752','01061191-1','Leonardo Valadão','Leonardo Valadao','Santander'], label: 'Leonardo Valadão Pinto' },
+  { key: 'leo',        keywords: ['13604862752','01061191-1','Leonardo Valadão','Leonardo Valadao'], label: 'Leonardo Valadão Pinto' },
   { key: 'magda',      keywords: ['21995892783','21 995892783','Magda Pires'], label: 'Magda Pires (Instrumentadora)' },
   { key: 'adrielle',   keywords: ['adriellelopesinstrumentacao','Adrielle Lopes'], label: 'Adrielle Lopes (Instrumentadora)' },
   { key: 'fisio',      keywords: ['cintyafisiorj','Perfeita Saúde','Perfeita Saude'], label: 'Fisioterapia (Cintya)' },
@@ -44,35 +44,64 @@ export async function POST(req: NextRequest) {
         },
         {
           type: 'text',
-          text: `Você é um assistente OCR para a Clínica Blue. Analise este comprovante/documento e extraia:
-1. Valor do pagamento (em reais)
-2. Data do pagamento
-3. Nome do favorecido / destinatário
-4. Chave PIX ou conta bancária
-5. Nome do pagador / paciente (se visível)
-6. Tipo de documento (comprovante PIX, TED, boleto, etc.)
+          text: `Você é um assistente OCR para a Clínica Blue. Analise este comprovante/documento e extraia as informações EXATAMENTE como aparecem no documento.
 
-Retorne APENAS JSON válido neste formato exato:
+REGRAS CRÍTICAS:
+- Extraia SOMENTE o que aparece literalmente no documento. NÃO invente, NÃO infira, NÃO alucine dados.
+- Se um campo não estiver visível no documento, retorne null para esse campo.
+- O "favorecido" é a pessoa ou empresa que RECEBE o dinheiro (destinatário/beneficiário). Leia cuidadosamente o nome exato.
+- O "pagador" é quem ENVIOU o dinheiro (normalmente o paciente).
+- Leia o nome do favorecido com atenção — pode ser uma clínica (ex: "Perfeita Saúde"), médico, instrumentadora, etc.
+
+Retorne APENAS JSON válido neste formato exato (sem markdown, sem explicações):
 {
-  "valor": "R$ X.XXX,XX",
-  "data": "DD/MM/YYYY",
-  "favorecido": "nome",
-  "chavePix": "chave ou conta",
-  "pagador": "nome ou null",
+  "valor": "R$ X.XXX,XX ou null",
+  "data": "DD/MM/YYYY ou null",
+  "favorecido": "nome exato do destinatário como aparece no comprovante, ou null",
+  "chavePix": "chave PIX, CPF, CNPJ ou conta exata, ou null",
+  "pagador": "nome do pagador como aparece no comprovante, ou null",
   "tipo": "PIX|TED|DOC|Boleto|Outro",
-  "raw": "texto extraído do comprovante"
+  "raw": "transcrição completa do texto visível no comprovante"
+}`,
+        },
+      ];
+    } else if (mediaType === 'application/pdf') {
+      // PDF: use Anthropic document block (native PDF support)
+      textContent = [
+        {
+          type: 'document',
+          source: { type: 'base64', media_type: 'application/pdf', data: base64 },
+        } as unknown as { type: 'text'; text: string },
+        {
+          type: 'text',
+          text: `Você é um assistente OCR para a Clínica Blue. Analise este comprovante/documento PDF e extraia as informações EXATAMENTE como aparecem.
+
+REGRAS CRÍTICAS:
+- Extraia SOMENTE o que aparece literalmente no documento. NÃO invente, NÃO infira, NÃO alucine dados.
+- Se um campo não estiver visível, retorne null para esse campo.
+- O "favorecido" é quem RECEBE o dinheiro. O "pagador" é quem ENVIOU.
+- Leia o nome do favorecido com atenção — pode ser uma clínica (ex: "Perfeita Saúde"), médico, instrumentadora.
+
+Retorne APENAS JSON válido neste formato (sem markdown, sem explicações):
+{
+  "valor": "R$ X.XXX,XX ou null",
+  "data": "DD/MM/YYYY ou null",
+  "favorecido": "nome exato do destinatário, ou null",
+  "chavePix": "chave PIX, CPF, CNPJ ou conta, ou null",
+  "pagador": "nome do pagador, ou null",
+  "tipo": "PIX|TED|DOC|Boleto|Outro",
+  "raw": "transcrição completa do texto visível no documento"
 }`,
         },
       ];
     } else {
-      // Non-image: treat as text extraction from filename description
+      // Other file types
       textContent = [
         {
           type: 'text',
-          text: `Arquivo: ${filename || 'documento'}. Tipo: ${mediaType}. Base64: ${base64.substring(0, 200)}...
-
+          text: `Arquivo: ${filename || 'documento'}. Tipo: ${mediaType}.
 Extraia as informações de pagamento e retorne JSON:
-{"valor":"","data":"","favorecido":"","chavePix":"","pagador":null,"tipo":"Outro","raw":"Arquivo não suportado para OCR visual"}`,
+{"valor":null,"data":null,"favorecido":null,"chavePix":null,"pagador":null,"tipo":"Outro","raw":"Tipo de arquivo não suportado para OCR visual. Por favor use imagem (PNG/JPG) ou PDF."}`,
         },
       ];
     }
