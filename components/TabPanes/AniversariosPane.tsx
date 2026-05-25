@@ -30,6 +30,18 @@ const MS_COLORS: Record<number, { color: string; bg: string }> = {
   12: { color: '#28A745', bg: '#E6F7EC' },
 };
 
+// ── Fuzzy name matching (≥2 significant tokens in common) ─────────────────
+function nameTokens(name: string): string[] {
+  const stop = new Set(['dos','das','des','del','von','van','de','da','do','di','e']);
+  return name.toLowerCase().trim()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .split(/\s+/).filter(t => t.length > 2 && !stop.has(t));
+}
+function isSamePerson(a: string, b: string): boolean {
+  const tokA = new Set(nameTokens(a));
+  return nameTokens(b).filter(t => tokA.has(t)).length >= 2;
+}
+
 function daysUntilBirthday(birthdayDate: string): number {
   const today = new Date();
   const bday = new Date(birthdayDate);
@@ -65,27 +77,30 @@ export default function AniversariosPane({ cir25, cir26, amigoData, patients = [
   const upcomingAnivs = allAnivs.filter(a => a.daysUntil > 30 && a.daysUntil <= 90);
   const pastAnivs     = allAnivs.filter(a => a.daysUntil < 0 && a.daysUntil >= -30);
 
-  // Operated patient slugs — computed FIRST so birthday filters can use it
-  const operatedSlugs = useMemo(() => {
-    const set = new Set<string>();
-    [...cir25, ...cir26].forEach(s => set.add(s.p.toLowerCase().trim()));
-    return set;
-  }, [cir25, cir26]);
+  // Operated patient names for fuzzy badge check
+  const operatedNames = useMemo(() =>
+    [...cir25, ...cir26].map(s => s.p),
+    [cir25, cir26]
+  );
 
-  // AmigoClinic birthdays — ONLY for patients who operated
+  // isOperated uses fuzzy matching so "Ana Paula Souza" matches "Ana Souza" etc.
+  function isOperated(name: string) {
+    return operatedNames.some(n => isSamePerson(n, name));
+  }
+
+  // AmigoClinic birthdays — ALL patients (operated badge shown via fuzzy match)
   const birthdays = useMemo(() =>
-    (amigoData.birthdays ?? []).filter(b => operatedSlugs.has(b.name.toLowerCase().trim())),
-    [amigoData.birthdays, operatedSlugs]
+    (amigoData.birthdays ?? []),
+    [amigoData.birthdays]
   );
 
   const upcomingBirthdays = useMemo(() =>
     (amigoData.upcomingBirthdays ?? []).filter(b => {
       if (!b.birthdayDate) return false;
-      if (!operatedSlugs.has(b.name.toLowerCase().trim())) return false; // only operated patients
       const d = daysUntilBirthday(b.birthdayDate);
       return d > 0 && d <= 14;
     }),
-    [amigoData.upcomingBirthdays, operatedSlugs]
+    [amigoData.upcomingBirthdays]
   );
 
   // Today's AmigoClinic appointments
@@ -163,10 +178,6 @@ export default function AniversariosPane({ cir25, cir26, amigoData, patients = [
           <div style={{ fontSize: '0.75rem', fontWeight: 700, color: a.daysUntil === 0 ? '#FF3B30' : a.daysUntil > 0 && a.daysUntil <= 7 ? '#FF9500' : pal.color }}>
             {formatDue(a.daysUntil)}
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-            {phone && <WhatsAppButton phone={phone} size="sm" variant="icon" />}
-            <FollowUpScheduler patientName={a.patientName} phone={phone} />
-          </div>
         </div>
       </div>
     );
@@ -174,7 +185,7 @@ export default function AniversariosPane({ cir25, cir26, amigoData, patients = [
 
   function BirthdayCard({ b, daysUntil }: { b: AmigoBirthdayItem; daysUntil: number }) {
     const isToday = daysUntil === 0;
-    const operated = operatedSlugs.has(b.name.toLowerCase().trim());
+    const operated = isOperated(b.name);
     return (
       <div style={{
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',

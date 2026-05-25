@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { PipelineCard, PipelineStage } from '@/lib/data-model';
 import WhatsAppButton from './WhatsAppButton';
 import { formatCurrency } from '@/lib/dashboard-calculations';
@@ -36,6 +36,7 @@ export default function MayraPipeline({
   onDeleteCard,
 }: MayraPipelineProps) {
   const [dragging, setDragging] = useState<string | null>(null);
+  const [dragOver, setDragOver] = useState<PipelineStage | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [newCard, setNewCard] = useState<NewCardForm>({
     patientName: '',
@@ -46,24 +47,36 @@ export default function MayraPipeline({
     notes: '',
   });
 
-  function handleDragStart(e: React.DragEvent, cardId: string) {
-    setDragging(cardId);
-    e.dataTransfer.effectAllowed = 'move';
-  }
-
-  function handleDragOver(e: React.DragEvent) {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-  }
-
-  function handleDrop(e: React.DragEvent, stageId: PipelineStage) {
-    e.preventDefault();
+  // Release drag on global pointerup (handles touch release outside board)
+  useEffect(() => {
     if (!dragging) return;
-    const card = cards.find((c) => c.id === dragging);
-    if (card && card.stage !== stageId) {
-      onUpdateCard({ ...card, stage: stageId, updatedAt: new Date().toISOString() });
+    function onGlobalUp() { setDragging(null); setDragOver(null); }
+    document.addEventListener('pointerup', onGlobalUp);
+    return () => document.removeEventListener('pointerup', onGlobalUp);
+  }, [dragging]);
+
+  function onCardPointerDown(e: React.PointerEvent<HTMLDivElement>, cardId: string) {
+    e.preventDefault();
+    setDragging(cardId);
+  }
+
+  function onBoardPointerMove(e: React.PointerEvent<HTMLDivElement>) {
+    if (!dragging) return;
+    // elementFromPoint sees through the dragging card (pointer-events:none on it)
+    const under = document.elementFromPoint(e.clientX, e.clientY);
+    const col = under?.closest<HTMLElement>('[data-stage]');
+    setDragOver((col?.dataset.stage as PipelineStage) ?? null);
+  }
+
+  function onBoardPointerUp() {
+    if (dragging && dragOver) {
+      const card = cards.find((c) => c.id === dragging);
+      if (card && card.stage !== dragOver) {
+        onUpdateCard({ ...card, stage: dragOver, updatedAt: new Date().toISOString() });
+      }
     }
     setDragging(null);
+    setDragOver(null);
   }
 
   function handleAddCard() {
@@ -118,30 +131,38 @@ export default function MayraPipeline({
 
       {/* Kanban board */}
       <div
+        onPointerMove={onBoardPointerMove}
+        onPointerUp={onBoardPointerUp}
         style={{
           display: 'flex',
           gap: '12px',
           overflowX: 'auto',
           paddingBottom: '8px',
           alignItems: 'flex-start',
+          touchAction: dragging ? 'none' : 'pan-x pan-y',
+          cursor: dragging ? 'grabbing' : 'auto',
         }}
       >
         {STAGES.map((stage) => {
           const stageCards = cardsByStage(stage.id);
+          const isTarget = dragging && dragOver === stage.id;
           return (
             <div
               key={stage.id}
-              onDragOver={handleDragOver}
-              onDrop={(e) => handleDrop(e, stage.id)}
+              data-stage={stage.id}
               style={{
-                minWidth: '220px',
-                width: '220px',
+                minWidth: '200px',
+                width: '200px',
                 flexShrink: 0,
-                background: '#F9F9FB',
+                background: isTarget ? `${stage.color}12` : '#F9F9FB',
                 borderRadius: '12px',
                 padding: '12px',
-                border: dragging ? `2px dashed ${stage.color}40` : '2px solid transparent',
-                transition: 'border 0.15s',
+                border: isTarget
+                  ? `2px solid ${stage.color}`
+                  : dragging
+                    ? `2px dashed ${stage.color}35`
+                    : '2px solid transparent',
+                transition: 'border 0.1s, background 0.1s',
               }}
             >
               {/* Column header */}
@@ -169,17 +190,20 @@ export default function MayraPipeline({
                 {stageCards.map((card) => (
                   <div
                     key={card.id}
-                    draggable
-                    onDragStart={(e) => handleDragStart(e, card.id)}
-                    onDragEnd={() => setDragging(null)}
+                    onPointerDown={(e) => onCardPointerDown(e, card.id)}
                     style={{
                       background: '#fff',
                       borderRadius: '10px',
                       padding: '10px 12px',
                       boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
-                      cursor: 'grab',
+                      cursor: dragging === card.id ? 'grabbing' : 'grab',
                       borderLeft: `3px solid ${stage.color}`,
-                      opacity: dragging === card.id ? 0.5 : 1,
+                      opacity: dragging === card.id ? 0.35 : 1,
+                      // while this card is dragging, make it transparent to pointer hits
+                      // so elementFromPoint sees the column div below
+                      pointerEvents: dragging === card.id ? 'none' : 'auto',
+                      userSelect: 'none',
+                      touchAction: 'none',
                       transition: 'opacity 0.15s',
                     }}
                   >

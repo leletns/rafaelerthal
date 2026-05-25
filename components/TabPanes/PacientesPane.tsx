@@ -21,22 +21,17 @@ const CHIP_COLORS: Record<FilterType, { active: string; bg: string; activeBg: st
 };
 
 export default function PacientesPane({ patients, amigoAttendances }: PacientesPaneProps) {
-  const [search, setSearch]           = useState('');
-  const [filterCanal, setFilterCanal] = useState('');
-  const [filterType, setFilterType]   = useState<FilterType>('all');
-  const [selected, setSelected]       = useState<Patient | null>(null);
+  const [search, setSearch]         = useState('');
+  const [filterType, setFilterType] = useState<FilterType>('all');
+  const [selected, setSelected]     = useState<Patient | null>(null);
 
-  const canais = Array.from(new Set(patients.filter(p => p.canal).map(p => p.canal!))).sort();
-
-  // Type filter first, then canal, then search
+  // Type filter then search
   const byType =
     filterType === 'surgery' ? patients.filter(p => p.surgeries.length > 0) :
     filterType === 'consult' ? patients.filter(p => p.surgeries.length === 0 && p.consultations.length > 0) :
     patients;
 
-  const byCanal = byType.filter(p => !filterCanal || p.canal === filterCanal);
-
-  const filtered = byCanal.filter(p => {
+  const filtered = byType.filter(p => {
     if (!search) return true;
     const q = search.toLowerCase();
     return (
@@ -110,59 +105,6 @@ export default function PacientesPane({ patients, amigoAttendances }: PacientesP
           );
         })}
       </div>
-
-      {/* ── CANAL — mesma estética de chip ── */}
-      {canais.length > 0 && (
-        <div style={{
-          display: 'flex',
-          gap: '6px',
-          flexWrap: 'wrap',
-        }}>
-          {/* "Todos" canal chip */}
-          <button
-            onClick={() => setFilterCanal('')}
-            style={{
-              padding: '6px 14px',
-              borderRadius: '20px',
-              border: `1.5px solid ${!filterCanal ? '#007AFF' : 'transparent'}`,
-              background: !filterCanal ? '#E5F1FF' : '#F2F2F7',
-              color: !filterCanal ? '#007AFF' : '#86868B',
-              fontWeight: !filterCanal ? 700 : 500,
-              fontSize: '0.78rem',
-              fontFamily: 'inherit',
-              cursor: 'pointer',
-              transition: 'all 0.15s',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            Todos os canais
-          </button>
-          {canais.map(canal => {
-            const active = filterCanal === canal;
-            return (
-              <button
-                key={canal}
-                onClick={() => setFilterCanal(active ? '' : canal)}
-                style={{
-                  padding: '6px 14px',
-                  borderRadius: '20px',
-                  border: `1.5px solid ${active ? '#007AFF' : 'transparent'}`,
-                  background: active ? '#E5F1FF' : '#F2F2F7',
-                  color: active ? '#007AFF' : '#86868B',
-                  fontWeight: active ? 700 : 500,
-                  fontSize: '0.78rem',
-                  fontFamily: 'inherit',
-                  cursor: 'pointer',
-                  transition: 'all 0.15s',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                {canal}
-              </button>
-            );
-          })}
-        </div>
-      )}
 
       {/* ── BUSCA ── */}
       <input
@@ -286,7 +228,6 @@ export default function PacientesPane({ patients, amigoAttendances }: PacientesP
           <div style={{ padding: '10px 18px', fontSize: '0.75rem', color: '#86868B', borderTop: '1px solid #F2F2F7' }}>
             {filtered.length} paciente{filtered.length !== 1 ? 's' : ''} exibido{filtered.length !== 1 ? 's' : ''}
             {filterType !== 'all' && ` · ${typeOptions.find(o => o.key === filterType)?.label}`}
-            {filterCanal && ` · ${filterCanal}`}
             {search && ` · "${search}"`}
           </div>
         )}

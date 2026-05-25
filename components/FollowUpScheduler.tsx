@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 interface ScheduledFollowUp {
   id: string;
@@ -138,10 +138,13 @@ export default function FollowUpScheduler({ patientName, phone = '' }: FollowUpS
   const [period, setPeriod] = useState<'AM' | 'PM'>('AM');
   const [note, setNote] = useState('');
   const [saved, setSaved] = useState(false);
+  const [notifPerm, setNotifPerm] = useState<NotificationPermission>('default');
+  const permAsked = useRef(false);
 
-  // Load from localStorage
+  // Load from localStorage + read current notif permission
   useEffect(() => {
     setItems(loadAll().filter(i => i.patientName === patientName));
+    if ('Notification' in window) setNotifPerm(Notification.permission);
   }, [patientName]);
 
   const myItems = items.filter(i => i.patientName === patientName);
@@ -217,7 +220,20 @@ export default function FollowUpScheduler({ patientName, phone = '' }: FollowUpS
     <div style={{ position: 'relative', display: 'inline-block' }}>
       {/* ⏰ trigger button */}
       <button
-        onClick={() => { setOpen(o => !o); setShowCalendar(true); }}
+        onClick={() => {
+          const opening = !open;
+          setOpen(opening);
+          if (opening) {
+            setShowCalendar(true);
+            // Request permission proactively when popover opens
+            if ('Notification' in window && Notification.permission === 'default' && !permAsked.current) {
+              permAsked.current = true;
+              Notification.requestPermission().then(p => setNotifPerm(p));
+            } else if ('Notification' in window) {
+              setNotifPerm(Notification.permission);
+            }
+          }
+        }}
         title="Agendar follow-up"
         style={{
           background: hasScheduled ? '#E5F1FF' : 'none',
@@ -268,9 +284,39 @@ export default function FollowUpScheduler({ patientName, phone = '' }: FollowUpS
               border: '1.5px solid #E5E5EA',
             }}
           >
-            <div style={{ fontWeight: 700, fontSize: '0.8rem', color: '#1D1D1F', marginBottom: '10px' }}>
+            <div style={{ fontWeight: 700, fontSize: '0.8rem', color: '#1D1D1F', marginBottom: '8px' }}>
               ⏰ Follow-up — {patientName}
             </div>
+
+            {/* Notification permission status */}
+            {'Notification' in window && (
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: '5px',
+                padding: '5px 8px', borderRadius: '7px', marginBottom: '8px',
+                background: notifPerm === 'granted' ? '#E6F7EC' : notifPerm === 'denied' ? '#FFE5E3' : '#FFF3E0',
+                border: `1px solid ${notifPerm === 'granted' ? '#28A74530' : notifPerm === 'denied' ? '#FF3B3030' : '#FF950030'}`,
+                fontSize: '0.68rem',
+                color: notifPerm === 'granted' ? '#1D7A33' : notifPerm === 'denied' ? '#CC0000' : '#B85C00',
+              }}>
+                <span>{notifPerm === 'granted' ? '🔔' : notifPerm === 'denied' ? '🔕' : '🔔'}</span>
+                <span style={{ fontWeight: 600 }}>
+                  {notifPerm === 'granted'
+                    ? 'Notificações ativas'
+                    : notifPerm === 'denied'
+                      ? 'Notificações bloqueadas pelo navegador'
+                      : 'Aguardando permissão de notificação…'}
+                </span>
+                {notifPerm === 'default' && (
+                  <button
+                    type="button"
+                    onClick={() => Notification.requestPermission().then(p => setNotifPerm(p))}
+                    style={{ marginLeft: 'auto', background: '#FF9500', color: '#fff', border: 'none', borderRadius: '4px', padding: '2px 6px', fontSize: '0.65rem', cursor: 'pointer', fontWeight: 700 }}
+                  >
+                    Permitir
+                  </button>
+                )}
+              </div>
+            )}
 
             {/* Existing scheduled items */}
             {myItems.map(item => (
