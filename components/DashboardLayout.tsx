@@ -7,6 +7,7 @@ import { getStoredTheme, applyTheme } from '@/lib/theme';
 import NotificationBell from './NotificationBell';
 import GlobalSearch from './GlobalSearch';
 import type { Notification, Patient } from '@/lib/data-model';
+import type { SyncState, ConnStatus } from '@/app/dashboard/page';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -14,8 +15,70 @@ interface DashboardLayoutProps {
   onMarkRead: (id: string) => void;
   onMarkAllRead: () => void;
   syncing?: boolean;
+  syncState?: SyncState;
   lastSync?: string;
   patients?: Patient[];
+}
+
+// ── Status pill helper ────────────────────────────────────────────────────────
+const STATUS_STYLE: Record<ConnStatus, { dot: string; bg: string; text: string; border: string }> = {
+  pending:      { dot: '#AEAEB2', bg: '#F2F2F7',   text: '#86868B', border: '#E5E5EA' },
+  syncing:      { dot: '#007AFF', bg: '#E5F1FF',   text: '#007AFF', border: '#007AFF30' },
+  ok:           { dot: '#28A745', bg: '#E6F7EC',   text: '#1D7A33', border: '#28A74530' },
+  error:        { dot: '#FF3B30', bg: '#FFE5E3',   text: '#CC0000', border: '#FF3B3030' },
+  unconfigured: { dot: '#FF9500', bg: '#FFF3E0',   text: '#B85C00', border: '#FF950030' },
+};
+
+function StatusPill({
+  label, status, msg, pulse,
+}: {
+  label: string;
+  status: ConnStatus;
+  msg: string;
+  pulse?: boolean;
+}) {
+  const s = STATUS_STYLE[status];
+  const [tip, setTip] = useState(false);
+
+  return (
+    <div
+      style={{ position: 'relative', display: 'inline-flex' }}
+      onMouseEnter={() => msg && setTip(true)}
+      onMouseLeave={() => setTip(false)}
+    >
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: '5px',
+        padding: '3px 8px', borderRadius: '20px',
+        background: s.bg, border: `1.5px solid ${s.border}`,
+        cursor: msg ? 'default' : 'default',
+      }}>
+        <div style={{
+          width: 7, height: 7, borderRadius: '50%', background: s.dot, flexShrink: 0,
+          ...(pulse && status === 'syncing' ? { animation: 'pulse 1.2s ease-in-out infinite' } : {}),
+        }} />
+        <span style={{ fontSize: '11px', fontWeight: 600, color: s.text, whiteSpace: 'nowrap' }}>
+          {label}
+          {status === 'ok' && msg ? (
+            <span style={{ fontWeight: 400, marginLeft: '4px', opacity: 0.75 }}>· {msg}</span>
+          ) : status === 'syncing' ? (
+            <span style={{ fontWeight: 400, marginLeft: '4px', opacity: 0.75 }}>· sincronizando…</span>
+          ) : null}
+        </span>
+      </div>
+      {/* Tooltip — only on error/unconfigured/pending with a message */}
+      {tip && msg && status !== 'ok' && status !== 'syncing' && (
+        <div style={{
+          position: 'absolute', top: 'calc(100% + 6px)', right: 0, zIndex: 200,
+          background: '#1D1D1F', color: '#fff', borderRadius: '8px',
+          padding: '7px 12px', fontSize: '11px',
+          boxShadow: '0 4px 16px rgba(0,0,0,0.22)', pointerEvents: 'none',
+          maxWidth: '280px', wordBreak: 'break-word',
+        }}>
+          {msg}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function DashboardLayout({
@@ -24,6 +87,7 @@ export default function DashboardLayout({
   onMarkRead,
   onMarkAllRead,
   syncing,
+  syncState,
   patients,
 }: DashboardLayoutProps) {
   const router = useRouter();
@@ -46,6 +110,14 @@ export default function DashboardLayout({
     router.replace('/login');
   }
 
+  const sheetsPill = syncState
+    ? { status: syncState.sheets, msg: syncState.sheetsMsg }
+    : { status: (syncing ? 'syncing' : 'pending') as ConnStatus, msg: '' };
+
+  const amigoPill = syncState
+    ? { status: syncState.amigo, msg: syncState.amigoMsg }
+    : { status: 'pending' as ConnStatus, msg: '' };
+
   return (
     <div style={{ minHeight: '100vh', background: '#F5F5F7' }}>
       {/* Header */}
@@ -67,21 +139,13 @@ export default function DashboardLayout({
           gap: '16px',
         }}>
           {/* Logo */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexShrink: 0 }}>
             <div style={{
-              width: '52px',
-              height: '52px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '42px',
-              fontWeight: 200,
-              color: '#007AFF',
-              letterSpacing: '-3px',
-              lineHeight: 1,
-              userSelect: 'none',
-              fontFamily: "'Montserrat', sans-serif",
-              paddingBottom: '4px',
+              width: '52px', height: '52px',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: '42px', fontWeight: 200, color: '#007AFF',
+              letterSpacing: '-3px', lineHeight: 1, userSelect: 'none',
+              fontFamily: "'Montserrat', sans-serif", paddingBottom: '4px',
             }}>
               b.
             </div>
@@ -95,27 +159,24 @@ export default function DashboardLayout({
             </div>
           </div>
 
+          {/* Connection status pills — hidden on very small screens */}
+          <div style={{
+            display: 'flex', gap: '6px', alignItems: 'center',
+            marginLeft: '12px',
+            // hide on very small viewports
+            overflow: 'hidden',
+          }}
+            className="sync-pills"
+          >
+            <StatusPill label="Sheets"      status={sheetsPill.status} msg={sheetsPill.msg} pulse />
+            <StatusPill label="AmigoClinic" status={amigoPill.status}  msg={amigoPill.msg}  pulse />
+          </div>
+
           {/* Right side */}
-          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
             {/* Global search */}
             {patients && patients.length > 0 && (
               <GlobalSearch patients={patients} />
-            )}
-
-            {/* Sync indicator */}
-            {syncing && (
-              <div style={{
-                display: 'flex', alignItems: 'center', gap: '5px',
-                fontSize: '11px', color: '#007AFF', fontWeight: 600,
-              }}>
-                <span style={{
-                  width: '7px', height: '7px', borderRadius: '50%',
-                  background: '#007AFF',
-                  animation: 'pulse 1.2s ease-in-out infinite',
-                  display: 'inline-block',
-                }} />
-                Syncing…
-              </div>
             )}
 
             {/* Dark / Light toggle */}
