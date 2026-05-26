@@ -401,11 +401,15 @@ export default function MayraPipeline({
         if (Math.hypot(e.clientX - ps.startX, e.clientY - ps.startY) > 8) {
           ps.isDragging = true;
           setDragging(ps.cardId);
+          // IMPORTANT: fall through to update dragOver in this same event.
+          // Without this, a quick drag-and-release never registers the target column.
+        } else {
+          return; // haven't crossed threshold yet
         }
-        return;
       }
 
-      // Detect drop target column
+      // Detect drop target column by coordinate — works even on empty columns
+      // Release pointer capture first so elementFromPoint sees through the dragged card
       const under = document.elementFromPoint(e.clientX, e.clientY);
       const col = under?.closest<HTMLElement>('[data-stage]');
       const stage = (col?.dataset.stage as PipelineStage) ?? null;
@@ -413,11 +417,19 @@ export default function MayraPipeline({
       setDragOver(stage);
     }
 
-    function onDocUp() {
+    function onDocUp(e: PointerEvent) {
       const ps = pointerRef.current;
       if (!ps) return;
 
       if (ps.isDragging) {
+        // Try one last coordinate check in case no pointermove fired after last threshold cross
+        if (ps.dragOver === null) {
+          const under = document.elementFromPoint(e.clientX, e.clientY);
+          const col = under?.closest<HTMLElement>('[data-stage]');
+          if (col?.dataset.stage) {
+            ps.dragOver = col.dataset.stage as PipelineStage;
+          }
+        }
         // Drop card
         if (ps.dragOver) {
           const card = cardsRef.current.find(c => c.id === ps.cardId);
@@ -444,10 +456,12 @@ export default function MayraPipeline({
   }, [onUpdateCard]);
 
   function onCardPointerDown(e: React.PointerEvent<HTMLDivElement>, cardId: string) {
-    // Ignore if a modal/panel is open or if it's not a primary button
+    // Ignore if a modal/panel is open
     if (showAddModal || selectedCardId) return;
     e.preventDefault();
     e.stopPropagation();
+    // Release implicit pointer capture so elementFromPoint can see through dragged card
+    try { e.currentTarget.releasePointerCapture(e.pointerId); } catch { /* ignore */ }
     pointerRef.current = {
       startX: e.clientX, startY: e.clientY,
       cardId,

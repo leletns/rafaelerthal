@@ -37,25 +37,38 @@ function migrateStage(old: string): PipelineStage {
   return map[old] ?? 'orc_enviado';
 }
 
+/** Significant name tokens — used for fuzzy dedup in auto-populate */
+function nameTokens(name: string): string[] {
+  const stop = new Set(['dos','das','des','del','von','van','de','da','do','di','e']);
+  return name.toLowerCase().trim()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .split(/\s+/).filter(t => t.length > 2 && !stop.has(t));
+}
+
+function isSamePersonPipeline(a: string, b: string): boolean {
+  const tokA = new Set(nameTokens(a));
+  return nameTokens(b).filter(t => tokA.has(t)).length >= 2;
+}
+
 /** Build pipeline cards from 2026 patient journey data.
- *  Only called when BOTH Sheets pipeline AND localStorage are empty. */
+ *  Only called when BOTH Sheets pipeline AND localStorage are empty.
+ *  Uses fuzzy name matching to avoid double-adding the same person. */
 function autoPopulateCards(cons26: Consultation[], cir26: Surgery[]): PipelineCard[] {
   const now = new Date().toISOString();
-  // Index surgeries by normalised patient name
-  const surgByName = new Map<string, Surgery>();
-  for (const s of cir26) {
-    surgByName.set(s.p.toLowerCase().trim(), s);
-  }
-
   const cards: PipelineCard[] = [];
-  const seen = new Set<string>();
+  // Track names of patients already added (for fuzzy dedup)
+  const seenNames: string[] = [];
+
+  function alreadySeen(name: string): boolean {
+    return seenNames.some(n => isSamePersonPipeline(n, name));
+  }
 
   // 1. Patients who had surgery → cirurgia_agendada (surgery completed)
   for (const s of cir26) {
-    const slug = s.p.toLowerCase().trim();
-    if (seen.has(slug)) continue;
-    seen.add(slug);
-    const cons = cons26.find(c => c.p.toLowerCase().trim() === slug);
+    if (alreadySeen(s.p)) continue;
+    seenNames.push(s.p);
+    // Try to find a matching consultation for phone number
+    const cons = cons26.find(c => isSamePersonPipeline(c.p, s.p));
     cards.push({
       id: generateId(),
       patientName: s.p,
@@ -71,9 +84,8 @@ function autoPopulateCards(cons26: Consultation[], cir26: Surgery[]): PipelineCa
 
   // 2. Patients who consulted but have NO surgery → orc_enviado
   for (const c of cons26) {
-    const slug = c.p.toLowerCase().trim();
-    if (seen.has(slug)) continue;
-    seen.add(slug);
+    if (alreadySeen(c.p)) continue;
+    seenNames.push(c.p);
     cards.push({
       id: generateId(),
       patientName: c.p,
