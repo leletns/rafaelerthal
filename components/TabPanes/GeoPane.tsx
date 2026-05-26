@@ -96,7 +96,10 @@ export default function GeoPane({
     .filter(([k]) => k.toLowerCase() !== 'internacional')
     .sort((a, b) => b[1] - a[1]);
 
-  const intlEntries = Object.entries(intlData).sort((a, b) => b[1] - a[1]);
+  // Filter out generic "INTERNACIONAL" bucket — only show country-level entries
+  const intlEntries = Object.entries(intlData)
+    .filter(([k]) => k.toUpperCase() !== 'INTERNACIONAL')
+    .sort((a, b) => b[1] - a[1]);
   const intlTotal   = intlEntries.reduce((s, [,v]) => s + v, 0);
 
   const canalEntries  = Object.entries(canalData).sort((a, b) => b[1] - a[1]);

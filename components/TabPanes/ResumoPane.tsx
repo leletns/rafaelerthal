@@ -62,7 +62,6 @@ export default function ResumoPane({
 
   const totalRev  = cir.reduce((s, c) => s + c.v, 0);
   const avgTicket = cir.length > 0 ? totalRev / cir.length : 0;
-  const conversion = cons.length > 0 ? (cir.length / cons.length * 100).toFixed(1) : '0';
   const topProc   = procs[0];
 
   // Funil summary (3 stages)
@@ -77,7 +76,10 @@ export default function ResumoPane({
   const intlMerged: Record<string, number> = {};
   for (const [k, v] of Object.entries(intl25)) intlMerged[k] = (intlMerged[k] || 0) + v;
   for (const [k, v] of Object.entries(intl26)) intlMerged[k] = (intlMerged[k] || 0) + v;
-  const intlEntries = Object.entries(intlMerged).sort(([,a],[,b]) => b - a);
+  // Filter out generic "INTERNACIONAL" bucket — only show country-level entries
+  const intlEntries = Object.entries(intlMerged)
+    .filter(([k]) => k.toUpperCase() !== 'INTERNACIONAL')
+    .sort(([,a],[,b]) => b - a);
   const intlTotal   = intlEntries.reduce((s, [,v]) => s + v, 0);
 
   const topCidades = Object.entries(cidadesMerged)
@@ -246,13 +248,13 @@ export default function ResumoPane({
           <div className="card-ttl">Taxa de conversão</div>
           <div style={{ marginTop: '8px' }}>
             <div style={{ fontSize: '32px', fontWeight: 800, color: '#007AFF', letterSpacing: '-1px', lineHeight: 1 }}>
-              {conversion}%
+              {conversionRate}%
             </div>
             <div style={{ fontSize: '12px', color: '#86868B', marginTop: '8px' }}>
-              {cir.length} cirurgias de {cons.length} consultas
+              {uniqueOperated} cirurgias de {uniqueConsulted} pacientes únicas
             </div>
             <div style={{ marginTop: '12px', height: '8px', background: '#F2F2F7', borderRadius: '4px', overflow: 'hidden' }}>
-              <div style={{ height: '100%', width: `${conversion}%`, background: '#007AFF', borderRadius: '4px' }} />
+              <div style={{ height: '100%', width: `${conversionRate}%`, background: '#007AFF', borderRadius: '4px' }} />
             </div>
           </div>
         </div>
@@ -275,7 +277,7 @@ export default function ResumoPane({
             </div>
             <div className="ins">
               <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#007AFF', flexShrink: 0, marginTop: 3 }} />
-              <div><strong>Consultas em {year}:</strong> {cons.length}<br /><span style={{ color: '#86868B' }}>Taxa de conversão: {conversion}%</span></div>
+              <div><strong>Consultas em {year}:</strong> {cons.length}<br /><span style={{ color: '#86868B' }}>Taxa de conversão: {conversionRate}%</span></div>
             </div>
           </div>
         </div>

@@ -114,11 +114,13 @@ function CardProfile({
     <>
       {/* Backdrop */}
       <div
+        data-no-invert
         style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 200 }}
         onClick={onClose}
       />
       {/* Slide-in panel */}
       <div
+        data-no-invert
         onClick={e => e.stopPropagation()}
         style={{
           position: 'fixed', top: 0, right: 0, bottom: 0,
@@ -468,6 +470,17 @@ export default function MayraPipeline({
     setShowAddModal(false);
   }
 
+  /** Click on empty column area → open Add modal pre-set to that stage */
+  function handleColumnClick(stageId: PipelineStage, e: React.MouseEvent) {
+    // Only if not currently dragging and not a card click (cards stop propagation via pointer events)
+    if (dragging || selectedCardId || showAddModal) return;
+    // Ignore if the click target is a card (they have pointerDown handler that stops propagation)
+    const target = e.target as HTMLElement;
+    if (target.closest('[data-card]')) return;
+    setNewCard(prev => ({ ...prev, stage: stageId }));
+    setShowAddModal(true);
+  }
+
   const cardsByStage = (stageId: PipelineStage) => cards.filter(c => c.stage === stageId);
 
   const selectedCard = selectedCardId ? cards.find(c => c.id === selectedCardId) ?? null : null;
@@ -529,6 +542,7 @@ export default function MayraPipeline({
             <div
               key={stage.id}
               data-stage={stage.id}
+              onClick={e => handleColumnClick(stage.id, e)}
               style={{
                 minWidth: '200px',
                 width: '200px',
@@ -542,7 +556,8 @@ export default function MayraPipeline({
                     ? `2px dashed ${stage.color}35`
                     : '2px solid transparent',
                 transition: 'border 0.1s, background 0.1s',
-                minHeight: '80px', // ensures empty columns are droppable
+                minHeight: '120px', // ensures empty columns are visible and droppable
+                cursor: dragging ? 'grabbing' : 'default',
               }}
             >
               {/* Column header */}
@@ -569,6 +584,7 @@ export default function MayraPipeline({
                   return (
                     <div
                       key={card.id}
+                      data-card={card.id}
                       onPointerDown={e => onCardPointerDown(e, card.id)}
                       style={{
                         background: '#fff',
@@ -625,14 +641,16 @@ export default function MayraPipeline({
         />
       )}
 
-      {/* Add card modal */}
+      {/* Add card modal — data-no-invert prevents dark-mode CSS filter from inverting colours */}
       {showAddModal && (
         <>
           <div
-            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 300 }}
+            data-no-invert
+            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 300 }}
             onClick={() => setShowAddModal(false)}
           />
           <div
+            data-no-invert
             onClick={e => e.stopPropagation()}
             style={{
               position: 'fixed',

@@ -7,17 +7,31 @@ interface ScheduledFollowUp {
   patientName: string;
   phone: string;
   date: string;     // YYYY-MM-DD
-  hour: string;     // "09" – "23"
-  period: 'AM' | 'PM';
+  hour: string;     // "00"–"23" (24h)
+  minute: string;   // "00" | "15" | "30" | "45"
   note?: string;
 }
 
-const STORAGE_KEY = 'followup_scheduler_v1';
+const STORAGE_KEY = 'followup_scheduler_v2';
 
 function loadAll(): ScheduledFollowUp[] {
   if (typeof window === 'undefined') return [];
   try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '[]') as ScheduledFollowUp[];
+    // Support both v1 (AM/PM) and v2 (24h + minutes) storage
+    const v2 = localStorage.getItem(STORAGE_KEY);
+    if (v2) return JSON.parse(v2) as ScheduledFollowUp[];
+    // Migrate v1 data
+    const v1Raw = localStorage.getItem('followup_scheduler_v1');
+    if (v1Raw) {
+      const v1 = JSON.parse(v1Raw) as Array<{ id: string; patientName: string; phone: string; date: string; hour: string; period: string; note?: string }>;
+      return v1.map(item => {
+        let h = parseInt(item.hour, 10);
+        if (item.period === 'PM' && h !== 12) h += 12;
+        if (item.period === 'AM' && h === 12) h = 0;
+        return { id: item.id, patientName: item.patientName, phone: item.phone, date: item.date, hour: String(h).padStart(2, '0'), minute: '00', note: item.note };
+      });
+    }
+    return [];
   } catch { return []; }
 }
 
@@ -65,7 +79,6 @@ function MiniCalendar({ value, onChange }: MiniCalendarProps) {
 
   return (
     <div style={{ userSelect: 'none' }}>
-      {/* Month nav */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
         <button
           type="button"
@@ -82,14 +95,12 @@ function MiniCalendar({ value, onChange }: MiniCalendarProps) {
         >›</button>
       </div>
 
-      {/* Day headers */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '1px', marginBottom: '2px' }}>
         {WEEKDAYS.map((d, i) => (
           <div key={i} style={{ textAlign: 'center', fontSize: '0.6rem', fontWeight: 700, color: '#AEAEB2', padding: '2px 0' }}>{d}</div>
         ))}
       </div>
 
-      {/* Day cells */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '1px' }}>
         {cells.map((day, idx) => {
           if (day === null) return <div key={idx} />;
@@ -124,6 +135,10 @@ function MiniCalendar({ value, onChange }: MiniCalendarProps) {
   );
 }
 
+// ── Hours (24h) and minutes options ──────────────────────────────
+const HOURS_24 = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
+const MINUTES  = ['00', '15', '30', '45'];
+
 interface FollowUpSchedulerProps {
   patientName: string;
   phone?: string;
@@ -135,64 +150,81 @@ export default function FollowUpScheduler({ patientName, phone = '' }: FollowUpS
   const [date, setDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [showCalendar, setShowCalendar] = useState(true);
   const [hour, setHour] = useState('09');
-  const [period, setPeriod] = useState<'AM' | 'PM'>('AM');
+  const [minute, setMinute] = useState('00');
   const [note, setNote] = useState('');
   const [saved, setSaved] = useState(false);
+  const [notifPerm, setNotifPerm] = useState<NotificationPermission | 'unsupported'>('default');
 
   // Load from localStorage
   useEffect(() => {
     setItems(loadAll().filter(i => i.patientName === patientName));
   }, [patientName]);
 
+  // Check current notification permission state on mount
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (!('Notification' in window)) {
+      setNotifPerm('unsupported');
+    } else {
+      setNotifPerm(Notification.permission);
+    }
+  }, []);
+
+  // When popover opens → request notification permission proactively
+  useEffect(() => {
+    if (!open) return;
+    if (typeof window === 'undefined') return;
+    if (!('Notification' in window)) return;
+    if (Notification.permission === 'granted') return; // already granted
+    if (Notification.permission === 'denied') return;  // user already denied, don't ask again
+    // 'default' → request permission
+    Notification.requestPermission().then(perm => setNotifPerm(perm));
+  }, [open]);
+
   const myItems = items.filter(i => i.patientName === patientName);
   const hasScheduled = myItems.length > 0;
 
   function handleDatePick(d: string) {
     setDate(d);
-    setShowCalendar(false); // collapse calendar on selection
+    setShowCalendar(false);
   }
 
   async function handleSave() {
     const id = `fu_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
-    const newItem: ScheduledFollowUp = { id, patientName, phone, date, hour, period, note: note.trim() || undefined };
+    const newItem: ScheduledFollowUp = { id, patientName, phone, date, hour, minute, note: note.trim() || undefined };
     const all = loadAll().filter(i => !(i.patientName === patientName));
     all.push(newItem);
     saveAll(all);
     setItems([newItem]);
     setSaved(true);
 
-    // ── Browser notification ────────────────────────────────────
-    if ('Notification' in window) {
-      const perm = await Notification.requestPermission();
-      if (perm === 'granted') {
-        // Immediate confirmation
-        const dateFormatted = date.split('-').reverse().join('/');
-        new Notification('⏰ Follow-up agendado!', {
-          body: `${patientName} — ${dateFormatted} às ${hour}h ${period}${newItem.note ? ' · ' + newItem.note : ''}`,
-          tag: `followup_confirm_${id}`,
-        });
+    // ── Browser notification ─────────────────────────────────────────────────
+    if ('Notification' in window && Notification.permission === 'granted') {
+      const dateFormatted = date.split('-').reverse().join('/');
+      new Notification('⏰ Follow-up agendado!', {
+        body: `${patientName} — ${dateFormatted} às ${hour}h${minute !== '00' ? minute : ''}${newItem.note ? ' · ' + newItem.note : ''}`,
+        tag: `followup_confirm_${id}`,
+      });
 
-        // If scheduled for today, fire a timed notification at the exact time
-        const todayIso = new Date().toISOString().split('T')[0];
-        if (date === todayIso) {
-          let h24 = parseInt(hour, 10);
-          if (period === 'PM' && h24 !== 12) h24 += 12;
-          if (period === 'AM' && h24 === 12) h24 = 0;
-          const scheduledMs = new Date();
-          scheduledMs.setHours(h24, 0, 0, 0);
-          const delay = scheduledMs.getTime() - Date.now();
-          if (delay > 0) {
-            setTimeout(() => {
-              new Notification('⏰ Follow-up agora!', {
-                body: `${patientName}${newItem.note ? ' — ' + newItem.note : ''}`,
-                tag: `followup_due_${id}`,
-              });
-            }, delay);
-          }
+      // If scheduled for today, fire a timed notification at the exact time
+      const todayIso = new Date().toISOString().split('T')[0];
+      if (date === todayIso) {
+        const h24 = parseInt(hour, 10);
+        const m   = parseInt(minute, 10);
+        const scheduledMs = new Date();
+        scheduledMs.setHours(h24, m, 0, 0);
+        const delay = scheduledMs.getTime() - Date.now();
+        if (delay > 0) {
+          setTimeout(() => {
+            new Notification('⏰ Follow-up agora!', {
+              body: `${patientName}${newItem.note ? ' — ' + newItem.note : ''}`,
+              tag: `followup_due_${id}`,
+            });
+          }, delay);
         }
       }
     }
-    // ─────────────────────────────────────────────────────────────
+    // ────────────────────────────────────────────────────────────────────────
 
     setTimeout(() => {
       setSaved(false);
@@ -206,11 +238,14 @@ export default function FollowUpScheduler({ patientName, phone = '' }: FollowUpS
     setItems(all.filter(i => i.patientName === patientName));
   }
 
-  // Format date for display
   function formatDate(d: string) {
     const parts = d.split('-');
     if (parts.length !== 3) return d;
     return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  }
+
+  function formatTime(item: ScheduledFollowUp) {
+    return `${item.hour}:${item.minute || '00'}`;
   }
 
   return (
@@ -264,7 +299,7 @@ export default function FollowUpScheduler({ patientName, phone = '' }: FollowUpS
               borderRadius: '14px',
               boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
               padding: '14px',
-              width: '230px',
+              width: '248px',
               border: '1.5px solid #E5E5EA',
             }}
           >
@@ -272,12 +307,25 @@ export default function FollowUpScheduler({ patientName, phone = '' }: FollowUpS
               ⏰ Follow-up — {patientName}
             </div>
 
+            {/* Notification permission status */}
+            {notifPerm !== 'granted' && notifPerm !== 'unsupported' && (
+              <div style={{
+                fontSize: '0.68rem', color: notifPerm === 'denied' ? '#FF3B30' : '#FF9500',
+                background: notifPerm === 'denied' ? '#FFE5E3' : '#FFF3E0',
+                padding: '5px 8px', borderRadius: '7px', marginBottom: '8px', lineHeight: 1.4,
+              }}>
+                {notifPerm === 'denied'
+                  ? '🔕 Notificações bloqueadas. Habilite nas configurações do navegador.'
+                  : '🔔 Permita notificações para receber lembretes.'}
+              </div>
+            )}
+
             {/* Existing scheduled items */}
             {myItems.map(item => (
               <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 8px', background: '#E5F1FF', borderRadius: '8px', marginBottom: '8px' }}>
                 <div>
                   <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#007AFF' }}>
-                    {formatDate(item.date)} às {item.hour}h {item.period}
+                    {formatDate(item.date)} às {formatTime(item)}
                   </div>
                   {item.note && <div style={{ fontSize: '0.68rem', color: '#86868B' }}>{item.note}</div>}
                 </div>
@@ -290,7 +338,7 @@ export default function FollowUpScheduler({ patientName, phone = '' }: FollowUpS
               </div>
             ))}
 
-            {/* Date toggle button (shows selected date, click to reopen calendar) */}
+            {/* Date toggle button */}
             <div style={{ marginBottom: '8px' }}>
               <label style={{ display: 'block', fontSize: '0.68rem', fontWeight: 600, color: '#86868B', marginBottom: '4px' }}>Data</label>
               <button
@@ -309,36 +357,37 @@ export default function FollowUpScheduler({ patientName, phone = '' }: FollowUpS
               </button>
             </div>
 
-            {/* Mini calendar (collapsible) */}
+            {/* Mini calendar */}
             {showCalendar && (
               <div style={{ marginBottom: '8px', padding: '8px', background: '#F9F9FB', borderRadius: '10px', border: '1.5px solid #E5E5EA' }}>
                 <MiniCalendar value={date} onChange={handleDatePick} />
               </div>
             )}
 
-            {/* Time */}
+            {/* Time — hours + minutes (24h) */}
             <div style={{ display: 'flex', gap: '6px', marginBottom: '8px' }}>
               <div style={{ flex: 1 }}>
                 <label style={{ display: 'block', fontSize: '0.68rem', fontWeight: 600, color: '#86868B', marginBottom: '3px' }}>Hora</label>
                 <select
                   value={hour}
                   onChange={e => setHour(e.target.value)}
-                  style={{ width: '100%', padding: '6px 8px', borderRadius: '7px', border: '1.5px solid #E5E5EA', fontSize: '0.8rem', fontFamily: 'inherit', background: '#F9F9FB' }}
+                  style={{ width: '100%', padding: '6px 8px', borderRadius: '7px', border: '1.5px solid #E5E5EA', fontSize: '0.8rem', fontFamily: 'inherit', background: '#F9F9FB', color: '#1D1D1F' }}
                 >
-                  {['06','07','08','09','10','11','12','01','02','03','04','05'].map(h => (
-                    <option key={h} value={h}>{h}</option>
+                  {HOURS_24.map(h => (
+                    <option key={h} value={h}>{h}h</option>
                   ))}
                 </select>
               </div>
-              <div>
-                <label style={{ display: 'block', fontSize: '0.68rem', fontWeight: 600, color: '#86868B', marginBottom: '3px' }}>AM/PM</label>
+              <div style={{ flex: 1 }}>
+                <label style={{ display: 'block', fontSize: '0.68rem', fontWeight: 600, color: '#86868B', marginBottom: '3px' }}>Minutos</label>
                 <select
-                  value={period}
-                  onChange={e => setPeriod(e.target.value as 'AM' | 'PM')}
-                  style={{ padding: '6px 8px', borderRadius: '7px', border: '1.5px solid #E5E5EA', fontSize: '0.8rem', fontFamily: 'inherit', background: '#F9F9FB' }}
+                  value={minute}
+                  onChange={e => setMinute(e.target.value)}
+                  style={{ width: '100%', padding: '6px 8px', borderRadius: '7px', border: '1.5px solid #E5E5EA', fontSize: '0.8rem', fontFamily: 'inherit', background: '#F9F9FB', color: '#1D1D1F' }}
                 >
-                  <option value="AM">AM</option>
-                  <option value="PM">PM</option>
+                  {MINUTES.map(m => (
+                    <option key={m} value={m}>{m}min</option>
+                  ))}
                 </select>
               </div>
             </div>
@@ -351,7 +400,8 @@ export default function FollowUpScheduler({ patientName, phone = '' }: FollowUpS
                 placeholder="Retorno pós-op, orçamento..."
                 value={note}
                 onChange={e => setNote(e.target.value)}
-                style={{ width: '100%', padding: '6px 8px', borderRadius: '7px', border: '1.5px solid #E5E5EA', fontSize: '0.8rem', fontFamily: 'inherit', background: '#F9F9FB' }}
+                onKeyDown={e => { if (e.key === 'Enter') handleSave(); }}
+                style={{ width: '100%', padding: '6px 8px', borderRadius: '7px', border: '1.5px solid #E5E5EA', fontSize: '0.8rem', fontFamily: 'inherit', background: '#F9F9FB', color: '#1D1D1F' }}
               />
             </div>
 

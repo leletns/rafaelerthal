@@ -24,14 +24,13 @@ import type { DashboardData, Notification, AmigoLiveData, PipelineCard } from '@
 const TABS = [
   { id: 'resumo',       label: 'Visão Geral' },
   { id: 'pipeline',     label: 'Comercial', highlight: true },
-  { id: 'agenda',       label: 'Agenda' },
   { id: 'pacientes',    label: 'Pacientes' },
   { id: 'ranking',      label: 'Ranking' },
   { id: 'equipe',       label: 'Equipe' },
   { id: 'comp',         label: 'Comparativo' },
   { id: 'aniversarios', label: 'Aniversários', highlight: true },
 ];
-// Note: 'funil', 'orcamentos' and 'geo' are not in the nav but remain available
+// Note: 'funil', 'orcamentos', 'geo' and 'agenda' are not in the nav but remain available
 // via onTabChange ('Ver detalhes' links in Visão Geral summaries)
 
 const INITIAL_NOTIFICATIONS: Notification[] = [
