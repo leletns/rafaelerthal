@@ -221,7 +221,7 @@ export default function DashboardPage() {
       case 'agenda':
         return <AgendaPane attendances={amigoData.attendances ?? []} amigoConfigured={amigoConfigured} />;
       case 'pacientes':
-        return <PacientesPane patients={patients} amigoAttendances={amigoData.attendances} />;
+        return <PacientesPane patients={patients} />;
       case 'pipeline':
         return <PipelinePane initialCards={pipelineFromSheets ?? undefined} cons26={data.cons26} cir26={data.cir26} patients={patients} />;
       case 'ranking':

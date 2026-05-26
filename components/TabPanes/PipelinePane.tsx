@@ -16,6 +16,27 @@ function generateId(): string {
   return `card_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
 }
 
+/** Migrate old localStorage stage names to current PipelineStage values.
+ *  Older versions of the app used different stage IDs — ensure nothing disappears. */
+function migrateStage(old: string): PipelineStage {
+  const map: Record<string, PipelineStage> = {
+    consulta_agendada:    'orc_enviado',
+    compareceu:           'orc_enviado',
+    orc_pendente:         'orc_enviado',
+    orc_apresentado:      'orc_enviado',
+    followup_agendado:    'followup',
+    retomada:             'followup',
+    nao_fechou:           'perdida',
+    sinal_pago:           'sinal_pago',
+    avista_pago:          'cirurgia_agendada',
+    cirurgia_agendada:    'cirurgia_agendada',
+    perdida:              'perdida',
+    orc_enviado:          'orc_enviado',
+    followup:             'followup',
+  };
+  return map[old] ?? 'orc_enviado';
+}
+
 /** Build pipeline cards from 2026 patient journey data.
  *  Only called when BOTH Sheets pipeline AND localStorage are empty. */
 function autoPopulateCards(cons26: Consultation[], cir26: Surgery[]): PipelineCard[] {
@@ -119,7 +140,9 @@ export default function PipelinePane({ initialCards, cons26 = [], cir26 = [], pa
     if (initialCards && initialCards.length > 0) {
       // Sheets is authoritative for stage/notes/checklist.
       // Merge: for each Sheets card, if localStorage has richer checklist/notes, prefer it.
-      const saved = safeStorage.get<PipelineCard[]>(PIPELINE_KEY, []);
+      const raw = safeStorage.get<PipelineCard[]>(PIPELINE_KEY, []);
+      // Migrate old stage names from localStorage before merging
+      const saved = raw.map(c => ({ ...c, stage: migrateStage(c.stage) }));
       const localById = new Map(saved.map(c => [c.id, c]));
       const merged = initialCards.map(sheetsCard => {
         const local = localById.get(sheetsCard.id);
@@ -139,7 +162,10 @@ export default function PipelinePane({ initialCards, cons26 = [], cir26 = [], pa
 
     const saved = safeStorage.get<PipelineCard[]>(PIPELINE_KEY, []);
     if (saved.length > 0) {
-      setCards(saved);
+      // Migrate any old stage names from previous app versions
+      const migrated = saved.map(c => ({ ...c, stage: migrateStage(c.stage) }));
+      setCards(migrated);
+      safeStorage.set(PIPELINE_KEY, migrated);
       setLoaded(true);
       return;
     }

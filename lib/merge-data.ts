@@ -141,6 +141,21 @@ function extractRecord(obj: unknown): Record<string, number> | null {
 }
 
 // -------------------------------------------------------
+// Check if an intl record has real country-level detail
+// (not just a generic "INTERNACIONAL" bucket from Apps Script).
+// Only replace legacy per-country data if Sheets returns
+// multiple countries or at least one country name.
+// -------------------------------------------------------
+function hasCountryDetail(rec: Record<string, number> | null): boolean {
+  if (!rec) return false;
+  const keys = Object.keys(rec);
+  if (keys.length === 0) return false;
+  // Single key "INTERNACIONAL" or "Internacional" = generic bucket → keep legacy
+  if (keys.length === 1 && keys[0].toUpperCase() === 'INTERNACIONAL') return false;
+  return true;
+}
+
+// -------------------------------------------------------
 // Extract OrcStats from Sheets response
 // -------------------------------------------------------
 function extractOrc(obj: unknown): OrcStats | null {
@@ -257,8 +272,11 @@ export function sheetsFirstMerge(
     fx26:      fx26_s      ?? base.fx26,
     cidades25: cidades25_s ?? base.cidades25,
     cidades26: cidades26_s ?? base.cidades26,
-    intl25:    intl25_s    ?? base.intl25,
-    intl26:    intl26_s    ?? base.intl26,
+    // For intl data: only use Sheets data if it has real country-level detail.
+    // Apps Script may return { "INTERNACIONAL": N } as a generic bucket —
+    // in that case preserve the legacy per-country breakdown with flags.
+    intl25:    hasCountryDetail(intl25_s) ? intl25_s! : base.intl25,
+    intl26:    hasCountryDetail(intl26_s) ? intl26_s! : base.intl26,
     orc25:     orc25_s     ?? base.orc25,
     orc26:     orc26_s     ?? base.orc26,
     cons25_mes: mes25_s    ?? base.cons25_mes,
