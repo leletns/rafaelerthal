@@ -80,13 +80,14 @@ export function computeFunnelData(
 ): FunnelData[] {
   const total = cons.length;
   if (total === 0) return [];
-  const orcApresentado = Math.round(total * 0.68);
+  // Every consultation = orçamento presented (1:1)
+  const orcApresentado = total;
   const fechou = cir.length;
 
   return [
     { label: 'Consultas realizadas',  value: total,          pct: 100 },
-    { label: 'Orçamento apresentado', value: orcApresentado, pct: Math.round((orcApresentado / total) * 100) },
-    { label: 'Fechou cirurgia',       value: fechou,         pct: Math.round((fechou / total) * 100) },
+    { label: 'Orçamento apresentado', value: orcApresentado, pct: 100 },
+    { label: 'Fechou cirurgia',       value: fechou,         pct: total > 0 ? Math.round((fechou / total) * 100) : 0 },
   ];
 }
 

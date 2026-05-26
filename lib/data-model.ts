@@ -47,6 +47,13 @@ export type PipelineStage =
   | 'cirurgia_agendada'
   | 'perdida';
 
+export interface PipelineCheckItem {
+  id: string;
+  text: string;
+  done: boolean;
+  createdAt: string;
+}
+
 export interface PipelineCard {
   id: string;
   patientName: string;
@@ -57,6 +64,7 @@ export interface PipelineCard {
   createdAt: string;
   updatedAt: string;
   notes?: string;
+  checklist?: PipelineCheckItem[];
 }
 
 export interface KPIData {
@@ -166,8 +174,8 @@ export interface AmigoBirthdayItem {
 }
 
 export interface AmigoLiveData {
-  attendances:      AmigoAttendanceItem[];
-  birthdays:        AmigoBirthdayItem[];   // today's birthdays
+  attendances?:     AmigoAttendanceItem[];  // kept for backward compat, no longer synced
+  birthdays:        AmigoBirthdayItem[];    // today's birthdays
   upcomingBirthdays?: AmigoBirthdayItem[]; // next 14 days
   syncedAt?:        string;
 }

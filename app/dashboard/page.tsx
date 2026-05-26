@@ -223,7 +223,7 @@ export default function DashboardPage() {
       case 'pacientes':
         return <PacientesPane patients={patients} amigoAttendances={amigoData.attendances} />;
       case 'pipeline':
-        return <PipelinePane initialCards={pipelineFromSheets ?? undefined} cons26={data.cons26} cir26={data.cir26} />;
+        return <PipelinePane initialCards={pipelineFromSheets ?? undefined} cons26={data.cons26} cir26={data.cir26} patients={patients} />;
       case 'ranking':
         return <RankingPane cir25={data.cir25} cir26={data.cir26} cons25={data.cons25} cons26={data.cons26} />;
       case 'funil':

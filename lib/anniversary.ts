@@ -37,7 +37,10 @@ function addMonths(date: Date, months: number): Date {
 }
 
 function daysBetween(a: Date, b: Date): number {
-  return Math.round((b.getTime() - a.getTime()) / (1000 * 60 * 60 * 24));
+  // Strip time — avoids UTC/local timezone off-by-one around midnight
+  const da = new Date(a.getFullYear(), a.getMonth(), a.getDate());
+  const db = new Date(b.getFullYear(), b.getMonth(), b.getDate());
+  return Math.round((db.getTime() - da.getTime()) / (1000 * 60 * 60 * 24));
 }
 
 /** Returns all milestone dates for surgeries, sorted by dueDate ascending.
@@ -50,6 +53,8 @@ export function computeAnniversaries(
   windowDays = 90,
 ): SurgeryAnniversary[] {
   const result: SurgeryAnniversary[] = [];
+  // Normalise today to midnight (local) to ensure date-only comparison
+  const todayNorm = new Date(today.getFullYear(), today.getMonth(), today.getDate());
 
   for (const s of surgeries) {
     const surgDate = parseSurgeryDate(s.d, year);
@@ -57,7 +62,7 @@ export function computeAnniversaries(
 
     for (const ms of MILESTONES) {
       const due = addMonths(surgDate, ms.months);
-      const days = daysBetween(today, due);
+      const days = daysBetween(todayNorm, due);
 
       if (Math.abs(days) <= windowDays) {
         result.push({

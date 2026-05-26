@@ -24,6 +24,12 @@ interface ResumoPaneProps {
 
 const COLORS = ['#007AFF', '#5856D6', '#FF9500', '#28A745', '#FF3B30', '#AF52DE', '#FF6B35', '#00C7BE'];
 
+const MONTH_ORDER = [
+  'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+  'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
+];
+const MONTH_SHORT = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+
 export default function ResumoPane({
   cir25, cir26, cons25, cons26,
   canal25, canal26, fx25, fx26,
@@ -33,7 +39,19 @@ export default function ResumoPane({
 }: ResumoPaneProps) {
   const [year, setYear] = useState<2025 | 2026>(new Date().getFullYear() >= 2026 ? 2026 : 2025);
 
-  const kpis      = computeKPIs(cir25, cir26, cons25, cons26);
+  // Same-period comparison: when viewing 2026, filter 2025 to Jan–currentMonth
+  const currentMonthIdx = new Date().getMonth(); // 0-indexed
+  const cir25Cmp  = year === 2026
+    ? cir25.filter(s  => MONTH_ORDER.indexOf(s.mes)  <= currentMonthIdx)
+    : cir25;
+  const cons25Cmp = year === 2026
+    ? cons25.filter(c => MONTH_ORDER.indexOf(c.mes) <= currentMonthIdx)
+    : cons25;
+  const periodLabel = year === 2026
+    ? `Jan–${MONTH_SHORT[currentMonthIdx]}`
+    : null;
+
+  const kpis      = computeKPIs(cir25Cmp, cir26, cons25Cmp, cons26);
   const cir       = year === 2025 ? cir25  : cir26;
   const cons      = year === 2025 ? cons25 : cons26;
   const rev       = computeRevenueByMonth(cir);
@@ -113,9 +131,14 @@ export default function ResumoPane({
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
         <h2 style={{ fontSize: '15px', fontWeight: 700, color: '#1D1D1F' }}>
           Visão Geral · {year}
-          {year === 2026 && (
+          {year === 2026 && periodLabel && (
             <span style={{ marginLeft: '8px', fontSize: '11px', background: '#E6F7EC', color: '#28A745', padding: '2px 8px', borderRadius: '6px', fontWeight: 600 }}>
-              Em andamento
+              {periodLabel} · em andamento
+            </span>
+          )}
+          {year === 2026 && periodLabel && (
+            <span style={{ marginLeft: '6px', fontSize: '10px', background: '#F2F2F7', color: '#86868B', padding: '2px 8px', borderRadius: '6px', fontWeight: 500 }}>
+              vs {periodLabel} 2025
             </span>
           )}
         </h2>
@@ -126,7 +149,7 @@ export default function ResumoPane({
       </div>
 
       {/* KPI row */}
-      <KPICards kpis={kpis} year={year} />
+      <KPICards kpis={kpis} year={year} periodLabel={periodLabel} />
 
       {/* Monthly charts */}
       <div className="g2">

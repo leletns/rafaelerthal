@@ -24,9 +24,10 @@ function KPICard({ label, value, sub, color }: KPICardProps) {
 interface KPICardsProps {
   kpis: KPIData;
   year: 2025 | 2026;
+  periodLabel?: string | null;
 }
 
-export default function KPICards({ kpis, year }: KPICardsProps) {
+export default function KPICards({ kpis, year, periodLabel }: KPICardsProps) {
   const is2025 = year === 2025;
 
   const surgeries   = is2025 ? kpis.totalSurgeries2025     : kpis.totalSurgeries2026;
@@ -35,7 +36,8 @@ export default function KPICards({ kpis, year }: KPICardsProps) {
   const conversion  = is2025 ? kpis.conversionRate2025     : kpis.conversionRate2026;
   const avgTicket   = is2025 ? kpis.avgTicket2025          : kpis.avgTicket2026;
 
-  // YoY trend
+  // YoY trend (same-period when periodLabel is set)
+  const cmpLabel = periodLabel ? `vs ${periodLabel} 2025` : 'vs 2025';
   const surgTrend = kpis.totalSurgeries2025 > 0
     ? ((kpis.totalSurgeries2026 - kpis.totalSurgeries2025) / kpis.totalSurgeries2025 * 100).toFixed(1)
     : '—';
@@ -48,13 +50,13 @@ export default function KPICards({ kpis, year }: KPICardsProps) {
       <KPICard
         label="Cirurgias"
         value={String(surgeries)}
-        sub={!is2025 && kpis.totalSurgeries2025 > 0 ? `${Number(surgTrend) >= 0 ? '+' : ''}${surgTrend}% vs 2025` : `em ${year}`}
+        sub={!is2025 && kpis.totalSurgeries2025 > 0 ? `${Number(surgTrend) >= 0 ? '+' : ''}${surgTrend}% ${cmpLabel}` : `em ${year}`}
         color="#007AFF"
       />
       <KPICard
         label="Receita total"
         value={formatCurrency(revenue)}
-        sub={!is2025 && kpis.totalRevenue2025 > 0 ? `${Number(revTrend) >= 0 ? '+' : ''}${revTrend}% vs 2025` : `em ${year}`}
+        sub={!is2025 && kpis.totalRevenue2025 > 0 ? `${Number(revTrend) >= 0 ? '+' : ''}${revTrend}% ${cmpLabel}` : `em ${year}`}
         color="#28A745"
       />
       <KPICard

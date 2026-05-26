@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import type { PipelineCard, PipelineStage, Consultation, Surgery } from '@/lib/data-model';
+import type { PipelineCard, PipelineStage, Consultation, Surgery, Patient } from '@/lib/data-model';
 import MayraPipeline from '../MayraPipeline';
 import { safeStorage, PIPELINE_KEY, getAuthToken } from '@/lib/safe-storage';
 
@@ -9,6 +9,7 @@ interface PipelinePaneProps {
   initialCards?: PipelineCard[];
   cons26?: Consultation[];
   cir26?: Surgery[];
+  patients?: Patient[];
 }
 
 function generateId(): string {
@@ -87,7 +88,7 @@ async function pushPipelineToSheets(cards: PipelineCard[]): Promise<void> {
   });
 }
 
-export default function PipelinePane({ initialCards, cons26 = [], cir26 = [] }: PipelinePaneProps) {
+export default function PipelinePane({ initialCards, cons26 = [], cir26 = [], patients = [] }: PipelinePaneProps) {
   const [cards, setCards]   = useState<PipelineCard[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [syncing, setSyncing] = useState(false);
@@ -187,6 +188,7 @@ export default function PipelinePane({ initialCards, cons26 = [], cir26 = [] }: 
         onUpdateCard={handleUpdateCard}
         onAddCard={handleAddCard}
         onDeleteCard={handleDeleteCard}
+        patients={patients}
       />
     </div>
   );
