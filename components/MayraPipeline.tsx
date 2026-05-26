@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import type { PipelineCard, PipelineStage, PipelineCheckItem, Patient } from '@/lib/data-model';
 import WhatsAppButton from './WhatsAppButton';
 import { formatCurrency } from '@/lib/dashboard-calculations';
@@ -381,9 +382,13 @@ export default function MayraPipeline({
   const [dragOver, setDragOver]       = useState<PipelineStage | null>(null);
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
   const [showAddModal, setShowAddModal]     = useState(false);
+  const [isMounted, setIsMounted]           = useState(false);
   const [newCard, setNewCard] = useState<NewCardForm>({
     patientName: '', phone: '', procedure: '', value: '', stage: 'orc_enviado', notes: '',
   });
+
+  // Portal needs client-side mount to avoid SSR mismatch
+  useEffect(() => { setIsMounted(true); }, []);
 
   // Refs to avoid stale closures in document event listeners
   const cardsRef   = useRef(cards);
@@ -543,7 +548,7 @@ export default function MayraPipeline({
           gap: '12px',
           overflowX: 'auto',
           paddingBottom: '8px',
-          alignItems: 'flex-start',
+          alignItems: 'stretch',
           touchAction: dragging ? 'none' : 'pan-x pan-y',
           cursor: dragging ? 'grabbing' : 'auto',
           userSelect: 'none',
@@ -622,9 +627,9 @@ export default function MayraPipeline({
                           {card.procedure}
                         </div>
                       )}
-                      {card.value && (
+                      {(card.value ?? 0) > 0 && (
                         <div style={{ fontSize: '0.72rem', color: '#28A745', fontWeight: 600 }}>
-                          {formatCurrency(card.value)}
+                          {formatCurrency(card.value!)}
                         </div>
                       )}
                       {checkTotal > 0 && (
@@ -644,19 +649,20 @@ export default function MayraPipeline({
         })}
       </div>
 
-      {/* Card Profile Panel */}
-      {selectedCard && (
+      {/* Card Profile Panel — rendered via portal to escape any parent CSS filter stacking context */}
+      {isMounted && selectedCard && createPortal(
         <CardProfile
           card={selectedCard}
           patients={patients}
           onUpdateCard={card => onUpdateCard(card)}
           onDeleteCard={id => { onDeleteCard(id); setSelectedCardId(null); }}
           onClose={() => setSelectedCardId(null)}
-        />
+        />,
+        document.body
       )}
 
-      {/* Add card modal — data-no-invert prevents dark-mode CSS filter from inverting colours */}
-      {showAddModal && (
+      {/* Add card modal — portal to body so it escapes any parent CSS filter/stacking context (dark mode fix) */}
+      {isMounted && showAddModal && createPortal(
         <>
           <div
             data-no-invert
@@ -774,7 +780,8 @@ export default function MayraPipeline({
               </button>
             </div>
           </div>
-        </>
+        </>,
+        document.body
       )}
     </div>
   );
