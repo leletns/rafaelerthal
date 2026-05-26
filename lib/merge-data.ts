@@ -176,17 +176,40 @@ function extractConsMes(consObj: unknown): number[] | null {
 export function extractPipeline(remote: Record<string, unknown>): PipelineCard[] | null {
   const raw = remote.pipeline;
   if (!Array.isArray(raw) || raw.length === 0) return null;
-  return (raw as Record<string, unknown>[]).map((r) => ({
-    id:           String(r.id          ?? `p_${Math.random().toString(36).slice(2)}`),
-    patientName:  String(r.patientName ?? r.paciente ?? ''),
-    phone:        String(r.phone       ?? r.telefone ?? ''),
-    procedure:    String(r.procedure   ?? r.procedimento ?? ''),
-    value:        Number(r.value       ?? r.valor ?? 0),
-    stage:        String(r.stage       ?? r.etapa ?? 'orc_enviado') as import('./data-model').PipelineStage,
-    notes:        String(r.notes       ?? r.notas ?? ''),
-    createdAt:    String(r.createdAt   ?? new Date().toISOString()),
-    updatedAt:    String(r.updatedAt   ?? new Date().toISOString()),
-  }));
+  return (raw as Record<string, unknown>[]).map((r) => {
+    // checklist: stored as JSON string (checklistJson) or native array (checklist)
+    // Apps Script may store the serialized JSON string in a text column.
+    const checklist = (() => {
+      // 1. Try checklistJson (explicit JSON string field)
+      const jsonStr = r.checklistJson ?? r.checklist_json;
+      if (typeof jsonStr === 'string' && jsonStr.trim().startsWith('[')) {
+        try { return JSON.parse(jsonStr); } catch { /* fall through */ }
+      }
+      // 2. Try checklist as native array (passed through)
+      const arr = r.checklist;
+      if (Array.isArray(arr)) return arr;
+      // 3. Try checklist as JSON string
+      if (typeof arr === 'string' && arr.trim().startsWith('[')) {
+        try { return JSON.parse(arr); } catch { return undefined; }
+      }
+      return undefined;
+    })();
+
+    const notes = String(r.notes ?? r.notas ?? '').trim() || undefined;
+
+    return {
+      id:          String(r.id          ?? `p_${Math.random().toString(36).slice(2)}`),
+      patientName: String(r.patientName ?? r.paciente ?? ''),
+      phone:       String(r.phone       ?? r.telefone ?? ''),
+      procedure:   String(r.procedure   ?? r.procedimento ?? '') || undefined,
+      value:       Number(r.value       ?? r.valor ?? 0) || undefined,
+      stage:       String(r.stage       ?? r.etapa ?? 'orc_enviado') as import('./data-model').PipelineStage,
+      notes,
+      checklist,
+      createdAt:   String(r.createdAt   ?? new Date().toISOString()),
+      updatedAt:   String(r.updatedAt   ?? new Date().toISOString()),
+    };
+  });
 }
 
 // -------------------------------------------------------

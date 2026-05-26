@@ -69,6 +69,24 @@ function autoPopulateCards(cons26: Consultation[], cir26: Surgery[]): PipelineCa
   return cards;
 }
 
+/** Serialize a card for Sheets storage.
+ *  checklist (array) → checklistJson (JSON string) so Apps Script can store it
+ *  as a plain text column without losing structure. */
+function serializeCardForSheets(card: PipelineCard): Record<string, unknown> {
+  return {
+    id:           card.id,
+    patientName:  card.patientName,
+    phone:        card.phone,
+    procedure:    card.procedure ?? '',
+    value:        card.value ?? 0,
+    stage:        card.stage,
+    notes:        card.notes ?? '',
+    checklistJson: JSON.stringify(card.checklist ?? []),
+    createdAt:    card.createdAt,
+    updatedAt:    card.updatedAt,
+  };
+}
+
 /** Push all pipeline cards to Sheets (debounced). */
 async function pushPipelineToSheets(cards: PipelineCard[]): Promise<void> {
   const token = getAuthToken();
@@ -83,7 +101,7 @@ async function pushPipelineToSheets(cards: PipelineCard[]): Promise<void> {
     },
     body: JSON.stringify({
       acao: 'pipeline_bulk',
-      cards,
+      cards: cards.map(serializeCardForSheets),
     }),
   });
 }
@@ -99,9 +117,22 @@ export default function PipelinePane({ initialCards, cons26 = [], cir26 = [], pa
     if (loaded) return;
 
     if (initialCards && initialCards.length > 0) {
-      // Sheets has pipeline data — use it as authoritative
-      setCards(initialCards);
-      safeStorage.set(PIPELINE_KEY, initialCards);
+      // Sheets is authoritative for stage/notes/checklist.
+      // Merge: for each Sheets card, if localStorage has richer checklist/notes, prefer it.
+      const saved = safeStorage.get<PipelineCard[]>(PIPELINE_KEY, []);
+      const localById = new Map(saved.map(c => [c.id, c]));
+      const merged = initialCards.map(sheetsCard => {
+        const local = localById.get(sheetsCard.id);
+        if (!local) return sheetsCard;
+        return {
+          ...sheetsCard,
+          // Prefer local notes/checklist if Sheets doesn't have them (old Apps Script)
+          notes:     sheetsCard.notes     ?? local.notes,
+          checklist: sheetsCard.checklist ?? local.checklist,
+        };
+      });
+      setCards(merged);
+      safeStorage.set(PIPELINE_KEY, merged);
       setLoaded(true);
       return;
     }
@@ -127,12 +158,25 @@ export default function PipelinePane({ initialCards, cons26 = [], cir26 = [], pa
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialCards, cons26, cir26]);
 
-  // When initialCards arrives later (Sheets synced after mount), update if we auto-populated
+  // When initialCards arrives later (Sheets synced after mount), merge with current cards
   useEffect(() => {
     if (!loaded) return;
     if (initialCards && initialCards.length > 0) {
-      setCards(initialCards);
-      safeStorage.set(PIPELINE_KEY, initialCards);
+      setCards(prev => {
+        const prevById = new Map(prev.map(c => [c.id, c]));
+        const merged = initialCards.map(sheetsCard => {
+          const current = prevById.get(sheetsCard.id);
+          if (!current) return sheetsCard;
+          return {
+            ...sheetsCard,
+            // Current in-memory card wins for notes/checklist (user may have just edited)
+            notes:     current.notes     ?? sheetsCard.notes,
+            checklist: current.checklist ?? sheetsCard.checklist,
+          };
+        });
+        safeStorage.set(PIPELINE_KEY, merged);
+        return merged;
+      });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialCards]);
