@@ -72,19 +72,25 @@ export async function GET(req: NextRequest) {
         : []
     );
 
+  const normalizedAtts = atts.status === 'fulfilled'
+    ? (atts.value as Record<string, unknown>[]).map(a => normalizeAttendance(a))
+    : [];
+
   return NextResponse.json({
     success: true,
     timestamp: new Date().toISOString(),
     data: {
-      attendances: atts.status === 'fulfilled'
-        ? (atts.value as Record<string, unknown>[]).map(a => normalizeAttendance(a))
-        : [],
+      attendances: normalizedAtts,
       birthdays: todayBdays.status === 'fulfilled'
         ? (todayBdays.value as Record<string, unknown>[]).map(p => normalizeBirthday(p, today))
         : [],
       upcomingBirthdays,
       places:  placesList.status === 'fulfilled' ? placesList.value : [],
       events:  eventsList.status === 'fulfilled' ? eventsList.value : [],
+    },
+    meta: {
+      attendanceCount: normalizedAtts.length,
+      syncedAt: new Date().toISOString(),
     },
     errors: {
       attendances: atts.status === 'rejected' ? (atts.reason as Error).message : null,

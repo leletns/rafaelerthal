@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import type { Surgery, Consultation } from '@/lib/data-model';
-import { formatCurrency } from '@/lib/dashboard-calculations';
+import { formatCurrency, normalizeProcedureCategory, formatCategoryLabel } from '@/lib/dashboard-calculations';
 
 interface RankingPaneProps {
   cir25: Surgery[];
@@ -81,12 +81,14 @@ export default function RankingPane({ cir25, cir26, cons25, cons26 }: RankingPan
     [patientMap]
   );
 
-  // Procedure ranking
+  // Procedure ranking — normalize category names first to merge typo variants
   const byProc = useMemo(() => {
     const map = new Map<string, { procedure: string; count: number; revenue: number }>();
     for (const s of cir) {
-      const key = s.cl || s.c;
-      const e = map.get(key) ?? { procedure: key, count: 0, revenue: 0 };
+      const raw   = s.cl || s.c;
+      const key   = normalizeProcedureCategory(raw);
+      const label = formatCategoryLabel(key);
+      const e = map.get(key) ?? { procedure: label, count: 0, revenue: 0 };
       map.set(key, { ...e, count: e.count + 1, revenue: e.revenue + s.v });
     }
     return Array.from(map.values()).sort((a, b) => b.count - a.count).slice(0, 10);
@@ -226,7 +228,7 @@ export default function RankingPane({ cir25, cir26, cons25, cons26 }: RankingPan
                       {p.procedure}
                     </span>
                     <span style={{ fontWeight: 800, fontSize: '0.875rem', color: COLORS[i % COLORS.length], flexShrink: 0, marginLeft: '8px' }}>
-                      {p.count}×
+                      {p.count} {p.count === 1 ? 'vez' : 'vezes'} realizada
                     </span>
                   </div>
                   <div style={{ height: '6px', background: '#F2F2F7', borderRadius: '3px', overflow: 'hidden' }}>
@@ -236,7 +238,14 @@ export default function RankingPane({ cir25, cir26, cons25, cons26 }: RankingPan
                       borderRadius: '3px', transition: 'width 0.5s ease',
                     }} />
                   </div>
-                  <span style={{ fontSize: '0.68rem', color: '#86868B' }}>{formatCurrency(p.revenue)}</span>
+                  <div style={{ display: 'flex', gap: '12px', marginTop: '2px' }}>
+                    <span style={{ fontSize: '0.68rem', color: '#86868B' }}>
+                      Total: {formatCurrency(p.revenue)}
+                    </span>
+                    <span style={{ fontSize: '0.68rem', color: '#86868B' }}>
+                      Ticket médio: {formatCurrency(Math.round(p.revenue / p.count))}
+                    </span>
+                  </div>
                 </div>
               </div>
             ))

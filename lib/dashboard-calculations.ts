@@ -119,6 +119,33 @@ export function formatNumber(value: number): string {
   return new Intl.NumberFormat('pt-BR').format(value);
 }
 
+/** Normalize Surgery.cl (clinic category) field: fix typos, collapse spaces, remove suffixes.
+ *  "LIPEDEMA,TECNOLOGIA E PLÁSTICA" → "LIPEDEMA, TECNOLOGIA E PLÁSTICA"
+ *  "LIPEDEMA  E TECNOLOGIA + PROCEDIMENTO" → "LIPEDEMA E TECNOLOGIA" */
+export function normalizeProcedureCategory(cl: string): string {
+  if (!cl) return 'NÃO ESPECIFICADA';
+  return cl.trim()
+    .replace(/\s+/g, ' ')                      // collapse multiple spaces
+    .replace(/\s*\+\s*PROCEDIMENTO\s*$/i, '')   // remove trailing "+ PROCEDIMENTO"
+    .replace(/,(\S)/g, ', $1')                  // add space after comma: ",T" → ", T"
+    .trim();
+}
+
+const CATEGORY_LABELS: Record<string, string> = {
+  'LIPEDEMA E TECNOLOGIA':           'Lipedema + Tecnologia',
+  'LIPEDEMA, TECNOLOGIA E PLÁSTICA': 'Lipedema + Tecnologia + Plástica',
+  'LIPEDEMA E PLÁSTICA':             'Lipedema + Plástica',
+  'LIPEDEMA SEM TECNOLOGIA':         'Lipedema sem Tecnologia',
+  'PLÁSTICA':                        'Plástica',
+  'RETOQUE':                         'Retoque / Revisão',
+  'NÃO ESPECIFICADA':                'Não especificada',
+};
+
+/** Human-readable display label for a normalized category */
+export function formatCategoryLabel(normalized: string): string {
+  return CATEGORY_LABELS[normalized.toUpperCase()] ?? normalized;
+}
+
 export function computeTopProcedures(cir: Surgery[]): { procedure: string; count: number; revenue: number }[] {
   const map = new Map<string, { count: number; revenue: number }>();
   for (const s of cir) {

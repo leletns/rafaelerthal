@@ -14,12 +14,21 @@ function headers(): HeadersInit {
 
 async function get<T>(path: string, params?: Record<string, string>): Promise<T> {
   const qs = params ? '?' + new URLSearchParams(params).toString() : '';
-  const res = await fetch(`${BASE_URL}${path}${qs}`, { headers: headers(), cache: 'no-store' });
-  if (!res.ok) throw new Error(`AmigoAPI GET ${path} → HTTP ${res.status}`);
+  const url = `${BASE_URL}${path}${qs}`;
+  const res = await fetch(url, { headers: headers(), cache: 'no-store' });
+  if (!res.ok) {
+    let body = '';
+    try { body = await res.text(); } catch { /* ignore */ }
+    throw new Error(`AmigoAPI ${path} → HTTP ${res.status}${body ? ': ' + body.slice(0, 300) : ''}`);
+  }
   const raw = await res.json();
   // Unwrap AmigoClinic's standard { data: T, status: 'success' } envelope
   if (raw && typeof raw === 'object' && 'status' in raw && 'data' in raw) {
     return (raw as { data: T }).data;
+  }
+  // Also try { result: T } envelope (some API versions)
+  if (raw && typeof raw === 'object' && 'result' in raw) {
+    return (raw as { result: T }).result;
   }
   return raw as T;
 }
@@ -28,7 +37,11 @@ async function post<T>(path: string, body: unknown): Promise<T> {
   const res = await fetch(`${BASE_URL}${path}`, {
     method: 'POST', headers: headers(), body: JSON.stringify(body), cache: 'no-store',
   });
-  if (!res.ok) throw new Error(`AmigoAPI POST ${path} → HTTP ${res.status}`);
+  if (!res.ok) {
+    let errBody = '';
+    try { errBody = await res.text(); } catch { /* ignore */ }
+    throw new Error(`AmigoAPI POST ${path} → HTTP ${res.status}${errBody ? ': ' + errBody.slice(0, 300) : ''}`);
+  }
   return res.json() as Promise<T>;
 }
 

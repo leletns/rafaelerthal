@@ -143,10 +143,13 @@ export default function AgendaPane({ attendances, amigoConfigured = true }: Agen
           </div>
           <ol style={{ margin: 0, paddingLeft: '18px', fontSize: '0.82rem', color: '#6D4C00', lineHeight: 1.7 }}>
             <li>Acesse o painel do AmigoClinic e copie sua <strong>API Key</strong></li>
-            <li>Abra o arquivo <code style={{ background: '#FFE0B2', padding: '1px 5px', borderRadius: '4px' }}>.env.local</code> na raiz do projeto</li>
-            <li>Preencha: <code style={{ background: '#FFE0B2', padding: '1px 5px', borderRadius: '4px' }}>AMIGOCLINIC_API_KEY=sua_chave_aqui</code></li>
-            <li>Reinicie o servidor (<code style={{ background: '#FFE0B2', padding: '1px 5px', borderRadius: '4px' }}>npm run dev</code>)</li>
+            <li><strong>Em produção (Vercel):</strong> vá em Settings → Environment Variables → adicione <code style={{ background: '#FFE0B2', padding: '1px 5px', borderRadius: '4px' }}>AMIGOCLINIC_API_KEY</code></li>
+            <li><strong>Em desenvolvimento:</strong> abra <code style={{ background: '#FFE0B2', padding: '1px 5px', borderRadius: '4px' }}>.env.local</code> e adicione <code style={{ background: '#FFE0B2', padding: '1px 5px', borderRadius: '4px' }}>AMIGOCLINIC_API_KEY=sua_chave_aqui</code></li>
+            <li>Faça redeploy (Vercel) ou reinicie o servidor (<code style={{ background: '#FFE0B2', padding: '1px 5px', borderRadius: '4px' }}>npm run dev</code>)</li>
           </ol>
+          <div style={{ marginTop: '10px', fontSize: '0.72rem', color: '#86868B', background: '#FFF8F0', padding: '8px 12px', borderRadius: '8px' }}>
+            🔧 Para diagnosticar problemas de conexão, acesse: <code style={{ fontSize: '0.7rem' }}>/api/amigo/test</code> (requer token de autenticação)
+          </div>
           <div style={{ marginTop: '10px', fontSize: '0.75rem', color: '#86868B' }}>
             💡 A chave fica apenas no servidor — nunca exposta ao browser.
           </div>
