@@ -1,9 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { getAuthToken } from '@/lib/safe-storage';
-// @ts-ignore
-import * as XLSX from 'xlsx';
+import OcrScanner, { runOcr, type OcrResult } from '@/components/OcrScanner';
 
 interface TeamMember {
   key: string;
@@ -136,6 +134,39 @@ export default function EquipePane() {
     setTimeout(() => setCopied(''), 2000);
   }
 
+  /** Salva o resultado do OCR como comprovante na pasta do profissional. */
+  function saveOcrReceipt(json: OcrResult, file: File) {
+    const ext = json.extracted ?? {};
+
+    // Determine which member folder to use
+    let memberKey = selected;
+    if (!memberKey && json.detectedMember) memberKey = json.detectedMember;
+
+    if (!memberKey) {
+      setUploadMsg(`⚠️ Não foi possível identificar o profissional. Selecione uma pasta primeiro.`);
+      return;
+    }
+
+    const newReceipt: Receipt = {
+      id: `rec_${Date.now()}`,
+      memberKey,
+      filename: file.name,
+      uploadedAt: new Date().toISOString(),
+      valor: ext.valor ?? undefined,
+      data: ext.data ?? undefined,
+      pagador: ext.pagador ?? undefined,
+      raw: ext.raw,
+    };
+
+    const updated = [newReceipt, ...receipts];
+    setReceipts(updated);
+    saveReceipts(updated);
+
+    const member = TEAM.find(t => t.key === memberKey);
+    setUploadMsg(`✅ Comprovante salvo na pasta de ${member?.name ?? memberKey}${ext.valor ? ` · ${ext.valor}` : ''}`);
+    if (!selected && memberKey) setSelected(memberKey);
+  }
+
   async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -143,54 +174,12 @@ export default function EquipePane() {
     setUploadMsg('Lendo comprovante com IA…');
 
     try {
-      const base64 = await new Promise<string>((res, rej) => {
-        const reader = new FileReader();
-        reader.onload = () => res((reader.result as string).split(',')[1]);
-        reader.onerror = rej;
-        reader.readAsDataURL(file);
-      });
-
-      const token = getAuthToken();
-      const resp = await fetch('/api/ai/ocr', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify({ base64, mediaType: file.type, filename: file.name }),
-      });
-
-      const json = await resp.json();
-      const ext = json.extracted ?? {};
-
-      // Determine which member folder to use
-      let memberKey = selected;
-      if (!memberKey && json.detectedMember) memberKey = json.detectedMember;
-
-      if (!memberKey) {
-        setUploadMsg(`⚠️ Não foi possível identificar o profissional. Selecione uma pasta primeiro.`);
-        setUploading(false);
+      const json = await runOcr(file);
+      if (json.error) {
+        setUploadMsg(`❌ Erro: ${json.error}`);
         return;
       }
-
-      const newReceipt: Receipt = {
-        id: `rec_${Date.now()}`,
-        memberKey,
-        filename: file.name,
-        uploadedAt: new Date().toISOString(),
-        valor: ext.valor,
-        data: ext.data,
-        pagador: ext.pagador,
-        raw: ext.raw,
-      };
-
-      const updated = [newReceipt, ...receipts];
-      setReceipts(updated);
-      saveReceipts(updated);
-
-      const member = TEAM.find(t => t.key === memberKey);
-      setUploadMsg(`✅ Comprovante salvo na pasta de ${member?.name ?? memberKey}${ext.valor ? ` · ${ext.valor}` : ''}`);
-      if (!selected && memberKey) setSelected(memberKey);
+      saveOcrReceipt(json, file);
     } catch (err) {
       setUploadMsg(`❌ Erro: ${String(err)}`);
     } finally {
@@ -336,6 +325,9 @@ export default function EquipePane() {
           {uploadMsg}
         </div>
       )}
+
+      {/* Scanner OCR (Gemini): drag & drop, arquivo ou câmera */}
+      <OcrScanner onExtracted={saveOcrReceipt} />
 
       {/* Team grid */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '14px' }}>
