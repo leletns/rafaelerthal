@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react';
 import type { Surgery, Consultation } from '@/lib/data-model';
 import { formatCurrency } from '@/lib/dashboard-calculations';
+import { canonicalCategoryLabel } from '@/lib/normalize-category';
 
 interface RankingPaneProps {
   cir25: Surgery[];
@@ -85,7 +86,9 @@ export default function RankingPane({ cir25, cir26, cons25, cons26 }: RankingPan
   const byProc = useMemo(() => {
     const map = new Map<string, { procedure: string; count: number; revenue: number }>();
     for (const s of cir) {
-      const key = s.cl || s.c;
+      // Agrupamento por categoria unificada — variações de digitação
+      // ("lipedema + tecnologia", "Lipedema & Tecnologia") caem no mesmo bucket
+      const key = canonicalCategoryLabel(s.cl) || s.c;
       const e = map.get(key) ?? { procedure: key, count: 0, revenue: 0 };
       map.set(key, { ...e, count: e.count + 1, revenue: e.revenue + s.v });
     }

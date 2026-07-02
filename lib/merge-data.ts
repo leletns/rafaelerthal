@@ -12,6 +12,7 @@
 //     anos: [...], syncedAt: "..." }
 // ============================================================
 import type { Surgery, Consultation, DashboardData, OrcStats, PipelineCard } from './data-model';
+import { canonicalCategoryLabel } from './normalize-category';
 import {
   cir25_lista, cir26_lista, cons25_lista, cons26_lista,
   canal25, canal26, fx25, fx26,
@@ -19,9 +20,16 @@ import {
   orc25, orc26, cons25_mes, cons26_mes,
 } from './legacy-data';
 
+// Unifica a categoria (cl) de cada cirurgia — o fallback legado também
+// contém variações digitadas à mão ("LIPEDEMA  E TECNOLOGIA + PROCEDIMENTO").
+function withNormalizedCategory(list: Surgery[]): Surgery[] {
+  return list.map((s) => ({ ...s, cl: canonicalCategoryLabel(s.cl) }));
+}
+
 export function getBaseData(): DashboardData {
   return {
-    cir25: cir25_lista, cir26: cir26_lista,
+    cir25: withNormalizedCategory(cir25_lista),
+    cir26: withNormalizedCategory(cir26_lista),
     cons25: cons25_lista, cons26: cons26_lista,
     canal25, canal26,
     fx25, fx26,
@@ -63,7 +71,9 @@ function normalizeSurgery(row: RawRow): Surgery | null {
     mes: normalizeMes(row.mes),
     p,
     c:   String(row.c ?? '').trim(),
-    cl:  String(row.cl ?? '').trim(),
+    // Categoria unificada: "lipedema + tecnologia", "Lipedema & Tecnologia"
+    // e "LIPEDEMA E TECNOLOGIA" viram um único rótulo canônico.
+    cl:  canonicalCategoryLabel(String(row.cl ?? '')),
     v:   Number(row.v) || 0,
     ...(row.reg ? { reg: String(row.reg) } : {}),
   };

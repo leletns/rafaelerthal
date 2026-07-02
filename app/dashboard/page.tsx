@@ -16,6 +16,7 @@ import EquipePane from '@/components/TabPanes/EquipePane';
 import AniversariosPane from '@/components/TabPanes/AniversariosPane';
 import OrcamentosPane from '@/components/TabPanes/OrcamentosPane';
 import { getBaseData, sheetsFirstMerge, extractPipeline } from '@/lib/merge-data';
+import { canonicalCategoryLabel } from '@/lib/normalize-category';
 import { mergePatientRecords } from '@/lib/normalize-patient';
 import { getAuthToken, safeStorage, SNAPSHOT_KEY } from '@/lib/safe-storage';
 import type { DashboardData, Notification, AmigoLiveData, PipelineCard } from '@/lib/data-model';
@@ -67,7 +68,12 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const snap = safeStorage.get<DashboardData | null>(SNAPSHOT_KEY, null);
-    if (snap) setData(snap);
+    if (snap) {
+      // Snapshots antigos podem conter categorias não normalizadas
+      const normalizeCl = (list: typeof snap.cir25) =>
+        (list ?? []).map((s) => ({ ...s, cl: canonicalCategoryLabel(s.cl) }));
+      setData({ ...snap, cir25: normalizeCl(snap.cir25), cir26: normalizeCl(snap.cir26) });
+    }
 
     const token = getAuthToken();
     if (!token) {
