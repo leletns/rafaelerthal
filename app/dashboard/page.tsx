@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import DashboardLayout from '@/components/DashboardLayout';
 import Tabs from '@/components/Tabs';
+import AttentionQueue from '@/components/AttentionQueue';
 import AssistantChat from '@/components/AssistantChat';
 import ResumoPane from '@/components/TabPanes/ResumoPane';
 import PacientesPane from '@/components/TabPanes/PacientesPane';
@@ -181,7 +182,7 @@ export default function DashboardPage() {
               ...todayBdays.map((b, i) => ({
                 id: `bday_${Date.now()}_${i}`,
                 type: 'birthday' as const,
-                title: '🎂 Aniversário hoje',
+                title: 'Aniversário hoje',
                 body: `${b.name}${b.phone ? ` · ${b.phone}` : ''}`,
                 date: todayStr,
                 read: false,
@@ -263,6 +264,14 @@ export default function DashboardPage() {
       syncState={syncState}
       patients={patients}
     >
+      <AttentionQueue
+        cir25={data.cir25} cir26={data.cir26}
+        cons25={data.cons25} cons26={data.cons26}
+        amigoData={amigoData}
+        pipelineFromSheets={pipelineFromSheets}
+        patients={patients}
+        syncing={syncing}
+      />
       <Tabs tabs={TABS} activeTab={activeTab} onChange={setActiveTab} />
       <div key={activeTab} style={{ animation: 'fadeIn 0.25s ease both' }}>
         {renderTabContent()}
