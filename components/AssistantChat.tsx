@@ -49,7 +49,7 @@ export default function AssistantChat() {
     const text = input.trim();
     if ((!text && !attachedFile) || loading) return;
 
-    const displayText = text || (attachedFile ? `📎 ${attachedFile.name}` : '');
+    const displayText = text || (attachedFile ? `Arquivo: ${attachedFile.name}` : '');
     const newMessages: Message[] = [...messages, { role: 'user', content: displayText }];
     setMessages(newMessages);
     setInput('');
@@ -179,7 +179,7 @@ export default function AssistantChat() {
               {messages.length === 0 && (
                 <div>
                   <div style={{ textAlign: 'center', color: '#86868B', fontSize: '0.8rem', marginBottom: '16px' }}>
-                    Olá! Pergunte qualquer coisa sobre seus dados clínicos, ou anexe um arquivo 📎
+                    Olá! Pergunte qualquer coisa sobre seus dados clínicos, ou anexe um arquivo.
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     {suggestedQuestions.map((q) => (
@@ -251,7 +251,7 @@ export default function AssistantChat() {
                 gap: '8px',
                 background: '#F9F9FB',
               }}>
-                <span style={{ fontSize: '14px' }}>📎</span>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#86868B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" /></svg>
                 <span style={{ flex: 1, fontSize: '0.75rem', color: '#1D1D1F', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {attachedFile.name}
                 </span>

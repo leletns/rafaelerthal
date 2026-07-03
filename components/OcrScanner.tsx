@@ -139,16 +139,23 @@ export default function OcrScanner({ onExtracted }: OcrScannerProps) {
         }}
       >
         {loading ? (
-          <div style={{ fontSize: '13px', fontWeight: 700, color: '#007AFF' }}>
-            ⏳ Lendo documento com Gemini…
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'center' }}>
+            <div className="skeleton" style={{ width: '180px', height: '12px' }} />
+            <div style={{ fontSize: '12px', fontWeight: 500, color: 'var(--ink-2)' }}>
+              Lendo documento…
+            </div>
           </div>
         ) : (
           <>
-            <div style={{ fontSize: '1.6rem', marginBottom: '6px' }}>🔍</div>
-            <div style={{ fontSize: '13px', fontWeight: 700, color: '#1D1D1F' }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#AEAEB2" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: '8px' }}>
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="17 8 12 3 7 8" />
+              <line x1="12" y1="3" x2="12" y2="15" />
+            </svg>
+            <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--ink)' }}>
               Arraste um comprovante ou clique para escolher
             </div>
-            <div style={{ fontSize: '11px', color: '#86868B', marginTop: '2px' }}>
+            <div style={{ fontSize: '11px', color: 'var(--ink-3)', marginTop: '2px' }}>
               PNG, JPG, WEBP ou PDF · extração automática por IA
             </div>
           </>
@@ -160,22 +167,22 @@ export default function OcrScanner({ onExtracted }: OcrScannerProps) {
         <button
           onClick={() => fileRef.current?.click()}
           disabled={loading}
-          style={{ flex: 1, minWidth: '140px', padding: '9px 14px', borderRadius: '10px', border: 'none', background: '#007AFF', color: '#fff', fontSize: '13px', fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}
+          style={{ flex: 1, minWidth: '140px', padding: '9px 14px', borderRadius: '10px', border: 'none', background: 'var(--accent)', color: '#fff', fontSize: '13px', fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', fontFamily: 'inherit', transition: 'opacity .15s ease', opacity: loading ? 0.7 : 1 }}
         >
-          📎 Escolher arquivo
+          Escolher arquivo
         </button>
         <button
           onClick={() => cameraRef.current?.click()}
           disabled={loading}
-          style={{ flex: 1, minWidth: '140px', padding: '9px 14px', borderRadius: '10px', border: '1.5px solid #007AFF', background: '#fff', color: '#007AFF', fontSize: '13px', fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}
+          style={{ flex: 1, minWidth: '140px', padding: '9px 14px', borderRadius: '10px', border: '1px solid var(--line)', background: '#fff', color: 'var(--ink)', fontSize: '13px', fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', fontFamily: 'inherit', transition: 'border-color .15s ease' }}
         >
-          📷 Tirar foto
+          Tirar foto
         </button>
       </div>
 
       {error && (
-        <div style={{ padding: '10px 14px', borderRadius: '10px', background: '#FFE5E3', color: '#FF3B30', fontWeight: 600, fontSize: '12.5px' }}>
-          ❌ {error}
+        <div style={{ padding: '10px 14px', borderRadius: '10px', background: '#FDF0F0', border: '1px solid #F2D5D5', color: 'var(--critical)', fontWeight: 500, fontSize: '12.5px' }}>
+          {error}
         </div>
       )}
 
@@ -193,11 +200,11 @@ export default function OcrScanner({ onExtracted }: OcrScannerProps) {
           {ext && (
             <div style={{ flex: 1, minWidth: '220px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                <span style={{ fontSize: '11px', fontWeight: 800, color: '#28A745', textTransform: 'uppercase', letterSpacing: '.6px' }}>
-                  ✅ Dados extraídos
+                <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--positive)', textTransform: 'uppercase', letterSpacing: '.6px' }}>
+                  Dados extraídos
                 </span>
                 {result?.engine && (
-                  <span style={{ fontSize: '10px', color: '#86868B' }}>{result.engine}</span>
+                  <span style={{ fontSize: '10px', color: 'var(--ink-3)' }}>{result.engine}</span>
                 )}
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -210,8 +217,8 @@ export default function OcrScanner({ onExtracted }: OcrScannerProps) {
                   </div>
                 ))}
                 {result?.detectedLabel && (
-                  <div style={{ marginTop: '6px', fontSize: '12px', color: '#007AFF', fontWeight: 700 }}>
-                    👤 Profissional detectado: {result.detectedLabel}
+                  <div style={{ marginTop: '6px', fontSize: '12px', color: 'var(--accent)', fontWeight: 600 }}>
+                    Profissional detectado: {result.detectedLabel}
                   </div>
                 )}
               </div>

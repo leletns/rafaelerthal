@@ -143,12 +143,13 @@ export default function DashboardLayout({
       {/* Header */}
       <header style={{
         background: '#fff',
-        borderBottom: '1px solid #E5E5EA',
+        borderBottom: '1px solid var(--line)',
         position: 'sticky',
         top: 0,
         zIndex: 20,
-        boxShadow: '0 1px 8px rgba(0,0,0,0.04)',
       }}>
+        {/* Barra de progresso sutil durante sincronização */}
+        {syncing && <div className="sync-progress" />}
         <div style={{
           maxWidth: '1180px',
           margin: '0 auto',
@@ -163,9 +164,9 @@ export default function DashboardLayout({
             <div style={{
               width: '52px', height: '52px',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '42px', fontWeight: 200, color: '#007AFF',
+              fontSize: '42px', fontWeight: 300, color: 'var(--accent)',
               letterSpacing: '-3px', lineHeight: 1, userSelect: 'none',
-              fontFamily: "'Montserrat', sans-serif", paddingBottom: '4px',
+              fontFamily: 'var(--font)', paddingBottom: '4px',
             }}>
               b.
             </div>
@@ -207,13 +208,21 @@ export default function DashboardLayout({
                 background: 'none', border: 'none', cursor: 'pointer',
                 padding: '6px', borderRadius: '8px', color: '#86868B',
                 display: 'flex', alignItems: 'center',
-                fontSize: '16px',
                 transition: 'color 0.15s, background 0.15s',
               }}
               onMouseEnter={(e) => { e.currentTarget.style.background = '#F2F2F7'; }}
               onMouseLeave={(e) => { e.currentTarget.style.background = 'none'; }}
             >
-              {theme === 'dark' ? '☀️' : '🌙'}
+              {theme === 'dark' ? (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <circle cx="12" cy="12" r="4" />
+                  <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+                </svg>
+              ) : (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                </svg>
+              )}
             </button>
 
             <NotificationBell
