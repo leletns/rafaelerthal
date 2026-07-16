@@ -52,7 +52,7 @@ export default function KPICards({ kpis, year }: KPICardsProps) {
         color="#007AFF"
       />
       <KPICard
-        label="Receita total"
+        label="Faturamento total"
         value={formatCurrency(revenue)}
         sub={!is2025 && kpis.totalRevenue2025 > 0 ? `${Number(revTrend) >= 0 ? '+' : ''}${revTrend}% vs 2025` : `em ${year}`}
         color="#28A745"
