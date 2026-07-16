@@ -20,14 +20,14 @@ Você é o assistente de IA do dashboard médico da Clínica Blue, especializado
 
 ### KPIs 2025
 - Total de cirurgias: ${kpis.totalSurgeries2025}
-- Receita total: ${formatCurrency(kpis.totalRevenue2025)}
+- Faturamento total: ${formatCurrency(kpis.totalRevenue2025)}
 - Total de consultas: ${kpis.totalConsultations2025}
 - Taxa de conversão: ${kpis.conversionRate2025}%
 - Ticket médio: ${formatCurrency(kpis.avgTicket2025)}
 
 ### KPIs 2026 (até agora)
 - Total de cirurgias: ${kpis.totalSurgeries2026}
-- Receita total: ${formatCurrency(kpis.totalRevenue2026)}
+- Faturamento total: ${formatCurrency(kpis.totalRevenue2026)}
 - Total de consultas: ${kpis.totalConsultations2026}
 - Taxa de conversão: ${kpis.conversionRate2026}%
 - Ticket médio: ${formatCurrency(kpis.avgTicket2026)}
