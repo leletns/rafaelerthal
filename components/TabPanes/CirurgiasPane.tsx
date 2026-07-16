@@ -72,7 +72,7 @@ export default function CirurgiasPane({ cir25, cir26 }: CirurgiasPaneProps) {
       <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '14px' }}>
         {[
           { label: 'Cirurgias', value: filtered.length, color: '#007AFF' },
-          { label: 'Receita total', value: formatCurrency(total), color: '#28A745' },
+          { label: 'Faturamento total', value: formatCurrency(total), color: '#28A745' },
           { label: 'Ticket médio', value: filtered.length > 0 ? formatCurrency(total / filtered.length) : '—', color: '#FF9500' },
         ].map(({ label, value, color }) => (
           <div key={label} style={{
