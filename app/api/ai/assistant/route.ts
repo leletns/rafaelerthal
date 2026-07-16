@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
               media_type: 'application/pdf',
               data: attachment.base64,
             },
-          } as unknown as { type: 'text'; text: string },
+          },
           {
             type: 'text',
             text: message?.trim() || 'Analise este documento e forneça um resumo detalhado em português.',

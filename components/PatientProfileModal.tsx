@@ -159,7 +159,7 @@ export default function PatientProfileModal({ patient, onClose, amigoAttendances
               {anniversaries.length > 0 && (
                 <div>
                   <h4 style={{ fontSize:'0.72rem',fontWeight:700,color:'#86868B',textTransform:'uppercase',letterSpacing:'0.05em',margin:'0 0 8px' }}>
-                    🎂 Mesversários pós-cirurgia
+                    Mesversários pós-cirurgia
                   </h4>
                   <div style={{ display:'flex',flexDirection:'column',gap:'6px' }}>
                     {anniversaries.slice(0,6).map((a,i) => (
@@ -171,7 +171,7 @@ export default function PatientProfileModal({ patient, onClose, amigoAttendances
                           <div style={{ fontSize:'0.72rem',color:'#86868B',marginTop:'1px' }}>{a.surgery.c}</div>
                         </div>
                         <span style={{ fontSize:'0.78rem',fontWeight:700,color:a.days === 0 ? '#FF3B30' : a.days > 0 && a.days <= 7 ? '#FF9500' : a.color }}>
-                          {a.days === 0 ? '🔴 Hoje!' : a.days > 0 ? `em ${a.days}d` : `há ${Math.abs(a.days)}d`}
+                          {a.days === 0 ? 'Hoje' : a.days > 0 ? `em ${a.days}d` : `há ${Math.abs(a.days)}d`}
                         </span>
                       </div>
                     ))}
@@ -261,8 +261,7 @@ export default function PatientProfileModal({ patient, onClose, amigoAttendances
               </h4>
               {myAttendances.length === 0 ? (
                 <div style={{ textAlign:'center',padding:'32px 0',color:'#86868B',fontSize:'0.85rem' }}>
-                  <div style={{ fontSize:'2rem',marginBottom:'8px' }}>📅</div>
-                  Nenhum atendimento encontrado no AmigoClinic
+                                    Nenhum atendimento encontrado no AmigoClinic
                 </div>
               ) : (
                 <div style={{ display:'flex',flexDirection:'column',gap:'8px' }}>
@@ -289,7 +288,7 @@ export default function PatientProfileModal({ patient, onClose, amigoAttendances
               {anniversaries.filter(a => a.days >= 0 && a.days <= 60).length > 0 && (
                 <div style={{ marginTop:'16px' }}>
                   <h4 style={{ fontSize:'0.72rem',fontWeight:700,color:'#86868B',textTransform:'uppercase',letterSpacing:'0.05em',margin:'0 0 8px' }}>
-                    📅 Próximos mesversários
+                    Próximos mesversários
                   </h4>
                   {anniversaries.filter(a => a.days >= 0 && a.days <= 60).map((a,i) => (
                     <div key={i} style={{ display:'flex',justifyContent:'space-between',padding:'8px 12px',background:a.bg,borderRadius:'8px',marginBottom:'4px',border:`1px solid ${a.color}25` }}>

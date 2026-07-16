@@ -17,13 +17,6 @@ export default function NotificationBell({
   const [open, setOpen] = useState(false);
   const unread = notifications.filter((n) => !n.read).length;
 
-  const typeIcons: Record<string, string> = {
-    surgery: '🏥',
-    followup: '📋',
-    birthday: '🎂',
-    payment: '💰',
-    info: 'ℹ️',
-  };
 
   const typeColors: Record<string, string> = {
     surgery: '#007AFF',
@@ -164,15 +157,14 @@ export default function NotificationBell({
                         width: '32px',
                         height: '32px',
                         borderRadius: '8px',
-                        background: `${typeColors[n.type]}15`,
+                        background: `${typeColors[n.type]}12`,
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        fontSize: '1rem',
                         flexShrink: 0,
                       }}
                     >
-                      {typeIcons[n.type]}
+                      <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: typeColors[n.type] }} />
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontWeight: 600, fontSize: '0.8rem', color: '#1D1D1F', marginBottom: '2px' }}>

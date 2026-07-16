@@ -134,8 +134,7 @@ function NotifBanner({
 }) {
   if (perm === 'granted') {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '5px 8px', borderRadius: '7px', marginBottom: '8px', background: '#E6F7EC', border: '1px solid #28A74530', fontSize: '0.67rem', color: '#1D7A33' }}>
-        <span>🔔</span>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '5px 8px', borderRadius: '7px', marginBottom: '8px', background: '#F0F7F2', border: '1px solid #D4E8DB', fontSize: '0.67rem', color: '#1F7A3D' }}>
         <span style={{ fontWeight: 600 }}>Notificações ativas — você receberá alertas</span>
       </div>
     );
@@ -143,8 +142,8 @@ function NotifBanner({
 
   if (perm === 'unsupported') {
     return (
-      <div style={{ padding: '6px 8px', borderRadius: '7px', marginBottom: '8px', background: '#F2F2F7', border: '1px solid #E5E5EA', fontSize: '0.67rem', color: '#86868B' }}>
-        <span style={{ fontWeight: 700 }}>📵 Notificações não suportadas</span>
+      <div style={{ padding: '6px 8px', borderRadius: '7px', marginBottom: '8px', background: '#F4F4F5', border: '1px solid #ECECEE', fontSize: '0.67rem', color: '#6E6E73' }}>
+        <span style={{ fontWeight: 600 }}>Notificações não suportadas</span>
         <div style={{ marginTop: '2px' }}>No iOS, adicione o site à tela inicial e abra pelo ícone.</div>
       </div>
     );
@@ -152,10 +151,10 @@ function NotifBanner({
 
   if (perm === 'denied') {
     return (
-      <div style={{ padding: '6px 8px', borderRadius: '7px', marginBottom: '8px', background: '#FFE5E3', border: '1px solid #FF3B3030', fontSize: '0.67rem', color: '#CC0000' }}>
-        <span style={{ fontWeight: 700 }}>🔕 Notificações bloqueadas</span>
+      <div style={{ padding: '6px 8px', borderRadius: '7px', marginBottom: '8px', background: '#FDF0F0', border: '1px solid #F2D5D5', fontSize: '0.67rem', color: '#B3261E' }}>
+        <span style={{ fontWeight: 600 }}>Notificações bloqueadas</span>
         <div style={{ marginTop: '3px', lineHeight: 1.4 }}>
-          Para ativar: clique no <strong>🔒 cadeado</strong> ou <strong>ⓘ</strong> na barra do navegador → <strong>Notificações → Permitir</strong>.
+          Para ativar: clique no <strong>cadeado</strong> na barra do navegador → <strong>Notificações → Permitir</strong>.
         </div>
       </div>
     );
@@ -163,13 +162,13 @@ function NotifBanner({
 
   // 'default' — not yet asked or dismissed
   return (
-    <div style={{ padding: '6px 8px', borderRadius: '7px', marginBottom: '8px', background: '#FFF3E0', border: '1px solid #FF950030', fontSize: '0.67rem', color: '#B85C00' }}>
+    <div style={{ padding: '6px 8px', borderRadius: '7px', marginBottom: '8px', background: '#FDF6EC', border: '1px solid #F0E0C7', fontSize: '0.67rem', color: '#B45309' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span style={{ fontWeight: 700 }}>🔔 Ativar notificações</span>
+        <span style={{ fontWeight: 600 }}>Ativar notificações</span>
         <button
           type="button"
           onClick={onAllow}
-          style={{ background: '#FF9500', color: '#fff', border: 'none', borderRadius: '5px', padding: '3px 8px', fontSize: '0.67rem', cursor: 'pointer', fontWeight: 700, whiteSpace: 'nowrap' }}
+          style={{ background: '#B45309', color: '#fff', border: 'none', borderRadius: '5px', padding: '3px 8px', fontSize: '0.67rem', cursor: 'pointer', fontWeight: 600, whiteSpace: 'nowrap' }}
         >
           Permitir
         </button>
@@ -303,30 +302,34 @@ export default function FollowUpScheduler({ patientName, phone = '' }: FollowUpS
         }}
         title="Agendar follow-up"
         style={{
-          background: hasScheduled ? '#E5F1FF' : 'none',
-          border: hasScheduled ? '1.5px solid #007AFF40' : 'none',
+          background: hasScheduled ? '#F0F6FF' : '#fff',
+          border: `1px solid ${hasScheduled ? '#BBDBFF' : 'var(--line)'}`,
           cursor: 'pointer',
-          padding: '4px 6px',
-          borderRadius: '7px',
-          color: hasScheduled ? '#007AFF' : '#AEAEB2',
+          padding: '5px 9px',
+          borderRadius: '8px',
+          color: hasScheduled ? 'var(--accent)' : '#6E6E73',
           display: 'flex',
           alignItems: 'center',
-          gap: '3px',
-          fontSize: '14px',
-          transition: 'all 0.15s',
+          gap: '5px',
+          fontSize: '11.5px',
+          fontWeight: 600,
+          transition: 'all 0.15s ease',
         }}
-        onMouseEnter={(e) => { e.currentTarget.style.background = '#E5F1FF'; e.currentTarget.style.color = '#007AFF'; }}
+        onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#BBDBFF'; e.currentTarget.style.color = 'var(--accent)'; }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.background = hasScheduled ? '#E5F1FF' : 'none';
-          e.currentTarget.style.color = hasScheduled ? '#007AFF' : '#AEAEB2';
+          e.currentTarget.style.borderColor = hasScheduled ? '#BBDBFF' : 'var(--line)';
+          e.currentTarget.style.color = hasScheduled ? 'var(--accent)' : '#6E6E73';
         }}
       >
-        ⏰
-        {hasScheduled && (
-          <span style={{ fontSize: '10px', fontWeight: 700, lineHeight: 1 }}>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="10" />
+          <polyline points="12 6 12 12 16 14" />
+        </svg>
+        {hasScheduled ? (
+          <span style={{ fontSize: '10.5px', fontWeight: 600, lineHeight: 1 }}>
             {myItems[0].date.slice(5).replace('-', '/')}
           </span>
-        )}
+        ) : 'Agendar'}
       </button>
 
       {/* Dropdown popover */}

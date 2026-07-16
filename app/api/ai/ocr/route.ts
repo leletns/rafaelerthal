@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
+import { geminiVisionJSON, isGeminiConfigured, getGeminiModel } from '@/lib/gemini';
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+// ============================================================
+// OCR — Google Gemini (tier gratuito) como engine primária.
+// Fallback automático para Anthropic Claude quando GEMINI_API_KEY
+// não estiver configurada (ou a chamada Gemini falhar).
+// ============================================================
 
 // Team member identifiers for auto-detection
 const TEAM_SIGNATURES = [
@@ -13,6 +18,106 @@ const TEAM_SIGNATURES = [
   { key: 'fisio',      keywords: ['cintyafisiorj','Perfeita Saúde','Perfeita Saude'], label: 'Fisioterapia (Cintya)' },
 ];
 
+// Prompt rigoroso: extração literal, JSON estruturado, sem alucinação.
+const OCR_PROMPT = `Você é um sistema OCR de alta precisão da Clínica Blue. Analise a imagem/documento anexado (comprovante de pagamento, recibo ou documento financeiro) e extraia os dados em JSON estruturado.
+
+REGRAS OBRIGATÓRIAS:
+1. Extraia SOMENTE o que aparece LITERALMENTE no documento. NÃO invente, NÃO infira, NÃO alucine dados.
+2. IGNORE ruídos visuais: marcas d'água, logotipos decorativos, elementos de interface (botões, barras de status), sombras, reflexos e texto cortado ilegível.
+3. Se um campo não estiver visível ou legível, retorne null para esse campo — nunca chute.
+4. O "favorecido" é quem RECEBE o dinheiro (destinatário/beneficiário). Leia o nome exato.
+5. O "pagador" é quem ENVIOU o dinheiro (normalmente o paciente).
+6. Valores monetários no formato brasileiro exato do documento (ex: "R$ 1.234,56").
+7. Datas no formato DD/MM/YYYY.
+8. Responda APENAS com o objeto JSON — sem markdown, sem comentários, sem texto extra.
+
+FORMATO DE SAÍDA (JSON):
+{
+  "valor": "R$ X.XXX,XX ou null",
+  "data": "DD/MM/YYYY ou null",
+  "favorecido": "nome exato do destinatário como aparece no comprovante, ou null",
+  "chavePix": "chave PIX, CPF, CNPJ ou conta exata, ou null",
+  "pagador": "nome do pagador como aparece no comprovante, ou null",
+  "banco": "instituição financeira de origem, ou null",
+  "tipo": "PIX|TED|DOC|Boleto|Cartão|Outro",
+  "raw": "transcrição completa e fiel de todo o texto legível do documento"
+}`;
+
+const GEMINI_SUPPORTED_TYPES = [
+  'image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif',
+  'application/pdf',
+];
+
+interface ExtractedData {
+  valor?: string | null;
+  data?: string | null;
+  favorecido?: string | null;
+  chavePix?: string | null;
+  pagador?: string | null;
+  banco?: string | null;
+  tipo?: string | null;
+  raw?: string;
+}
+
+function parseJsonLoose(text: string): ExtractedData {
+  const jsonMatch = text.match(/\{[\s\S]*\}/);
+  try {
+    return jsonMatch ? (JSON.parse(jsonMatch[0]) as ExtractedData) : { raw: text };
+  } catch {
+    return { raw: text };
+  }
+}
+
+function detectTeamMember(extracted: ExtractedData): { key: string | null; label: string | null } {
+  const searchText = JSON.stringify(extracted).toLowerCase();
+  for (const sig of TEAM_SIGNATURES) {
+    if (sig.keywords.some((k) => searchText.includes(k.toLowerCase()))) {
+      return { key: sig.key, label: sig.label };
+    }
+  }
+  return { key: null, label: null };
+}
+
+// ── Engine 1: Google Gemini (gratuito) ─────────────────────────
+async function ocrWithGemini(base64: string, mediaType: string): Promise<ExtractedData> {
+  const text = await geminiVisionJSON({
+    base64,
+    mimeType: mediaType,
+    prompt: OCR_PROMPT,
+    maxOutputTokens: 2048,
+  });
+  return parseJsonLoose(text);
+}
+
+// ── Engine 2: Anthropic Claude (fallback) ──────────────────────
+async function ocrWithClaude(base64: string, mediaType: string): Promise<ExtractedData> {
+  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  const isImage = mediaType.startsWith('image/');
+
+  const mediaBlock: Anthropic.ContentBlockParam = isImage
+    ? {
+        type: 'image',
+        source: {
+          type: 'base64',
+          media_type: mediaType as 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp',
+          data: base64,
+        },
+      }
+    : {
+        type: 'document',
+        source: { type: 'base64', media_type: 'application/pdf', data: base64 },
+      };
+
+  const response = await client.messages.create({
+    model: 'claude-opus-4-5',
+    max_tokens: 1024,
+    messages: [{ role: 'user', content: [mediaBlock, { type: 'text', text: OCR_PROMPT }] }],
+  });
+
+  const text = response.content[0].type === 'text' ? response.content[0].text : '{}';
+  return parseJsonLoose(text);
+}
+
 export async function POST(req: NextRequest) {
   const authHeader = req.headers.get('Authorization');
   const token = authHeader?.replace('Bearer ', '');
@@ -21,118 +126,68 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  if (!process.env.ANTHROPIC_API_KEY) {
-    return NextResponse.json({ error: 'ANTHROPIC_API_KEY not configured' }, { status: 500 });
+  const hasGemini = isGeminiConfigured();
+  const hasClaude = Boolean(process.env.ANTHROPIC_API_KEY);
+  if (!hasGemini && !hasClaude) {
+    return NextResponse.json(
+      { error: 'Nenhuma engine OCR configurada. Defina GEMINI_API_KEY (gratuita) ou ANTHROPIC_API_KEY no ambiente.' },
+      { status: 500 }
+    );
   }
 
   try {
-    const body = await req.json() as { base64: string; mediaType: string; filename?: string };
-    const { base64, mediaType, filename } = body;
+    const body = (await req.json()) as { base64: string; mediaType: string; filename?: string };
+    const { base64, mediaType } = body;
 
     if (!base64) return NextResponse.json({ error: 'base64 required' }, { status: 400 });
+    if (!mediaType) return NextResponse.json({ error: 'mediaType required' }, { status: 400 });
 
     const isImage = mediaType.startsWith('image/');
-
-    type MessageContent = Parameters<typeof client.messages.create>[0]['messages'][0]['content'];
-
-    let textContent: MessageContent;
-    if (isImage) {
-      textContent = [
-        {
-          type: 'image',
-          source: { type: 'base64', media_type: mediaType as 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp', data: base64 },
+    const isPdf = mediaType === 'application/pdf';
+    if (!isImage && !isPdf) {
+      return NextResponse.json({
+        success: true,
+        engine: 'none',
+        extracted: {
+          valor: null, data: null, favorecido: null, chavePix: null, pagador: null, banco: null,
+          tipo: 'Outro',
+          raw: 'Tipo de arquivo não suportado para OCR visual. Use imagem (PNG/JPG/WEBP) ou PDF.',
         },
-        {
-          type: 'text',
-          text: `Você é um assistente OCR para a Clínica Blue. Analise este comprovante/documento e extraia as informações EXATAMENTE como aparecem no documento.
-
-REGRAS CRÍTICAS:
-- Extraia SOMENTE o que aparece literalmente no documento. NÃO invente, NÃO infira, NÃO alucine dados.
-- Se um campo não estiver visível no documento, retorne null para esse campo.
-- O "favorecido" é a pessoa ou empresa que RECEBE o dinheiro (destinatário/beneficiário). Leia cuidadosamente o nome exato.
-- O "pagador" é quem ENVIOU o dinheiro (normalmente o paciente).
-- Leia o nome do favorecido com atenção — pode ser uma clínica (ex: "Perfeita Saúde"), médico, instrumentadora, etc.
-
-Retorne APENAS JSON válido neste formato exato (sem markdown, sem explicações):
-{
-  "valor": "R$ X.XXX,XX ou null",
-  "data": "DD/MM/YYYY ou null",
-  "favorecido": "nome exato do destinatário como aparece no comprovante, ou null",
-  "chavePix": "chave PIX, CPF, CNPJ ou conta exata, ou null",
-  "pagador": "nome do pagador como aparece no comprovante, ou null",
-  "tipo": "PIX|TED|DOC|Boleto|Outro",
-  "raw": "transcrição completa do texto visível no comprovante"
-}`,
-        },
-      ];
-    } else if (mediaType === 'application/pdf') {
-      // PDF: use Anthropic document block (native PDF support)
-      textContent = [
-        {
-          type: 'document',
-          source: { type: 'base64', media_type: 'application/pdf', data: base64 },
-        } as unknown as { type: 'text'; text: string },
-        {
-          type: 'text',
-          text: `Você é um assistente OCR para a Clínica Blue. Analise este comprovante/documento PDF e extraia as informações EXATAMENTE como aparecem.
-
-REGRAS CRÍTICAS:
-- Extraia SOMENTE o que aparece literalmente no documento. NÃO invente, NÃO infira, NÃO alucine dados.
-- Se um campo não estiver visível, retorne null para esse campo.
-- O "favorecido" é quem RECEBE o dinheiro. O "pagador" é quem ENVIOU.
-- Leia o nome do favorecido com atenção — pode ser uma clínica (ex: "Perfeita Saúde"), médico, instrumentadora.
-
-Retorne APENAS JSON válido neste formato (sem markdown, sem explicações):
-{
-  "valor": "R$ X.XXX,XX ou null",
-  "data": "DD/MM/YYYY ou null",
-  "favorecido": "nome exato do destinatário, ou null",
-  "chavePix": "chave PIX, CPF, CNPJ ou conta, ou null",
-  "pagador": "nome do pagador, ou null",
-  "tipo": "PIX|TED|DOC|Boleto|Outro",
-  "raw": "transcrição completa do texto visível no documento"
-}`,
-        },
-      ];
-    } else {
-      // Other file types
-      textContent = [
-        {
-          type: 'text',
-          text: `Arquivo: ${filename || 'documento'}. Tipo: ${mediaType}.
-Extraia as informações de pagamento e retorne JSON:
-{"valor":null,"data":null,"favorecido":null,"chavePix":null,"pagador":null,"tipo":"Outro","raw":"Tipo de arquivo não suportado para OCR visual. Por favor use imagem (PNG/JPG) ou PDF."}`,
-        },
-      ];
+        detectedMember: null,
+        detectedLabel: null,
+      });
     }
 
-    const response = await client.messages.create({
-      model: 'claude-opus-4-5',
-      max_tokens: 512,
-      messages: [{ role: 'user', content: textContent }],
-    });
+    let extracted: ExtractedData;
+    let engine: string;
 
-    const text = response.content[0].type === 'text' ? response.content[0].text : '{}';
-
-    // Extract JSON from response
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    const extracted = jsonMatch ? JSON.parse(jsonMatch[0]) : { raw: text };
-
-    // Auto-detect team member from extracted data
-    let detectedMember: string | null = null;
-    const searchText = JSON.stringify(extracted).toLowerCase();
-    for (const sig of TEAM_SIGNATURES) {
-      if (sig.keywords.some(k => searchText.includes(k.toLowerCase()))) {
-        detectedMember = sig.key;
-        break;
+    const geminiEligible = hasGemini && GEMINI_SUPPORTED_TYPES.includes(mediaType);
+    if (geminiEligible) {
+      try {
+        extracted = await ocrWithGemini(base64, mediaType);
+        engine = `gemini (${getGeminiModel()})`;
+      } catch (geminiErr) {
+        // Free tier pode estourar rate limit — cai para o Claude se disponível
+        if (!hasClaude) throw geminiErr;
+        extracted = await ocrWithClaude(base64, mediaType);
+        engine = 'claude (fallback)';
       }
+    } else if (hasClaude) {
+      extracted = await ocrWithClaude(base64, mediaType);
+      engine = 'claude';
+    } else {
+      extracted = await ocrWithGemini(base64, mediaType);
+      engine = `gemini (${getGeminiModel()})`;
     }
+
+    const detected = detectTeamMember(extracted);
 
     return NextResponse.json({
       success: true,
+      engine,
       extracted,
-      detectedMember,
-      detectedLabel: TEAM_SIGNATURES.find(s => s.key === detectedMember)?.label ?? null,
+      detectedMember: detected.key,
+      detectedLabel: detected.label,
     });
   } catch (err) {
     return NextResponse.json({ error: String(err) }, { status: 500 });

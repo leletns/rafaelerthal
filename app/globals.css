@@ -2,21 +2,47 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@200;300;400;500;600;700;800&display=swap');
+/* ================================================================
+   Design tokens — paleta neutra, destaques pontuais
+================================================================ */
+:root {
+  --ink:        #111113;   /* texto primário */
+  --ink-2:      #6E6E73;   /* texto secundário */
+  --ink-3:      #AEAEB2;   /* texto terciário */
+  --surface:    #FAFAFA;   /* fundo da página */
+  --card:       #FFFFFF;
+  --line:       #ECECEE;   /* bordas hairline */
+  --accent:     #0A84FF;   /* apenas conversão / ações primárias */
+  --positive:   #1F9D55;   /* receita / sucesso */
+  --critical:   #E5484D;   /* alertas críticos */
+  --warn:       #B45309;   /* atenção */
+  --radius:     14px;
+  --shadow-1:   0 1px 2px rgba(17,17,19,.04);
+  --shadow-2:   0 1px 2px rgba(17,17,19,.04), 0 8px 28px rgba(17,17,19,.05);
+  --font: var(--font-inter), -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif;
+}
 
 /* ================================================================
-   Global reset & base — mirrors the original Mydash HTML
+   Global reset & base
 ================================================================ */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { font-size: 16px; }
 body {
-  font-family: 'Montserrat', sans-serif;
-  background: #F5F5F7;
-  color: #1D1D1F;
+  font-family: var(--font);
+  background: var(--surface);
+  color: var(--ink);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'ss01';
 }
-button { font-family: 'Montserrat', sans-serif; cursor: pointer; }
+button { font-family: var(--font); cursor: pointer; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
 
 /* Thin scrollbar */
 ::-webkit-scrollbar { width: 4px; height: 4px; }
@@ -24,20 +50,22 @@ button { font-family: 'Montserrat', sans-serif; cursor: pointer; }
 ::-webkit-scrollbar-thumb { background: #D2D2D7; border-radius: 4px; }
 
 /* ================================================================
-   Card — matches original .card
+   Card — hairline border + sombra sutil, sem peso visual
 ================================================================ */
 .card {
-  background: #fff;
-  border-radius: 18px;
-  box-shadow: 0 1px 2px rgba(0,0,0,.04), 0 4px 20px rgba(0,0,0,.06);
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-1);
   padding: 24px 26px;
+  transition: box-shadow .2s ease;
 }
 .card-ttl {
   font-size: 13px;
-  font-weight: 700;
-  color: #1D1D1F;
+  font-weight: 600;
+  color: var(--ink);
   margin-bottom: 14px;
-  letter-spacing: -.2px;
+  letter-spacing: -.1px;
 }
 
 /* ================================================================
@@ -53,15 +81,16 @@ button { font-family: 'Montserrat', sans-serif; cursor: pointer; }
 @media(max-width:600px)  { .kpi-row { grid-template-columns: repeat(2, 1fr); } }
 
 .kpi {
-  background: #fff;
-  border-radius: 18px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
   padding: 22px 20px 18px;
-  box-shadow: 0 1px 2px rgba(0,0,0,.04), 0 4px 20px rgba(0,0,0,.06);
-  transition: transform .2s;
+  box-shadow: var(--shadow-1);
+  transition: transform .2s ease, box-shadow .2s ease;
   position: relative;
   overflow: hidden;
 }
-.kpi:hover { transform: translateY(-1px); }
+.kpi:hover { transform: translateY(-1px); box-shadow: var(--shadow-2); }
 .kpi-line {
   position: absolute;
   top: 0; left: 16px; right: 16px;
@@ -138,7 +167,7 @@ button { font-family: 'Montserrat', sans-serif; cursor: pointer; }
   background: transparent;
   color: #86868B;
   transition: all .2s;
-  font-family: 'Montserrat', sans-serif;
+  font-family: var(--font);
   cursor: pointer;
 }
 .sb.on {
@@ -163,7 +192,7 @@ button { font-family: 'Montserrat', sans-serif; cursor: pointer; }
   gap: 6px;
   transition: all .15s;
   cursor: pointer;
-  font-family: 'Montserrat', sans-serif;
+  font-family: var(--font);
 }
 .btn:hover { background: #1D1D1F; color: #fff; border-color: #1D1D1F; }
 
@@ -236,13 +265,66 @@ input:focus, textarea:focus, select:focus {
 .ins strong { color: #1D1D1F; font-weight: 700; }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
+  from { opacity: 0; transform: translateY(6px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50%       { opacity: .4; }
 }
+
+/* ================================================================
+   Skeleton loaders — shimmer sutil durante sync/filtragem
+================================================================ */
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+.skeleton {
+  border-radius: 8px;
+  background: linear-gradient(90deg, #F2F2F4 25%, #FAFAFB 50%, #F2F2F4 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.6s ease-in-out infinite;
+}
+
+/* Barra de progresso indeterminada (sync em andamento) */
+@keyframes indeterminate {
+  0%   { left: -40%; width: 40%; }
+  60%  { left: 100%; width: 40%; }
+  100% { left: 100%; width: 40%; }
+}
+.sync-progress {
+  position: absolute;
+  bottom: -1px; left: 0; right: 0;
+  height: 2px;
+  overflow: hidden;
+  pointer-events: none;
+}
+.sync-progress::after {
+  content: '';
+  position: absolute;
+  top: 0; height: 100%;
+  background: var(--accent);
+  border-radius: 2px;
+  animation: indeterminate 1.4s ease-in-out infinite;
+}
+
+/* Tag sutil — LTV / recorrência */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 8px;
+  border-radius: 6px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: .1px;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+.tag-high    { background: #F0F7F2; color: #1F7A3D; border-color: #D4E8DB; }
+.tag-medium  { background: #F5F3FB; color: #5B51B8; border-color: #E4E0F2; }
+.tag-neutral { background: #F4F4F5; color: #6E6E73; border-color: #ECECEE; }
 
 /* ================================================================
    Mobile responsiveness

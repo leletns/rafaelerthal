@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import DashboardLayout from '@/components/DashboardLayout';
 import Tabs from '@/components/Tabs';
+import AttentionQueue from '@/components/AttentionQueue';
 import AssistantChat from '@/components/AssistantChat';
 import ResumoPane from '@/components/TabPanes/ResumoPane';
 import PacientesPane from '@/components/TabPanes/PacientesPane';
@@ -16,6 +17,7 @@ import EquipePane from '@/components/TabPanes/EquipePane';
 import AniversariosPane from '@/components/TabPanes/AniversariosPane';
 import OrcamentosPane from '@/components/TabPanes/OrcamentosPane';
 import { getBaseData, sheetsFirstMerge, extractPipeline } from '@/lib/merge-data';
+import { canonicalCategoryLabel } from '@/lib/normalize-category';
 import { mergePatientRecords } from '@/lib/normalize-patient';
 import { getAuthToken, safeStorage, SNAPSHOT_KEY } from '@/lib/safe-storage';
 import type { DashboardData, Notification, AmigoLiveData, PipelineCard } from '@/lib/data-model';
@@ -67,7 +69,12 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const snap = safeStorage.get<DashboardData | null>(SNAPSHOT_KEY, null);
-    if (snap) setData(snap);
+    if (snap) {
+      // Snapshots antigos podem conter categorias não normalizadas
+      const normalizeCl = (list: typeof snap.cir25) =>
+        (list ?? []).map((s) => ({ ...s, cl: canonicalCategoryLabel(s.cl) }));
+      setData({ ...snap, cir25: normalizeCl(snap.cir25), cir26: normalizeCl(snap.cir26) });
+    }
 
     const token = getAuthToken();
     if (!token) {
@@ -175,7 +182,7 @@ export default function DashboardPage() {
               ...todayBdays.map((b, i) => ({
                 id: `bday_${Date.now()}_${i}`,
                 type: 'birthday' as const,
-                title: '🎂 Aniversário hoje',
+                title: 'Aniversário hoje',
                 body: `${b.name}${b.phone ? ` · ${b.phone}` : ''}`,
                 date: todayStr,
                 read: false,
@@ -257,6 +264,14 @@ export default function DashboardPage() {
       syncState={syncState}
       patients={patients}
     >
+      <AttentionQueue
+        cir25={data.cir25} cir26={data.cir26}
+        cons25={data.cons25} cons26={data.cons26}
+        amigoData={amigoData}
+        pipelineFromSheets={pipelineFromSheets}
+        patients={patients}
+        syncing={syncing}
+      />
       <Tabs tabs={TABS} activeTab={activeTab} onChange={setActiveTab} />
       <div key={activeTab} style={{ animation: 'fadeIn 0.25s ease both' }}>
         {renderTabContent()}

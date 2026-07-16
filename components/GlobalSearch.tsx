@@ -180,7 +180,6 @@ export default function GlobalSearch({ patients }: GlobalSearchProps) {
               <div style={{ maxHeight: '420px', overflowY: 'auto' }}>
                 {results.length === 0 ? (
                   <div style={{ padding: '24px', textAlign: 'center', color: '#86868B', fontSize: '14px' }}>
-                    <div style={{ fontSize: '1.5rem', marginBottom: '6px' }}>🔍</div>
                     Nenhum resultado para <strong>&ldquo;{query}&rdquo;</strong>
                   </div>
                 ) : (
@@ -238,13 +237,13 @@ export default function GlobalSearch({ patients }: GlobalSearchProps) {
                         {/* Tags */}
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', alignItems: 'flex-end', flexShrink: 0 }}>
                           {hasSurgery && (
-                            <span style={{ fontSize: '10px', fontWeight: 700, background: '#E6F7EC', color: '#28A745', borderRadius: '6px', padding: '2px 6px', whiteSpace: 'nowrap' }}>
-                              ✂️ {p.surgeries.length} cir.
+                            <span style={{ fontSize: '10px', fontWeight: 600, background: '#F0F7F2', color: '#1F7A3D', borderRadius: '6px', padding: '2px 6px', whiteSpace: 'nowrap' }}>
+                              {p.surgeries.length} cir.
                             </span>
                           )}
                           {p.consultations.length > 0 && (
                             <span style={{ fontSize: '10px', fontWeight: 600, background: '#F2F2F7', color: '#86868B', borderRadius: '6px', padding: '2px 6px' }}>
-                              📋 {p.consultations.length} cons.
+                              {p.consultations.length} cons.
                             </span>
                           )}
                           {revenue > 0 && (
@@ -269,7 +268,7 @@ export default function GlobalSearch({ patients }: GlobalSearchProps) {
             {/* Hint when empty */}
             {query.length < 2 && (
               <div style={{ padding: '20px 18px', color: '#86868B', fontSize: '13px' }}>
-                <div style={{ fontWeight: 600, marginBottom: '8px', color: '#1D1D1F', fontSize: '14px' }}>🔍 Busca global</div>
+                <div style={{ fontWeight: 600, marginBottom: '8px', color: '#1D1D1F', fontSize: '14px' }}>Busca global</div>
                 <div>Digite pelo menos 2 caracteres para buscar em todos os pacientes por nome, telefone, cidade ou procedimento.</div>
                 <div style={{ marginTop: '12px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                   {['Nome', 'Telefone', 'Cidade', 'Procedimento'].map(h => (

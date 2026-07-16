@@ -3,20 +3,12 @@
 import { useState } from 'react';
 import type { Surgery } from '@/lib/data-model';
 import { formatCurrency } from '@/lib/dashboard-calculations';
+import { CATEGORY_OPTIONS, sameCategoryName } from '@/lib/normalize-category';
 
 interface CirurgiasPaneProps {
   cir25: Surgery[];
   cir26: Surgery[];
 }
-
-const CL_OPTIONS = [
-  'LIPEDEMA E TECNOLOGIA',
-  'LIPEDEMA, TECNOLOGIA E PLÁSTICA',
-  'LIPEDEMA E PLÁSTICA',
-  'LIPEDEMA SEM TECNOLOGIA',
-  'PLÁSTICA',
-  'RETOQUE',
-];
 
 export default function CirurgiasPane({ cir25, cir26 }: CirurgiasPaneProps) {
   const [year, setYear] = useState<2025 | 2026>(new Date().getFullYear() >= 2026 ? 2026 : 2025);
@@ -28,7 +20,7 @@ export default function CirurgiasPane({ cir25, cir26 }: CirurgiasPaneProps) {
   const filtered = list.filter((s) => {
     const q = search.toLowerCase();
     const matchSearch = !q || s.p.toLowerCase().includes(q) || s.c.toLowerCase().includes(q);
-    const matchCl = !filterCl || s.cl === filterCl;
+    const matchCl = !filterCl || sameCategoryName(s.cl, filterCl);
     return matchSearch && matchCl;
   });
 
@@ -64,7 +56,7 @@ export default function CirurgiasPane({ cir25, cir26 }: CirurgiasPaneProps) {
           }}
         >
           <option value="">Todos os tipos</option>
-          {CL_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
+          {CATEGORY_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
         </select>
       </div>
 
