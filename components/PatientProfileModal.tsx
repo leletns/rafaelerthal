@@ -131,7 +131,7 @@ export default function PatientProfileModal({ patient, onClose, amigoAttendances
             {[
               { label:'Cirurgias',    value:String(patient.surgeries.length),                        color:'#007AFF' },
               { label:'Consultas',    value:String(patient.consultations.length),                    color:'#5856D6' },
-              { label:'Receita total',value:totalRevenue > 0 ? formatCurrency(totalRevenue) : '—',  color:'#28A745' },
+              { label:'Faturamento total',value:totalRevenue > 0 ? formatCurrency(totalRevenue) : '—',  color:'#28A745' },
             ].map(({ label,value,color }) => (
               <div key={label} style={{ background:`${color}10`,borderRadius:'10px',padding:'10px',textAlign:'center',borderTop:`2px solid ${color}` }}>
                 <div style={{ fontSize:'1rem',fontWeight:800,color,marginBottom:'2px' }}>{value}</div>
