@@ -33,7 +33,13 @@ export default function ResumoPane({
 }: ResumoPaneProps) {
   const [year, setYear] = useState<2025 | 2026>(new Date().getFullYear() >= 2026 ? 2026 : 2025);
 
-  const kpis      = computeKPIs(cir25, cir26, cons25, cons26);
+  // Mesmo periodo do Comparativo: compara Jan -> mes atual (ex.: Jan-Julho)
+  const MONTH_ORDER_RESUMO = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const currentMonthIdx = new Date().getMonth();
+  const validMonthsResumo = new Set(MONTH_ORDER_RESUMO.slice(0, currentMonthIdx + 1));
+  const cir25SamePeriod = cir25.filter((s) => validMonthsResumo.has(s.mes));
+  const cons25SamePeriod = cons25.filter((c) => validMonthsResumo.has(c.mes));
+  const kpis = computeKPIs(cir25SamePeriod, cir26, cons25SamePeriod, cons26);
   const cir       = year === 2025 ? cir25  : cir26;
   const cons      = year === 2025 ? cons25 : cons26;
   const rev       = computeRevenueByMonth(cir);
@@ -137,7 +143,7 @@ export default function ResumoPane({
           </div>
         </div>
         <div className="card">
-          <div className="card-ttl">Receita mensal</div>
+          <div className="card-ttl">Faturamento mensal</div>
           <div style={{ height: '195px' }}>
             <RevenueBarChart data={rev} year={year} />
           </div>
@@ -248,7 +254,7 @@ export default function ResumoPane({
             )}
             <div className="ins">
               <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#28A745', flexShrink: 0, marginTop: 3 }} />
-              <div><strong>Cirurgias em {year}:</strong> {cir.length}<br /><span style={{ color: '#86868B' }}>Receita: {formatCurrency(totalRev)}</span></div>
+              <div><strong>Cirurgias em {year}:</strong> {cir.length}<br /><span style={{ color: '#86868B' }}>Faturamento: {formatCurrency(totalRev)}</span></div>
             </div>
             <div className="ins">
               <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#007AFF', flexShrink: 0, marginTop: 3 }} />
