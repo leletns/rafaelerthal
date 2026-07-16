@@ -52,7 +52,7 @@ export function RevenueBarChart({ data, year }: RevenueChartProps) {
     labels: data.map((d) => d.mes),
     datasets: [
       {
-        label: `Receita ${year}`,
+        label: `Faturamento ${year}`,
         data: data.map((d) => d.receita),
         backgroundColor: 'rgba(0, 122, 255, 0.8)',
         borderRadius: 8,
