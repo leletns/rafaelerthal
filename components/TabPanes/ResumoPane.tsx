@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import KPICards from '../KPICards';
 import { RevenueBarChart, MonthlySurgeriesChart } from '../Charts';
-import { computeKPIs, computeMonthlyData, computeRevenueByMonth, computeTopProcedures, computeFunnelData, formatCurrency, filterByPeriod } from '@/lib/dashboard-calculations';
+import { computeKPIs, computeMonthlyData, computeRevenueByMonth, computeFunnelData, formatCurrency, filterByPeriod } from '@/lib/dashboard-calculations';
+import { computeCategoryBreakdown, computeTecnologiaBreakdown, computeComplementarBreakdown, computeSubcategoriaBreakdown } from '@/lib/procedures';
 import type { Surgery, Consultation, CanalStats, FxStats, CidadeStats, IntlStats } from '@/lib/data-model';
 
 interface ResumoPaneProps {
@@ -48,14 +49,16 @@ export default function ResumoPane({
   const cons      = year === 2025 ? cons25 : cons26;
   const rev       = computeRevenueByMonth(cir);
   const monthly   = computeMonthlyData(cir, cons);
-  const procs     = computeTopProcedures(cir);
+  const catBreakdown   = computeCategoryBreakdown(cir);
+  const subBreakdown   = computeSubcategoriaBreakdown(cir);
+  const techBreakdown  = computeTecnologiaBreakdown(cir);
+  const complBreakdown = computeComplementarBreakdown(cir);
   const canalData = year === 2025 ? canal25 : canal26;
   const fxData    = year === 2025 ? fx25    : fx26;
 
   const totalRev  = cir.reduce((s, c) => s + c.v, 0);
   const avgTicket = cir.length > 0 ? totalRev / cir.length : 0;
   const conversion = cons.length > 0 ? (cir.length / cons.length * 100).toFixed(1) : '0';
-  const topProc   = procs[0];
 
   // Funil summary (3 stages)
   const funnelData = computeFunnelData(cons, cir);
@@ -159,16 +162,21 @@ export default function ResumoPane({
         <div className="card">
           <div className="card-ttl">Tipos de cirurgia</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '4px' }}>
-            {procs.slice(0, 5).map(({ procedure, count, revenue }, i) => (
-              <div key={procedure} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            {catBreakdown.map(({ label, count, revenue }, i) => (
+              <div key={label} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: COLORS[i % COLORS.length], flexShrink: 0 }} />
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: '11.5px', fontWeight: 600, color: '#1D1D1F', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{procedure}</div>
+                  <div style={{ fontSize: '11.5px', fontWeight: 600, color: '#1D1D1F', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{label}</div>
                   <div style={{ fontSize: '10.5px', color: '#86868B' }}>{count}× · {formatCurrency(revenue)}</div>
                 </div>
               </div>
             ))}
-            {procs.length === 0 && <div style={{ fontSize: '12px', color: '#86868B' }}>Sem dados</div>}
+            {catBreakdown.length === 0 && <div style={{ fontSize: '12px', color: '#86868B' }}>Sem dados</div>}
+            {subBreakdown.length > 0 && (
+              <div style={{ borderTop: '1px solid #F2F2F7', paddingTop: '6px', fontSize: '10.5px', color: '#86868B' }}>
+                {subBreakdown.map(s => `${s.label}: ${s.count}×`).join(' · ')}
+              </div>
+            )}
           </div>
         </div>
 
@@ -247,12 +255,30 @@ export default function ResumoPane({
         <div className="card">
           <div className="card-ttl">Destaques</div>
           <div className="ins-list" style={{ marginTop: '4px' }}>
-            {topProc && (
+            {catBreakdown[0] && (
               <div className="ins">
                 <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#FFD700', flexShrink: 0, marginTop: 3 }} />
                 <div>
-                  <strong>Proc. mais realizado:</strong> {topProc.procedure}
-                  <br /><span style={{ color: '#86868B' }}>{topProc.count}× · {formatCurrency(topProc.revenue)}</span>
+                  <strong>Cirurgia mais realizada:</strong> {catBreakdown[0].label}
+                  <br /><span style={{ color: '#86868B' }}>{catBreakdown[0].count}× · {formatCurrency(catBreakdown[0].revenue)}</span>
+                </div>
+              </div>
+            )}
+            {techBreakdown[0] && (
+              <div className="ins">
+                <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#FF9500', flexShrink: 0, marginTop: 3 }} />
+                <div>
+                  <strong>Tecnologia mais usada:</strong> {techBreakdown[0].label}
+                  <br /><span style={{ color: '#86868B' }}>{techBreakdown[0].count}× nas cirurgias de {year}</span>
+                </div>
+              </div>
+            )}
+            {complBreakdown[0] && (
+              <div className="ins">
+                <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#AF52DE', flexShrink: 0, marginTop: 3 }} />
+                <div>
+                  <strong>Proc. complementar mais realizado:</strong> {complBreakdown[0].label}
+                  <br /><span style={{ color: '#86868B' }}>{complBreakdown[0].count}× nas cirurgias de {year}</span>
                 </div>
               </div>
             )}
@@ -310,7 +336,7 @@ export default function ResumoPane({
       {topCidades.length > 0 && (
         <div className="card">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-            <div className="card-ttl" style={{ margin: 0 }}>Origem das pacientes operadas</div>
+            <div className="card-ttl" style={{ margin: 0 }}>Origem de pacientes</div>
             {onTabChange && (
               <button
                 onClick={() => onTabChange('geo')}
@@ -391,7 +417,7 @@ export default function ResumoPane({
           {[
             { label: 'Pacientes atendidas', value: uniqueConsulted, color: '#007AFF', bg: '#E5F1FF' },
             { label: 'Fecharam cirurgia',   value: uniqueOperated,  color: '#28A745', bg: '#E6F7EC' },
-            { label: 'Potenciais',          value: potenciaisCount, color: '#5856D6', bg: '#F0F0FF' },
+            { label: 'Oportunidades',       value: potenciaisCount, color: '#5856D6', bg: '#F0F0FF' },
           ].map(({ label, value, color, bg }) => (
             <div
               key={label}

@@ -43,10 +43,14 @@ function isSamePerson(a: string, b: string): boolean {
 }
 
 function daysUntilBirthday(birthdayDate: string): number {
-  const today = new Date();
-  const bday = new Date(birthdayDate);
-  const diff = Math.round((bday.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-  return diff;
+  // Parse 'YYYY-MM-DD' as LOCAL date — new Date(str) would treat it as UTC
+  // midnight (= 21h do dia anterior no Brasil) and show birthdays 1 day early
+  const [y, m, d] = birthdayDate.split('-').map(Number);
+  if (!y || !m || !d) return 0;
+  const bday = new Date(y, m - 1, d);
+  const now = new Date();
+  const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  return Math.round((bday.getTime() - todayMidnight.getTime()) / (1000 * 60 * 60 * 24));
 }
 
 export default function AniversariosPane({ cir25, cir26, amigoData, patients = [] }: AniversariosPaneProps) {

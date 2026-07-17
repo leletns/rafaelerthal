@@ -6,11 +6,12 @@ import WhatsAppButton from './WhatsAppButton';
 import { formatCurrency } from '@/lib/dashboard-calculations';
 
 const STAGES: { id: PipelineStage; label: string; color: string; emoji: string }[] = [
-  { id: 'orc_enviado',       label: 'Orçamento enviado', color: '#FF9500', emoji: '📋' },
-  { id: 'sinal_pago',        label: 'Sinal pago',        color: '#5856D6', emoji: '💰' },
-  { id: 'followup',          label: 'Follow-up',         color: '#007AFF', emoji: '📞' },
-  { id: 'cirurgia_agendada', label: 'Cirurgia agendada', color: '#28A745', emoji: '✂️' },
-  { id: 'perdida',           label: 'Perdida',           color: '#FF3B30', emoji: '❌' },
+  { id: 'orc_enviado',        label: 'Orçamento enviado',  color: '#FF9500', emoji: '📋' },
+  { id: 'sinal_pago',         label: 'Sinal pago',         color: '#5856D6', emoji: '💰' },
+  { id: 'followup',           label: 'Follow-up',          color: '#007AFF', emoji: '📞' },
+  { id: 'cirurgia_agendada',  label: 'Cirurgia agendada',  color: '#28A745', emoji: '✂️' },
+  { id: 'cirurgia_realizada', label: 'Cirurgia realizada', color: '#00A67C', emoji: '✅' },
+  { id: 'perdida',            label: 'Perdida',            color: '#FF3B30', emoji: '❌' },
 ];
 
 interface MayraPipelineProps {
@@ -134,11 +135,13 @@ export default function MayraPipeline({
         onPointerMove={onBoardPointerMove}
         onPointerUp={onBoardPointerUp}
         style={{
-          display: 'flex',
-          gap: '12px',
-          overflowX: 'auto',
+          // Todas as colunas sempre visíveis (sem rolagem horizontal),
+          // para arrastar um card de qualquer coluna até qualquer outra
+          display: 'grid',
+          gridTemplateColumns: `repeat(${STAGES.length}, minmax(0, 1fr))`,
+          gap: '10px',
           paddingBottom: '8px',
-          alignItems: 'flex-start',
+          alignItems: 'start',
           touchAction: dragging ? 'none' : 'pan-x pan-y',
           cursor: dragging ? 'grabbing' : 'auto',
         }}
@@ -151,9 +154,7 @@ export default function MayraPipeline({
               key={stage.id}
               data-stage={stage.id}
               style={{
-                minWidth: '200px',
-                width: '200px',
-                flexShrink: 0,
+                minWidth: 0,
                 background: isTarget ? `${stage.color}12` : '#F9F9FB',
                 borderRadius: '12px',
                 padding: '12px',

@@ -419,21 +419,36 @@ function findCol_(headers, names) {
 function parseLocation_(tel) {
   if (!tel) return { label: 'Rio de Janeiro — RJ', isIntl: false };
   const t = String(tel).trim();
-  let m = t.match(/^\+?55\s*\(?(\d{2})\)?/);
+  const hasPlus = t.charAt(0) === '+';
+  const digits = t.replace(/\D/g, '');
+  if (!digits) return { label: 'Rio de Janeiro — RJ', isIntl: false };
+
+  // Formato explícito brasileiro: "(21) 99999-9999" ou começa com +55/55 + 10-11 dígitos
+  let m = t.match(/^\((\d{2})\)/);
   if (m) return { label: dddToCity_(m[1]), isIntl: false };
-  m = t.match(/^\((\d{2})\)/);
-  if (m) return { label: dddToCity_(m[1]), isIntl: false };
-  m = t.match(/^\+(\d{1,4})/);
-  if (m) {
-    const code = m[1];
-    if (code === '55') return { label: 'Rio de Janeiro — RJ', isIntl: false };
+  if (digits.length >= 12 && digits.length <= 13 && digits.substring(0, 2) === '55') {
+    return { label: dddToCity_(digits.substring(2, 4)), isIntl: false };
+  }
+
+  // Número nacional sem DDI: 10 dígitos (fixo) ou 11 dígitos com 9º dígito
+  // de celular (DDD + 9xxxx-xxxx) e DDD válido
+  const brShape = digits.length === 10 || (digits.length === 11 && digits.charAt(2) === '9');
+  if (!hasPlus && brShape && dddToCity_(digits.substring(0, 2)) !== 'Outras cidades') {
+    return { label: dddToCity_(digits.substring(0, 2)), isIntl: false };
+  }
+
+  // Internacional: identifica SEMPRE pelo DDI exato (prefixo mais longo primeiro).
+  // Vale para números com "+" e também para números longos sem "+" (ex.: 4207767..., 1860370...)
+  if (hasPlus || digits.length >= 11) {
     for (var len = 3; len >= 1; len--) {
-      const sub = code.substring(0, len);
+      const sub = digits.substring(0, len);
       const country = ddiToCountry_(sub);
       if (country) return { label: country, isIntl: true };
     }
-    return { label: 'Internacional', isIntl: true };
+    // DDI desconhecido: mostra o próprio DDI em vez de um "Internacional" solto
+    return { label: 'DDI +' + digits.substring(0, 3), isIntl: true };
   }
+
   return { label: 'Rio de Janeiro — RJ', isIntl: false };
 }
 
@@ -443,7 +458,7 @@ function dddToCity_(ddd) {
 }
 
 function ddiToCountry_(code) {
-  const map = {'1':'EUA e Canadá 🇺🇸','33':'França 🇫🇷','34':'Espanha 🇪🇸','39':'Itália 🇮🇹','41':'Suíça 🇨🇭','44':'Reino Unido 🇬🇧','49':'Alemanha 🇩🇪','51':'Peru 🇵🇪','52':'México 🇲🇽','54':'Argentina 🇦🇷','56':'Chile 🇨🇱','57':'Colômbia 🇨🇴','58':'Venezuela 🇻🇪','61':'Austrália 🇦🇺','81':'Japão 🇯🇵','351':'Portugal 🇵🇹','353':'Irlanda 🇮🇪','420':'Rep. Tcheca 🇨🇿','971':'EAU 🇦🇪','972':'Israel 🇮🇱','974':'Qatar 🇶🇦','593':'Equador 🇪🇨','503':'El Salvador 🇸🇻','598':'Uruguai 🇺🇾'};
+  const map = {'1':'EUA e Canadá 🇺🇸','20':'Egito 🇪🇬','27':'África do Sul 🇿🇦','30':'Grécia 🇬🇷','31':'Holanda 🇳🇱','32':'Bélgica 🇧🇪','33':'França 🇫🇷','34':'Espanha 🇪🇸','36':'Hungria 🇭🇺','39':'Itália 🇮🇹','40':'Romênia 🇷🇴','41':'Suíça 🇨🇭','43':'Áustria 🇦🇹','44':'Reino Unido 🇬🇧','45':'Dinamarca 🇩🇰','46':'Suécia 🇸🇪','47':'Noruega 🇳🇴','48':'Polônia 🇵🇱','49':'Alemanha 🇩🇪','51':'Peru 🇵🇪','52':'México 🇲🇽','53':'Cuba 🇨🇺','54':'Argentina 🇦🇷','56':'Chile 🇨🇱','57':'Colômbia 🇨🇴','58':'Venezuela 🇻🇪','60':'Malásia 🇲🇾','61':'Austrália 🇦🇺','62':'Indonésia 🇮🇩','63':'Filipinas 🇵🇭','64':'Nova Zelândia 🇳🇿','65':'Singapura 🇸🇬','66':'Tailândia 🇹🇭','81':'Japão 🇯🇵','82':'Coreia do Sul 🇰🇷','86':'China 🇨🇳','90':'Turquia 🇹🇷','91':'Índia 🇮🇳','351':'Portugal 🇵🇹','352':'Luxemburgo 🇱🇺','353':'Irlanda 🇮🇪','354':'Islândia 🇮🇸','356':'Malta 🇲🇹','358':'Finlândia 🇫🇮','372':'Estônia 🇪🇪','380':'Ucrânia 🇺🇦','420':'Rep. Tcheca 🇨🇿','421':'Eslováquia 🇸🇰','502':'Guatemala 🇬🇹','503':'El Salvador 🇸🇻','504':'Honduras 🇭🇳','505':'Nicarágua 🇳🇮','506':'Costa Rica 🇨🇷','507':'Panamá 🇵🇦','509':'Haiti 🇭🇹','591':'Bolívia 🇧🇴','592':'Guiana 🇬🇾','593':'Equador 🇪🇨','595':'Paraguai 🇵🇾','598':'Uruguai 🇺🇾','852':'Hong Kong 🇭🇰','886':'Taiwan 🇹🇼','961':'Líbano 🇱🇧','962':'Jordânia 🇯🇴','966':'Arábia Saudita 🇸🇦','971':'EAU 🇦🇪','972':'Israel 🇮🇱','973':'Bahrein 🇧🇭','974':'Qatar 🇶🇦'};
   return map[code] || null;
 }
 

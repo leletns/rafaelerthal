@@ -97,7 +97,7 @@ export function RevenueBarChart({ data, year }: RevenueChartProps) {
 
 // ===================== Monthly Surgeries Line =====================
 interface MonthlySurgeriesChartProps {
-  data: { mes: string; cirurgias: number }[];
+  data: { mes: string; cirurgias: number; consultas?: number }[];
   year: number;
 }
 
@@ -105,6 +105,16 @@ export function MonthlySurgeriesChart({ data, year }: MonthlySurgeriesChartProps
   const chartData = {
     labels: data.map((d) => d.mes),
     datasets: [
+      {
+        label: `Consultas ${year}`,
+        data: data.map((d) => d.consultas ?? 0),
+        borderColor: '#5856D6',
+        backgroundColor: 'rgba(88, 86, 214, 0.08)',
+        fill: true,
+        tension: 0.3,
+        pointRadius: 4,
+        pointBackgroundColor: '#5856D6',
+      },
       {
         label: `Cirurgias ${year}`,
         data: data.map((d) => d.cirurgias),
@@ -122,7 +132,7 @@ export function MonthlySurgeriesChart({ data, year }: MonthlySurgeriesChartProps
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
-      legend: { display: false },
+      legend: { position: 'top' as const, labels: { font: { size: 11 }, boxWidth: 12 } },
     },
     scales: {
       y: {

@@ -45,6 +45,7 @@ export type PipelineStage =
   | 'sinal_pago'
   | 'followup'
   | 'cirurgia_agendada'
+  | 'cirurgia_realizada'
   | 'perdida';
 
 export interface PipelineCard {

@@ -139,7 +139,7 @@ export default function GeoPane({
 
         {/* Cidades de origem (operadas) */}
         {domesticCidades.length > 0 && (
-          <SectionCard title="Cidades das pacientes operadas">
+          <SectionCard title="Cidades das pacientes">
             <BarList
               entries={domesticCidades}
               total={domesticCidades.reduce((s, [,v]) => s + v, 0)}
@@ -149,7 +149,7 @@ export default function GeoPane({
 
         {/* Regiões das operadas (Surgery.reg) */}
         {regEntries.length > 0 && (
-          <SectionCard title={`Regiões — pacientes operadas (${year})`}>
+          <SectionCard title={`Regiões — pacientes (${year})`}>
             <BarList entries={regEntries} total={regEntries.reduce((s, [,v]) => s + v, 0)} />
           </SectionCard>
         )}

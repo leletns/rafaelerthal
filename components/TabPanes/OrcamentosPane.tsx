@@ -159,7 +159,7 @@ export default function OrcamentosPane({
     },
     {
       key:   'potenciais' as CategoryKey,
-      label: 'Potenciais',
+      label: 'Oportunidades',
       value: potenciaisCount,
       color: '#5856D6', bg: '#F0F0FF',
       rate:  rate(potenciaisCount),

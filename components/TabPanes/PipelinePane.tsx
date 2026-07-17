@@ -26,8 +26,10 @@ function migrateStage(old: string): PipelineStage {
     retomada:           'orc_enviado',
     nao_fechou:         'perdida',
     sinal_pago:         'sinal_pago',
+    followup:           'followup',
     avista_pago:        'cirurgia_agendada',
     cirurgia_agendada:  'cirurgia_agendada',
+    cirurgia_realizada: 'cirurgia_realizada',
     perdida:            'perdida',
     orc_enviado:        'orc_enviado',
   };
@@ -42,19 +44,23 @@ function autoPopulateCards(cons26: Consultation[], cir26: Surgery[]): PipelineCa
   const cards: PipelineCard[] = [];
   const seen = new Set<string>();
 
-  // 1. Patients who had surgery → cirurgia_agendada (surgery completed)
+  // 1. Patients with a surgery → realizada (data já passou) ou agendada (futura)
+  const today = new Date();
   for (const s of cir26) {
     const slug = s.p.toLowerCase().trim();
     if (seen.has(slug)) continue;
     seen.add(slug);
     const cons = cons26.find(c => c.p.toLowerCase().trim() === slug);
+    const [dd, mm] = s.d.split('/').map(Number);
+    const surgDate = dd && mm ? new Date(s.ano || 2026, mm - 1, dd) : null;
+    const done = surgDate !== null && surgDate.getTime() <= today.getTime();
     cards.push({
       id: generateId(),
       patientName: s.p,
       phone: cons?.tel || '',
       procedure: s.c || '',
       value: s.v || 0,
-      stage: 'cirurgia_agendada' as PipelineStage,
+      stage: (done ? 'cirurgia_realizada' : 'cirurgia_agendada') as PipelineStage,
       createdAt: now,
       updatedAt: now,
       notes: `Cirurgia: ${s.d}/${s.mes || '2026'}`,

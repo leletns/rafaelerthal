@@ -30,13 +30,16 @@ export async function GET(req: NextRequest) {
     });
   }
 
-  // Fetch birthdays for today + next 14 days (15 calls total)
-  const today = new Date().toISOString().split('T')[0];
-  const dateRange = Array.from({ length: 15 }, (_, i) => {
-    const d = new Date();
-    d.setDate(d.getDate() + i);
-    return d.toISOString().split('T')[0];
-  });
+  // Fetch birthdays for today + next 14 days (15 calls total).
+  // Dates must be computed in the clinic's timezone — the server runs in UTC,
+  // and toISOString() would flip to the next day at 21h no Brasil.
+  const spDate = (offsetDays: number) =>
+    new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'America/Sao_Paulo',
+      year: 'numeric', month: '2-digit', day: '2-digit',
+    }).format(new Date(Date.now() + offsetDays * 86400000));
+  const today = spDate(0);
+  const dateRange = Array.from({ length: 15 }, (_, i) => spDate(i));
 
   const results = await Promise.allSettled(
     dateRange.map(d => patients.birthday(d))

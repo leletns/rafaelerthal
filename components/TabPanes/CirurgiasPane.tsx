@@ -3,33 +3,33 @@
 import { useState } from 'react';
 import type { Surgery } from '@/lib/data-model';
 import { formatCurrency } from '@/lib/dashboard-calculations';
+import { CATEGORIAS, TECNOLOGIAS, COMPLEMENTARES, categoriaOf, tecnologiasOf, complementaresOf, subcategoriasOf } from '@/lib/procedures';
 
 interface CirurgiasPaneProps {
   cir25: Surgery[];
   cir26: Surgery[];
 }
 
-const CL_OPTIONS = [
-  'LIPEDEMA E TECNOLOGIA',
-  'LIPEDEMA, TECNOLOGIA E PLÁSTICA',
-  'LIPEDEMA E PLÁSTICA',
-  'LIPEDEMA SEM TECNOLOGIA',
-  'PLÁSTICA',
-  'RETOQUE',
-];
+const SUBCATEGORIAS = ['Lipedema MMII', 'Lipedema MMSS', '+ Plástica associada'];
 
 export default function CirurgiasPane({ cir25, cir26 }: CirurgiasPaneProps) {
   const [year, setYear] = useState<2025 | 2026>(new Date().getFullYear() >= 2026 ? 2026 : 2025);
   const [search, setSearch] = useState('');
-  const [filterCl, setFilterCl] = useState('');
+  const [filterCat, setFilterCat] = useState('');
+  const [filterProc, setFilterProc] = useState('');
 
   const list = year === 2025 ? cir25 : cir26;
 
   const filtered = list.filter((s) => {
     const q = search.toLowerCase();
     const matchSearch = !q || s.p.toLowerCase().includes(q) || s.c.toLowerCase().includes(q);
-    const matchCl = !filterCl || s.cl === filterCl;
-    return matchSearch && matchCl;
+    const matchCat = !filterCat
+      || categoriaOf(s) === filterCat
+      || subcategoriasOf(s).includes(filterCat);
+    const matchProc = !filterProc
+      || tecnologiasOf(s).includes(filterProc)
+      || complementaresOf(s).includes(filterProc);
+    return matchSearch && matchCat && matchProc;
   });
 
   const total = filtered.reduce((acc, s) => acc + s.v, 0);
@@ -56,15 +56,35 @@ export default function CirurgiasPane({ cir25, cir26 }: CirurgiasPaneProps) {
         />
 
         <select
-          value={filterCl}
-          onChange={(e) => setFilterCl(e.target.value)}
+          value={filterCat}
+          onChange={(e) => setFilterCat(e.target.value)}
           style={{
             padding: '8px 12px', borderRadius: '10px', border: '1.5px solid #E5E5EA',
             fontSize: '13px', fontFamily: 'inherit', background: '#F9F9FB',
           }}
         >
-          <option value="">Todos os tipos</option>
-          {CL_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
+          <option value="">Todas as categorias</option>
+          {CATEGORIAS.map((o) => <option key={o} value={o}>{o}</option>)}
+          <optgroup label="Subcategorias">
+            {SUBCATEGORIAS.map((o) => <option key={o} value={o}>{o}</option>)}
+          </optgroup>
+        </select>
+
+        <select
+          value={filterProc}
+          onChange={(e) => setFilterProc(e.target.value)}
+          style={{
+            padding: '8px 12px', borderRadius: '10px', border: '1.5px solid #E5E5EA',
+            fontSize: '13px', fontFamily: 'inherit', background: '#F9F9FB',
+          }}
+        >
+          <option value="">Tecnologias e complementares</option>
+          <optgroup label="Tecnologias">
+            {TECNOLOGIAS.map((o) => <option key={o} value={o}>{o}</option>)}
+          </optgroup>
+          <optgroup label="Proc. complementares">
+            {COMPLEMENTARES.map((o) => <option key={o} value={o}>{o}</option>)}
+          </optgroup>
         </select>
       </div>
 
