@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import type { Surgery, Consultation } from '@/lib/data-model';
-import { computeKPIs, computeMonthlyData, formatCurrency } from '@/lib/dashboard-calculations';
+import { computeKPIs, computeMonthlyData, formatCurrency, filterByPeriod } from '@/lib/dashboard-calculations';
 import { ComparisonBarChart } from '../Charts';
 
 interface CompPaneProps {
@@ -22,12 +22,6 @@ const MONTH_NAMES: Record<string, string> = {
   'Mai':'Maio','Jun':'Junho','Jul':'Julho','Ago':'Agosto',
   'Set':'Setembro','Out':'Outubro','Nov':'Novembro','Dez':'Dezembro',
 };
-
-function filterByPeriod<T extends { mes: string }>(list: T[], upToMonth: number): T[] {
-  // upToMonth is 0-indexed (0=Jan, 4=May, etc.)
-  const validMonths = new Set(MONTH_ORDER.slice(0, upToMonth + 1));
-  return list.filter(item => validMonths.has(item.mes));
-}
 
 export default function CompPane({ cir25, cir26, cons25, cons26 }: CompPaneProps) {
   const now = new Date();
@@ -66,7 +60,7 @@ export default function CompPane({ cir25, cir26, cons25, cons26 }: CompPaneProps
 
   const kpiComparisons = [
     { label: 'Cirurgias',   v2025: kpis.totalSurgeries2025,     v2026: kpis.totalSurgeries2026,     format: String },
-    { label: 'Receita',     v2025: kpis.totalRevenue2025,       v2026: kpis.totalRevenue2026,       format: formatCurrency },
+    { label: 'Faturamento', v2025: kpis.totalRevenue2025,       v2026: kpis.totalRevenue2026,       format: formatCurrency },
     { label: 'Consultas',   v2025: kpis.totalConsultations2025, v2026: kpis.totalConsultations2026, format: String },
     { label: 'Ticket médio',v2025: kpis.avgTicket2025,          v2026: kpis.avgTicket2026,          format: formatCurrency },
     { label: 'Conversão',   v2025: kpis.conversionRate2025,     v2026: kpis.conversionRate2026,     format: (v: number) => `${v}%` },
@@ -147,7 +141,7 @@ export default function CompPane({ cir25, cir26, cons25, cons26 }: CompPaneProps
           <ComparisonBarChart data={compSurgeries} title="Cirurgias por mês" />
         </div>
         <div style={{ background: '#fff', borderRadius: '18px', padding: '20px', boxShadow: '0 2px 16px rgba(0,0,0,0.07)' }}>
-          <ComparisonBarChart data={compRevenue} title="Receita por mês (R$)" />
+          <ComparisonBarChart data={compRevenue} title="Faturamento por mês (R$)" />
         </div>
       </div>
     </div>

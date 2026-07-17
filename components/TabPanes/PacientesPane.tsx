@@ -136,7 +136,7 @@ export default function PacientesPane({ patients }: PacientesPaneProps) {
                 <th>Canal</th>
                 <th style={{ textAlign: 'center' }}>Cirurgias</th>
                 <th style={{ textAlign: 'center' }}>Consultas</th>
-                <th>Receita</th>
+                <th>Faturamento</th>
                 <th></th>
               </tr>
             </thead>

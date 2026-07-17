@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import KPICards from '../KPICards';
 import { RevenueBarChart, MonthlySurgeriesChart } from '../Charts';
-import { computeKPIs, computeMonthlyData, computeRevenueByMonth, computeTopProcedures, computeFunnelData, formatCurrency } from '@/lib/dashboard-calculations';
+import { computeKPIs, computeMonthlyData, computeRevenueByMonth, computeTopProcedures, computeFunnelData, formatCurrency, filterByPeriod } from '@/lib/dashboard-calculations';
 import type { Surgery, Consultation, CanalStats, FxStats, CidadeStats, IntlStats } from '@/lib/data-model';
 
 interface ResumoPaneProps {
@@ -34,6 +34,16 @@ export default function ResumoPane({
   const [year, setYear] = useState<2025 | 2026>(new Date().getFullYear() >= 2026 ? 2026 : 2025);
 
   const kpis      = computeKPIs(cir25, cir26, cons25, cons26);
+
+  // Tendência dos KPIs comparando exatamente o mesmo período dos dois anos
+  // (Jan → mês atual), igual ao Comparativo
+  const MONTH_SHORT = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  const currentMonth = new Date().getMonth();
+  const kpisTrend = computeKPIs(
+    filterByPeriod(cir25, currentMonth), cir26,
+    filterByPeriod(cons25, currentMonth), cons26,
+  );
+  const trendPeriodLabel = `Jan–${MONTH_SHORT[currentMonth]}`;
   const cir       = year === 2025 ? cir25  : cir26;
   const cons      = year === 2025 ? cons25 : cons26;
   const rev       = computeRevenueByMonth(cir);
@@ -126,7 +136,7 @@ export default function ResumoPane({
       </div>
 
       {/* KPI row */}
-      <KPICards kpis={kpis} year={year} />
+      <KPICards kpis={kpis} year={year} trendKpis={kpisTrend} trendPeriodLabel={trendPeriodLabel} />
 
       {/* Monthly charts */}
       <div className="g2">
@@ -137,7 +147,7 @@ export default function ResumoPane({
           </div>
         </div>
         <div className="card">
-          <div className="card-ttl">Receita mensal</div>
+          <div className="card-ttl">Faturamento cirúrgico mensal</div>
           <div style={{ height: '195px' }}>
             <RevenueBarChart data={rev} year={year} />
           </div>
@@ -248,7 +258,7 @@ export default function ResumoPane({
             )}
             <div className="ins">
               <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#28A745', flexShrink: 0, marginTop: 3 }} />
-              <div><strong>Cirurgias em {year}:</strong> {cir.length}<br /><span style={{ color: '#86868B' }}>Receita: {formatCurrency(totalRev)}</span></div>
+              <div><strong>Cirurgias em {year}:</strong> {cir.length}<br /><span style={{ color: '#86868B' }}>Faturamento: {formatCurrency(totalRev)}</span></div>
             </div>
             <div className="ins">
               <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#007AFF', flexShrink: 0, marginTop: 3 }} />

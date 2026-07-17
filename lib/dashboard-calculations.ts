@@ -3,10 +3,17 @@
 // ============================================================
 import type { Surgery, Consultation, KPIData, MonthlyData, FunnelData } from './data-model';
 
-const MONTH_ORDER = [
+export const MONTH_ORDER = [
   'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
   'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
 ];
+
+// Keep only entries whose month falls within Jan..upToMonth (0-indexed),
+// so 2025 vs 2026 comparisons cover the exact same period of each year.
+export function filterByPeriod<T extends { mes: string }>(list: T[], upToMonth: number): T[] {
+  const validMonths = new Set(MONTH_ORDER.slice(0, upToMonth + 1));
+  return list.filter((item) => validMonths.has(item.mes));
+}
 
 export function computeKPIs(
   cir25: Surgery[],
