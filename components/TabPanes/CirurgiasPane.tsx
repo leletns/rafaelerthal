@@ -44,23 +44,25 @@ export default function CirurgiasPane({ cir25, cir26 }: CirurgiasPaneProps) {
         </div>
 
         <input
-          type="text"
+          type="search"
+          aria-label="Buscar cirurgia por paciente ou procedimento"
           placeholder="Buscar paciente ou procedimento…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           style={{
             flex: 1, minWidth: '200px', padding: '8px 14px',
-            borderRadius: '10px', border: '1.5px solid #E5E5EA',
-            fontSize: '13px', fontFamily: 'inherit', background: '#F9F9FB',
+            borderRadius: '10px', border: '1.5px solid var(--border)',
+            fontSize: '13px', fontFamily: 'inherit', background: 'var(--surface-2)',
           }}
         />
 
         <select
+          aria-label="Filtrar por tipo de cirurgia"
           value={filterCl}
           onChange={(e) => setFilterCl(e.target.value)}
           style={{
-            padding: '8px 12px', borderRadius: '10px', border: '1.5px solid #E5E5EA',
-            fontSize: '13px', fontFamily: 'inherit', background: '#F9F9FB',
+            padding: '8px 12px', borderRadius: '10px', border: '1.5px solid var(--border)',
+            fontSize: '13px', fontFamily: 'inherit', background: 'var(--surface-2)',
           }}
         >
           <option value="">Todos os tipos</option>
@@ -71,16 +73,16 @@ export default function CirurgiasPane({ cir25, cir26 }: CirurgiasPaneProps) {
       {/* Stats row */}
       <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '14px' }}>
         {[
-          { label: 'Cirurgias', value: filtered.length, color: '#007AFF' },
-          { label: 'Faturamento total', value: formatCurrency(total), color: '#28A745' },
-          { label: 'Ticket médio', value: filtered.length > 0 ? formatCurrency(total / filtered.length) : '—', color: '#FF9500' },
+          { label: 'Cirurgias', value: filtered.length, color: 'var(--c-blue)' },
+          { label: 'Faturamento total', value: formatCurrency(total), color: 'var(--c-green)' },
+          { label: 'Ticket médio', value: filtered.length > 0 ? formatCurrency(total / filtered.length) : '—', color: 'var(--c-orange)' },
         ].map(({ label, value, color }) => (
           <div key={label} style={{
-            background: `${color}10`, border: `1.5px solid ${color}30`,
+            background: `color-mix(in srgb, ${color} 6%, transparent)`, border: `1.5px solid color-mix(in srgb, ${color} 19%, transparent)`,
             borderRadius: '12px', padding: '10px 16px',
           }}>
             <div style={{ fontSize: '18px', fontWeight: 800, color, lineHeight: 1 }}>{String(value)}</div>
-            <div style={{ fontSize: '10px', color: '#86868B', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.8px', marginTop: '4px' }}>{label}</div>
+            <div style={{ fontSize: '10px', color: 'var(--text-2)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.8px', marginTop: '4px' }}>{label}</div>
           </div>
         ))}
       </div>
@@ -103,24 +105,24 @@ export default function CirurgiasPane({ cir25, cir26 }: CirurgiasPaneProps) {
             <tbody>
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={7} style={{ textAlign: 'center', color: '#86868B', padding: '40px' }}>
+                  <td colSpan={7} style={{ textAlign: 'center', color: 'var(--text-2)', padding: '40px' }}>
                     Nenhuma cirurgia encontrada
                   </td>
                 </tr>
               ) : (
                 filtered.map((s, i) => (
                   <tr key={i}>
-                    <td style={{ color: '#86868B', fontSize: '11px', fontWeight: 600 }}>{i + 1}</td>
-                    <td style={{ fontWeight: 600, color: '#1D1D1F', maxWidth: '200px' }}>{s.p}</td>
-                    <td style={{ whiteSpace: 'nowrap', color: '#1D1D1F', fontWeight: 600 }}>{s.d}</td>
-                    <td style={{ fontSize: '12px', color: '#3A3A3C', maxWidth: '260px' }}>{s.c}</td>
+                    <td style={{ color: 'var(--text-2)', fontSize: '11px', fontWeight: 600 }}>{i + 1}</td>
+                    <td style={{ fontWeight: 600, color: 'var(--text)', maxWidth: '200px' }}>{s.p}</td>
+                    <td style={{ whiteSpace: 'nowrap', color: 'var(--text)', fontWeight: 600 }}>{s.d}</td>
+                    <td style={{ fontSize: '12px', color: 'var(--text-2)', maxWidth: '260px' }}>{s.c}</td>
                     <td>
-                      <span style={{ fontSize: '10.5px', background: '#F2F2F7', padding: '2px 8px', borderRadius: '6px', color: '#3A3A3C', fontWeight: 600, whiteSpace: 'nowrap' }}>
+                      <span style={{ fontSize: '10.5px', background: 'var(--fill)', padding: '2px 8px', borderRadius: '6px', color: 'var(--text-2)', fontWeight: 600, whiteSpace: 'nowrap' }}>
                         {s.cl}
                       </span>
                     </td>
-                    {year === 2026 && <td style={{ fontSize: '12px', color: '#86868B' }}>{s.reg || '—'}</td>}
-                    <td style={{ fontWeight: 700, color: '#28A745', textAlign: 'right', whiteSpace: 'nowrap' }}>
+                    {year === 2026 && <td style={{ fontSize: '12px', color: 'var(--text-2)' }}>{s.reg || '—'}</td>}
+                    <td style={{ fontWeight: 700, color: 'var(--c-green)', textAlign: 'right', whiteSpace: 'nowrap' }}>
                       {s.v > 0 ? formatCurrency(s.v) : '—'}
                     </td>
                   </tr>

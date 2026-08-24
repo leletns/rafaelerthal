@@ -10,7 +10,6 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.97.1",
-    "anthropic": "^0.0.0",
     "chart.js": "^4.5.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.2.1",

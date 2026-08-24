@@ -10,12 +10,22 @@ interface KPICardProps {
   color: string;
 }
 
+/** O número nunca quebra em duas linhas: encolhe conforme cresce. */
+function tamanhoDoNumero(valor: string): string {
+  const n = valor.length;
+  if (n <= 7)  return '28px';
+  if (n <= 9)  return '25px';
+  if (n <= 11) return '22px';
+  if (n <= 13) return '19px';
+  return '17px';
+}
+
 function KPICard({ label, value, sub, color }: KPICardProps) {
   return (
     <div className="kpi">
-      <div className="kpi-line" style={{ background: color }} />
+      <div className="kpi-line" style={{ background: color }} aria-hidden="true" />
       <div className="kpi-lbl">{label}</div>
-      <div className="kpi-val">{value}</div>
+      <div className="kpi-val" style={{ fontSize: tamanhoDoNumero(value) }}>{value}</div>
       {sub && <div className="kpi-sub">{sub}</div>}
     </div>
   );
@@ -49,37 +59,37 @@ export default function KPICards({ kpis, year }: KPICardsProps) {
         label="Cirurgias"
         value={String(surgeries)}
         sub={!is2025 && kpis.totalSurgeries2025 > 0 ? `${Number(surgTrend) >= 0 ? '+' : ''}${surgTrend}% vs 2025` : `em ${year}`}
-        color="#007AFF"
+        color="var(--c-blue)"
       />
       <KPICard
         label="Faturamento total"
         value={formatCurrency(revenue)}
         sub={!is2025 && kpis.totalRevenue2025 > 0 ? `${Number(revTrend) >= 0 ? '+' : ''}${revTrend}% vs 2025` : `em ${year}`}
-        color="#28A745"
+        color="var(--c-green)"
       />
       <KPICard
         label="Ticket médio"
         value={formatCurrency(avgTicket)}
         sub="por cirurgia"
-        color="#FF9500"
+        color="var(--c-orange)"
       />
       <KPICard
         label="Consultas"
         value={String(consultations)}
         sub={`em ${year}`}
-        color="#5856D6"
+        color="var(--c-purple)"
       />
       <KPICard
         label="Conversão"
         value={`${conversion}%`}
         sub="consulta → cirurgia"
-        color="#FF3B30"
+        color="var(--c-red)"
       />
       <KPICard
         label="Média mensal"
         value={(surgeries / 12).toFixed(1).replace('.', ',')}
         sub="cirurgias/mês"
-        color="#AF52DE"
+        color="var(--c-magenta)"
       />
     </div>
   );

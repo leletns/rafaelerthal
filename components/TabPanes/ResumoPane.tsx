@@ -5,6 +5,7 @@ import KPICards from '../KPICards';
 import { RevenueBarChart, MonthlySurgeriesChart } from '../Charts';
 import { computeKPIs, computeMonthlyData, computeRevenueByMonth, computeTopProcedures, computeFunnelData, formatCurrency } from '@/lib/dashboard-calculations';
 import type { Surgery, Consultation, CanalStats, FxStats, CidadeStats, IntlStats } from '@/lib/data-model';
+import { limparRotulo } from '@/lib/labels';
 
 interface ResumoPaneProps {
   cir25: Surgery[];
@@ -22,7 +23,7 @@ interface ResumoPaneProps {
   onTabChange?: (tab: string) => void;
 }
 
-const COLORS = ['#007AFF', '#5856D6', '#FF9500', '#28A745', '#FF3B30', '#AF52DE', '#FF6B35', '#00C7BE'];
+const COLORS = ['var(--c-blue)', 'var(--c-purple)', 'var(--c-orange)', 'var(--c-green)', 'var(--c-red)', 'var(--c-magenta)', 'var(--c-coral)', 'var(--c-teal)'];
 
 export default function ResumoPane({
   cir25, cir26, cons25, cons26,
@@ -110,17 +111,17 @@ export default function ResumoPane({
     ? Math.round((uniqueOperated / uniqueConsulted) * 100) : 0;
 
   // Funil bar colors
-  const funnelColors = ['#007AFF', '#5856D6', '#28A745'];
+  const funnelColors = ['var(--c-blue)', 'var(--c-purple)', 'var(--c-green)'];
   const funnelMax = funnelData[0]?.value || 1;
 
   return (
     <div>
       {/* Year toggle */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-        <h2 style={{ fontSize: '15px', fontWeight: 700, color: '#1D1D1F' }}>
+        <h2 style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text)' }}>
           Visão Geral · {year}
           {year === 2026 && (
-            <span style={{ marginLeft: '8px', fontSize: '11px', background: '#E6F7EC', color: '#28A745', padding: '2px 8px', borderRadius: '6px', fontWeight: 600 }}>
+            <span style={{ marginLeft: '8px', fontSize: '11px', background: 'var(--tint-green)', color: 'var(--c-green)', padding: '2px 8px', borderRadius: '6px', fontWeight: 600 }}>
               Em andamento
             </span>
           )}
@@ -159,12 +160,12 @@ export default function ResumoPane({
               <div key={procedure} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: COLORS[i % COLORS.length], flexShrink: 0 }} />
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: '11.5px', fontWeight: 600, color: '#1D1D1F', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{procedure}</div>
-                  <div style={{ fontSize: '10.5px', color: '#86868B' }}>{count}× · {formatCurrency(revenue)}</div>
+                  <div style={{ fontSize: '11.5px', fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{procedure}</div>
+                  <div style={{ fontSize: '10.5px', color: 'var(--text-2)' }}>{count}× · {formatCurrency(revenue)}</div>
                 </div>
               </div>
             ))}
-            {procs.length === 0 && <div style={{ fontSize: '12px', color: '#86868B' }}>Sem dados</div>}
+            {procs.length === 0 && <div style={{ fontSize: '12px', color: 'var(--text-2)' }}>Sem dados</div>}
           </div>
         </div>
 
@@ -177,10 +178,10 @@ export default function ResumoPane({
               return (
                 <div key={canal}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11.5px', marginBottom: '3px' }}>
-                    <span style={{ fontWeight: 600, color: '#1D1D1F' }}>{canal}</span>
-                    <span style={{ color: COLORS[i % COLORS.length], fontWeight: 700 }}>{count} <span style={{ color: '#86868B', fontWeight: 400 }}>({pct}%)</span></span>
+                    <span style={{ fontWeight: 600, color: 'var(--text)' }}>{canal}</span>
+                    <span style={{ color: COLORS[i % COLORS.length], fontWeight: 700 }}>{count} <span style={{ color: 'var(--text-2)', fontWeight: 400 }}>({pct}%)</span></span>
                   </div>
-                  <div style={{ height: '5px', background: '#F2F2F7', borderRadius: '3px', overflow: 'hidden' }}>
+                  <div style={{ height: '5px', background: 'var(--fill)', borderRadius: '3px', overflow: 'hidden' }}>
                     <div style={{ height: '100%', width: `${pct}%`, background: COLORS[i % COLORS.length], borderRadius: '3px' }} />
                   </div>
                 </div>
@@ -198,11 +199,11 @@ export default function ResumoPane({
               return (
                 <div key={fx}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11.5px', marginBottom: '3px' }}>
-                    <span style={{ fontWeight: 600, color: '#86868B' }}>{fx}</span>
-                    <span style={{ fontWeight: 700, color: '#5856D6' }}>{count} <span style={{ color: '#86868B', fontWeight: 400 }}>({pct}%)</span></span>
+                    <span style={{ fontWeight: 600, color: 'var(--text-2)' }}>{fx}</span>
+                    <span style={{ fontWeight: 700, color: 'var(--c-purple)' }}>{count} <span style={{ color: 'var(--text-2)', fontWeight: 400 }}>({pct}%)</span></span>
                   </div>
-                  <div style={{ height: '5px', background: '#F2F2F7', borderRadius: '3px', overflow: 'hidden' }}>
-                    <div style={{ height: '100%', width: `${pct}%`, background: '#5856D6', opacity: 0.3 + i * 0.15, borderRadius: '3px' }} />
+                  <div style={{ height: '5px', background: 'var(--fill)', borderRadius: '3px', overflow: 'hidden' }}>
+                    <div style={{ height: '100%', width: `${pct}%`, background: 'var(--c-purple)', opacity: 0.3 + i * 0.15, borderRadius: '3px' }} />
                   </div>
                 </div>
               );
@@ -216,10 +217,10 @@ export default function ResumoPane({
         <div className="card">
           <div className="card-ttl">Valor médio por cirurgia</div>
           <div style={{ marginTop: '8px' }}>
-            <div style={{ fontSize: '32px', fontWeight: 800, color: '#28A745', letterSpacing: '-1px', lineHeight: 1 }}>
+            <div style={{ fontSize: '32px', fontWeight: 800, color: 'var(--c-green)', letterSpacing: '-1px', lineHeight: 1 }}>
               {formatCurrency(avgTicket)}
             </div>
-            <div style={{ fontSize: '12px', color: '#86868B', marginTop: '8px' }}>
+            <div style={{ fontSize: '12px', color: 'var(--text-2)', marginTop: '8px' }}>
               {cir.length} cirurgias · {formatCurrency(totalRev)} total
             </div>
           </div>
@@ -228,14 +229,14 @@ export default function ResumoPane({
         <div className="card">
           <div className="card-ttl">Taxa de conversão</div>
           <div style={{ marginTop: '8px' }}>
-            <div style={{ fontSize: '32px', fontWeight: 800, color: '#007AFF', letterSpacing: '-1px', lineHeight: 1 }}>
+            <div style={{ fontSize: '32px', fontWeight: 800, color: 'var(--c-blue)', letterSpacing: '-1px', lineHeight: 1 }}>
               {conversion}%
             </div>
-            <div style={{ fontSize: '12px', color: '#86868B', marginTop: '8px' }}>
+            <div style={{ fontSize: '12px', color: 'var(--text-2)', marginTop: '8px' }}>
               {cir.length} cirurgias de {cons.length} consultas
             </div>
-            <div style={{ marginTop: '12px', height: '8px', background: '#F2F2F7', borderRadius: '4px', overflow: 'hidden' }}>
-              <div style={{ height: '100%', width: `${conversion}%`, background: '#007AFF', borderRadius: '4px' }} />
+            <div style={{ marginTop: '12px', height: '8px', background: 'var(--fill)', borderRadius: '4px', overflow: 'hidden' }}>
+              <div style={{ height: '100%', width: `${conversion}%`, background: 'var(--c-blue)', borderRadius: '4px' }} />
             </div>
           </div>
         </div>
@@ -245,20 +246,20 @@ export default function ResumoPane({
           <div className="ins-list" style={{ marginTop: '4px' }}>
             {topProc && (
               <div className="ins">
-                <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#FFD700', flexShrink: 0, marginTop: 3 }} />
+                <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--c-gold)', flexShrink: 0, marginTop: 3 }} />
                 <div>
                   <strong>Proc. mais realizado:</strong> {topProc.procedure}
-                  <br /><span style={{ color: '#86868B' }}>{topProc.count}× · {formatCurrency(topProc.revenue)}</span>
+                  <br /><span style={{ color: 'var(--text-2)' }}>{topProc.count}× · {formatCurrency(topProc.revenue)}</span>
                 </div>
               </div>
             )}
             <div className="ins">
-              <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#28A745', flexShrink: 0, marginTop: 3 }} />
-              <div><strong>Cirurgias em {year}:</strong> {cir.length}<br /><span style={{ color: '#86868B' }}>Faturamento: {formatCurrency(totalRev)}</span></div>
+              <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--c-green)', flexShrink: 0, marginTop: 3 }} />
+              <div><strong>Cirurgias em {year}:</strong> {cir.length}<br /><span style={{ color: 'var(--text-2)' }}>Faturamento: {formatCurrency(totalRev)}</span></div>
             </div>
             <div className="ins">
-              <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#007AFF', flexShrink: 0, marginTop: 3 }} />
-              <div><strong>Consultas em {year}:</strong> {cons.length}<br /><span style={{ color: '#86868B' }}>Taxa de conversão: {conversion}%</span></div>
+              <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--c-blue)', flexShrink: 0, marginTop: 3 }} />
+              <div><strong>Consultas em {year}:</strong> {cons.length}<br /><span style={{ color: 'var(--text-2)' }}>Taxa de conversão: {conversion}%</span></div>
             </div>
           </div>
         </div>
@@ -272,7 +273,7 @@ export default function ResumoPane({
             {onTabChange && (
               <button
                 onClick={() => onTabChange('funil')}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#007AFF', fontSize: '0.78rem', fontWeight: 600, fontFamily: 'inherit', padding: 0 }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--c-blue)', fontSize: '0.78rem', fontWeight: 600, fontFamily: 'inherit', padding: 0 }}
               >
                 Ver detalhes →
               </button>
@@ -282,12 +283,12 @@ export default function ResumoPane({
             {funnelData.map((stage, i) => (
               <div key={stage.label}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginBottom: '4px' }}>
-                  <span style={{ fontWeight: 600, color: '#1D1D1F' }}>{stage.label}</span>
+                  <span style={{ fontWeight: 600, color: 'var(--text)' }}>{stage.label}</span>
                   <span style={{ fontWeight: 700, color: funnelColors[i] }}>
-                    {stage.value} <span style={{ fontWeight: 400, color: '#86868B' }}>({stage.pct}%)</span>
+                    {stage.value} <span style={{ fontWeight: 400, color: 'var(--text-2)' }}>({stage.pct}%)</span>
                   </span>
                 </div>
-                <div style={{ height: '7px', background: '#F2F2F7', borderRadius: '4px', overflow: 'hidden' }}>
+                <div style={{ height: '7px', background: 'var(--fill)', borderRadius: '4px', overflow: 'hidden' }}>
                   <div style={{
                     height: '100%',
                     width: `${Math.round((stage.value / funnelMax) * 100)}%`,
@@ -310,7 +311,7 @@ export default function ResumoPane({
             {onTabChange && (
               <button
                 onClick={() => onTabChange('geo')}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#007AFF', fontSize: '0.78rem', fontWeight: 600, fontFamily: 'inherit', padding: 0 }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--c-blue)', fontSize: '0.78rem', fontWeight: 600, fontFamily: 'inherit', padding: 0 }}
               >
                 Ver detalhes →
               </button>
@@ -325,12 +326,12 @@ export default function ResumoPane({
                 return (
                   <div key={cidade} style={{ marginBottom: '8px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginBottom: '3px' }}>
-                      <span style={{ fontWeight: 600, color: '#1D1D1F' }}>{cidade}</span>
+                      <span style={{ fontWeight: 600, color: 'var(--text)' }}>{cidade}</span>
                       <span style={{ fontWeight: 700, color: COLORS[i % COLORS.length] }}>
-                        {count} <span style={{ fontWeight: 400, color: '#86868B' }}>({pct}%)</span>
+                        {count} <span style={{ fontWeight: 400, color: 'var(--text-2)' }}>({pct}%)</span>
                       </span>
                     </div>
-                    <div style={{ height: '5px', background: '#F2F2F7', borderRadius: '3px', overflow: 'hidden' }}>
+                    <div style={{ height: '5px', background: 'var(--fill)', borderRadius: '3px', overflow: 'hidden' }}>
                       <div style={{ height: '100%', width: `${pct}%`, background: COLORS[i % COLORS.length], borderRadius: '3px' }} />
                     </div>
                   </div>
@@ -341,7 +342,7 @@ export default function ResumoPane({
             {/* International breakdown — per country */}
             {intlTotal > 0 && (
               <div style={{ flexShrink: 0, minWidth: '130px' }}>
-                <div style={{ fontSize: '11px', fontWeight: 700, color: '#86868B', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-2)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                   Internacional · {intlTotal}
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -350,17 +351,17 @@ export default function ResumoPane({
                       key={country}
                       style={{
                         padding: '6px 10px',
-                        background: '#F0F7FF',
+                        background: 'var(--tint-blue)',
                         borderRadius: '8px',
-                        border: '1.5px solid #007AFF20',
+                        border: '1.5px solid color-mix(in srgb, var(--c-blue) 13%, transparent)',
                         display: 'flex',
                         justifyContent: 'space-between',
                         alignItems: 'center',
                         gap: '10px',
                       }}
                     >
-                      <span style={{ fontWeight: 600, fontSize: '0.78rem', color: '#1D1D1F' }}>{country}</span>
-                      <span style={{ fontWeight: 800, fontSize: '0.82rem', color: '#007AFF' }}>{count}</span>
+                      <span style={{ fontWeight: 600, fontSize: '0.78rem', color: 'var(--text)' }}>{limparRotulo(country)}</span>
+                      <span style={{ fontWeight: 800, fontSize: '0.82rem', color: 'var(--c-blue)' }}>{count}</span>
                     </div>
                   ))}
                 </div>
@@ -377,7 +378,7 @@ export default function ResumoPane({
           {onTabChange && (
             <button
               onClick={() => onTabChange('orcamentos')}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#007AFF', fontSize: '0.78rem', fontWeight: 600, fontFamily: 'inherit', padding: 0 }}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--c-blue)', fontSize: '0.78rem', fontWeight: 600, fontFamily: 'inherit', padding: 0 }}
             >
               Ver detalhes →
             </button>
@@ -385,9 +386,9 @@ export default function ResumoPane({
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', marginBottom: '12px' }}>
           {[
-            { label: 'Pacientes atendidas', value: uniqueConsulted, color: '#007AFF', bg: '#E5F1FF' },
-            { label: 'Fecharam cirurgia',   value: uniqueOperated,  color: '#28A745', bg: '#E6F7EC' },
-            { label: 'Potenciais',          value: potenciaisCount, color: '#5856D6', bg: '#F0F0FF' },
+            { label: 'Pacientes atendidas', value: uniqueConsulted, color: 'var(--c-blue)', bg: 'var(--tint-blue)' },
+            { label: 'Fecharam cirurgia',   value: uniqueOperated,  color: 'var(--c-green)', bg: 'var(--tint-green)' },
+            { label: 'Potenciais',          value: potenciaisCount, color: 'var(--c-purple)', bg: 'var(--tint-purple)' },
           ].map(({ label, value, color, bg }) => (
             <div
               key={label}
@@ -397,15 +398,15 @@ export default function ResumoPane({
               }}
             >
               <div style={{ fontSize: '1.5rem', fontWeight: 800, color, lineHeight: 1 }}>{value}</div>
-              <div style={{ fontSize: '0.68rem', color: '#86868B', fontWeight: 600, marginTop: '4px', lineHeight: 1.2 }}>{label}</div>
+              <div style={{ fontSize: '0.68rem', color: 'var(--text-2)', fontWeight: 600, marginTop: '4px', lineHeight: 1.2 }}>{label}</div>
             </div>
           ))}
         </div>
-        <div style={{ height: '8px', background: '#F2F2F7', borderRadius: '4px', overflow: 'hidden' }}>
-          <div style={{ height: '100%', width: `${conversionRate}%`, background: '#28A745', borderRadius: '4px', transition: 'width 0.4s ease' }} />
+        <div style={{ height: '8px', background: 'var(--fill)', borderRadius: '4px', overflow: 'hidden' }}>
+          <div style={{ height: '100%', width: `${conversionRate}%`, background: 'var(--c-green)', borderRadius: '4px', transition: 'width 0.4s ease' }} />
         </div>
-        <div style={{ marginTop: '6px', fontSize: '11.5px', color: '#86868B', fontWeight: 500 }}>
-          Taxa de conversão: <strong style={{ color: '#28A745' }}>{conversionRate}%</strong>
+        <div style={{ marginTop: '6px', fontSize: '11.5px', color: 'var(--text-2)', fontWeight: 500 }}>
+          Taxa de conversão: <strong style={{ color: 'var(--c-green)' }}>{conversionRate}%</strong>
         </div>
       </div>
     </div>

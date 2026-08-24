@@ -137,7 +137,7 @@ export default function OrcamentosPane({
       key:   'fechou'     as CategoryKey,
       label: 'Fechou cirurgia',
       value: fechouCount,
-      color: '#28A745', bg: '#E6F7EC',
+      color: 'var(--c-green)', bg: 'var(--tint-green)',
       rate:  rate(fechouCount),
       list:  patientLists.fechouList,
     },
@@ -145,7 +145,7 @@ export default function OrcamentosPane({
       key:   'nao'        as CategoryKey,
       label: 'Não fechou',
       value: naoCount,
-      color: '#FF3B30', bg: '#FFE5E3',
+      color: 'var(--c-red)', bg: 'var(--tint-red)',
       rate:  rate(naoCount),
       list:  patientLists.naoList,
     },
@@ -153,7 +153,7 @@ export default function OrcamentosPane({
       key:   'plano'      as CategoryKey,
       label: 'Plano de saúde',
       value: planoCount,
-      color: '#FF9500', bg: '#FFF3E0',
+      color: 'var(--c-orange)', bg: 'var(--tint-orange)',
       rate:  rate(planoCount),
       list:  patientLists.planoList,
     },
@@ -161,7 +161,7 @@ export default function OrcamentosPane({
       key:   'potenciais' as CategoryKey,
       label: 'Potenciais',
       value: potenciaisCount,
-      color: '#5856D6', bg: '#F0F0FF',
+      color: 'var(--c-purple)', bg: 'var(--tint-purple)',
       rate:  rate(potenciaisCount),
       list:  patientLists.potenciaisList,
     },
@@ -175,7 +175,7 @@ export default function OrcamentosPane({
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: '#1D1D1F' }}>
+        <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: 'var(--text)' }}>
           Orçamentos &amp; Conversão
         </h3>
         <div className="seg">
@@ -187,13 +187,13 @@ export default function OrcamentosPane({
 
       {/* Total */}
       <div style={{
-        background: '#E5F1FF', borderRadius: '12px', padding: '14px 18px',
+        background: 'var(--tint-blue)', borderRadius: '12px', padding: '14px 18px',
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
       }}>
-        <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#007AFF' }}>
+        <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--c-blue)' }}>
           Pacientes únicas atendidas em {year}
         </span>
-        <span style={{ fontSize: '1.8rem', fontWeight: 800, color: '#007AFF' }}>{derivedTotal}</span>
+        <span style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--c-blue)' }}>{derivedTotal}</span>
       </div>
 
       {/* Clickable category cards */}
@@ -211,30 +211,30 @@ export default function OrcamentosPane({
             >
               <div style={{ fontSize: '1.8rem', fontWeight: 800, color }}>{value}</div>
               <div style={{ fontSize: '0.72rem', color, fontWeight: 700, marginTop: '4px' }}>{label}</div>
-              <div style={{ fontSize: '0.68rem', color: '#86868B', marginTop: '2px' }}>{r}% dos atendimentos</div>
+              <div style={{ fontSize: '0.68rem', color: 'var(--text-2)', marginTop: '2px' }}>{r}% dos atendimentos</div>
               <div style={{ fontSize: '0.68rem', color, marginTop: '6px', fontWeight: 600 }}>
-                {expanded === key ? '▲ fechar' : `▼ ver ${value} pacientes`}
+                {expanded === key ? 'fechar' : `ver ${value} pacientes`}
               </div>
             </button>
 
             {/* Expanded patient list */}
             {expanded === key && (
               <div style={{
-                background: '#fff', borderRadius: '0 0 12px 12px',
+                background: 'var(--surface)', borderRadius: '0 0 12px 12px',
                 border: `2px solid ${color}`, borderTop: 'none',
                 maxHeight: '320px', overflowY: 'auto',
                 padding: '12px',
               }}>
                 {list.length === 0 ? (
-                  <p style={{ fontSize: '0.8rem', color: '#86868B', textAlign: 'center', margin: '12px 0' }}>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-2)', textAlign: 'center', margin: '12px 0' }}>
                     Nenhuma paciente identificada com os filtros atuais
                   </p>
                 ) : (
                   list.map((p, i) => (
-                    <div key={i} style={{ padding: '8px 0', borderBottom: '1px solid #F2F2F7' }}>
-                      <div style={{ fontWeight: 700, fontSize: '0.82rem', color: '#1D1D1F' }}>{p.name}</div>
+                    <div key={i} style={{ padding: '8px 0', borderBottom: '1px solid var(--fill)' }}>
+                      <div style={{ fontWeight: 700, fontSize: '0.82rem', color: 'var(--text)' }}>{p.name}</div>
                       {p.obs && (
-                        <div style={{ fontSize: '0.72rem', color: '#86868B', marginTop: '2px' }}>{p.obs}</div>
+                        <div style={{ fontSize: '0.72rem', color: 'var(--text-2)', marginTop: '2px' }}>{p.obs}</div>
                       )}
                     </div>
                   ))
@@ -246,20 +246,20 @@ export default function OrcamentosPane({
       </div>
 
       {/* Distribution bars */}
-      <div style={{ background: '#fff', borderRadius: '18px', padding: '20px', boxShadow: '0 2px 16px rgba(0,0,0,0.07)' }}>
-        <h4 style={{ margin: '0 0 16px', fontSize: '0.875rem', fontWeight: 700, color: '#1D1D1F' }}>
+      <div style={{ background: 'var(--surface)', borderRadius: '18px', padding: '20px', boxShadow: '0 2px 16px rgba(0,0,0,0.07)' }}>
+        <h4 style={{ margin: '0 0 16px', fontSize: '0.875rem', fontWeight: 700, color: 'var(--text)' }}>
           Distribuição dos orçamentos · {year}
         </h4>
         {categories.map(({ key, label, color, value, rate: r }) => (
           <div key={key} style={{ marginBottom: '12px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-              <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#1D1D1F' }}>{label}</span>
+              <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text)' }}>{label}</span>
               <div style={{ display: 'flex', gap: '8px', alignItems: 'baseline' }}>
                 <span style={{ fontSize: '0.82rem', fontWeight: 800, color }}>{value}</span>
-                <span style={{ fontSize: '0.75rem', color: '#86868B' }}>{r}%</span>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-2)' }}>{r}%</span>
               </div>
             </div>
-            <div style={{ height: '10px', background: '#F2F2F7', borderRadius: '5px', overflow: 'hidden' }}>
+            <div style={{ height: '10px', background: 'var(--fill)', borderRadius: '5px', overflow: 'hidden' }}>
               <div style={{ height: '100%', width: `${r}%`, background: color, borderRadius: '5px', transition: 'width 0.5s ease' }} />
             </div>
           </div>
@@ -267,8 +267,8 @@ export default function OrcamentosPane({
       </div>
 
       {/* Conversion insight */}
-      <div style={{ background: '#E6F7EC', borderRadius: '14px', padding: '16px', border: '1.5px solid #28A74540' }}>
-        <p style={{ margin: 0, fontSize: '0.85rem', color: '#1D7A33', fontWeight: 600 }}>
+      <div style={{ background: 'var(--tint-green)', borderRadius: '14px', padding: '16px', border: '1.5px solid color-mix(in srgb, var(--c-green) 25%, transparent)' }}>
+        <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--c-green)', fontWeight: 600 }}>
           Taxa de conversão: <strong>{rate(fechouCount)}%</strong> das {derivedTotal} pacientes únicas se tornaram cirurgias em {year}
         </p>
       </div>

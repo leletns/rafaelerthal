@@ -14,9 +14,9 @@ interface PacientesPaneProps {
 type FilterType = 'all' | 'surgery' | 'consult';
 
 const CHIP_COLORS: Record<FilterType, { active: string; bg: string; activeBg: string }> = {
-  all:     { active: '#007AFF', bg: '#F2F2F7', activeBg: '#E5F1FF' },
-  surgery: { active: '#28A745', bg: '#F2F2F7', activeBg: '#E6F7EC' },
-  consult: { active: '#5856D6', bg: '#F2F2F7', activeBg: '#EEECFF' },
+  all:     { active: 'var(--c-blue)', bg: 'var(--fill)', activeBg: 'var(--tint-blue)' },
+  surgery: { active: 'var(--c-green)', bg: 'var(--fill)', activeBg: 'var(--tint-green)' },
+  consult: { active: 'var(--c-purple)', bg: 'var(--fill)', activeBg: 'var(--tint-purple)' },
 };
 
 export default function PacientesPane({ patients }: PacientesPaneProps) {
@@ -60,7 +60,7 @@ export default function PacientesPane({ patients }: PacientesPaneProps) {
       padding: '9px 16px',
       borderRadius: '12px',
       border: `1.5px solid ${active ? color : 'transparent'}`,
-      background: active ? activeBg : '#F2F2F7',
+      background: active ? activeBg : 'var(--fill)',
       cursor: 'pointer',
       fontFamily: 'inherit',
       transition: 'all 0.15s',
@@ -87,7 +87,7 @@ export default function PacientesPane({ patients }: PacientesPaneProps) {
               <span style={{
                 fontSize: '1.1rem',
                 fontWeight: 800,
-                color: active ? color : '#AEAEB2',
+                color: active ? color : 'var(--text-3)',
                 lineHeight: 1,
               }}>
                 {count}
@@ -95,7 +95,7 @@ export default function PacientesPane({ patients }: PacientesPaneProps) {
               <span style={{
                 fontSize: '0.7rem',
                 fontWeight: active ? 700 : 500,
-                color: active ? color : '#86868B',
+                color: active ? color : 'var(--text-2)',
                 lineHeight: 1,
               }}>
                 {label}
@@ -107,7 +107,8 @@ export default function PacientesPane({ patients }: PacientesPaneProps) {
 
       {/* ── BUSCA ── */}
       <input
-        type="text"
+        type="search"
+        aria-label="Buscar paciente por nome, telefone ou cidade"
         placeholder="Buscar por nome, telefone ou cidade…"
         value={search}
         onChange={e => setSearch(e.target.value)}
@@ -115,17 +116,17 @@ export default function PacientesPane({ patients }: PacientesPaneProps) {
           width: '100%',
           padding: '9px 14px',
           borderRadius: '10px',
-          border: '1.5px solid #E5E5EA',
+          border: '1.5px solid var(--border)',
           fontSize: '0.85rem',
           fontFamily: 'inherit',
-          background: '#F9F9FB',
+          background: 'var(--surface-2)',
           outline: 'none',
           boxSizing: 'border-box',
         }}
       />
 
       {/* ── TABELA ── */}
-      <div style={{ background: '#fff', borderRadius: '18px', boxShadow: '0 2px 16px rgba(0,0,0,0.07)', overflow: 'hidden' }}>
+      <div style={{ background: 'var(--surface)', borderRadius: '18px', boxShadow: '0 2px 16px rgba(0,0,0,0.07)', overflow: 'hidden' }}>
         <div className="ts">
           <table>
             <thead>
@@ -137,13 +138,13 @@ export default function PacientesPane({ patients }: PacientesPaneProps) {
                 <th style={{ textAlign: 'center' }}>Cirurgias</th>
                 <th style={{ textAlign: 'center' }}>Consultas</th>
                 <th>Faturamento</th>
-                <th></th>
+                <th><span className="sr-only">Ações</span></th>
               </tr>
             </thead>
             <tbody>
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={8} style={{ textAlign: 'center', color: '#86868B', padding: '40px 16px', fontSize: '0.9rem' }}>
+                  <td colSpan={8} style={{ textAlign: 'center', color: 'var(--text-2)', padding: '40px 16px', fontSize: '0.9rem' }}>
                     Nenhum paciente encontrado
                   </td>
                 </tr>
@@ -158,53 +159,53 @@ export default function PacientesPane({ patients }: PacientesPaneProps) {
                           onClick={() => setSelected(p)}
                           style={{
                             background: 'none', border: 'none', cursor: 'pointer',
-                            fontWeight: 700, color: '#007AFF', fontSize: '13px',
+                            fontWeight: 700, color: 'var(--c-blue)', fontSize: '13px',
                             fontFamily: 'inherit', padding: 0, textAlign: 'left',
                           }}
                         >
                           {p.name}
                         </button>
                         {hasSurg && (
-                          <div style={{ fontSize: '10px', color: '#86868B', marginTop: '2px' }}>
+                          <div style={{ fontSize: '10px', color: 'var(--text-2)', marginTop: '2px' }}>
                             {p.surgeries.map(s => s.c).slice(0, 2).join(', ')}
                             {p.surgeries.length > 2 && ` +${p.surgeries.length - 2}`}
                           </div>
                         )}
                       </td>
                       <td>
-                        <span style={{ color: '#86868B', fontSize: '12px', fontFamily: 'monospace' }}>
+                        <span style={{ color: 'var(--text-2)', fontSize: '12px', fontFamily: 'monospace' }}>
                           {p.phone || '—'}
                         </span>
                       </td>
-                      <td style={{ color: '#86868B', fontSize: '12px' }}>{p.city || '—'}</td>
+                      <td style={{ color: 'var(--text-2)', fontSize: '12px' }}>{p.city || '—'}</td>
                       <td>
                         {p.canal
                           ? <span className="badge badge-blue">{p.canal}</span>
-                          : <span style={{ color: '#AEAEB2' }}>—</span>}
+                          : <span style={{ color: 'var(--text-3)' }}>—</span>}
                       </td>
                       <td style={{ textAlign: 'center' }}>
                         {hasSurg ? (
                           <span style={{
-                            display: 'inline-block', background: '#E6F7EC', color: '#28A745',
+                            display: 'inline-block', background: 'var(--tint-green)', color: 'var(--c-green)',
                             fontWeight: 800, fontSize: '12px', borderRadius: '8px', padding: '2px 8px',
                           }}>
                             {p.surgeries.length}
                           </span>
-                        ) : <span style={{ color: '#AEAEB2' }}>—</span>}
+                        ) : <span style={{ color: 'var(--text-3)' }}>—</span>}
                       </td>
                       <td style={{ textAlign: 'center' }}>
                         {p.consultations.length > 0 ? (
                           <span style={{
-                            display: 'inline-block', background: '#EEECFF', color: '#5856D6',
+                            display: 'inline-block', background: 'var(--tint-purple)', color: 'var(--c-purple)',
                             fontWeight: 700, fontSize: '12px', borderRadius: '8px', padding: '2px 8px',
                           }}>
                             {p.consultations.length}
                           </span>
-                        ) : <span style={{ color: '#AEAEB2' }}>—</span>}
+                        ) : <span style={{ color: 'var(--text-3)' }}>—</span>}
                       </td>
                       <td style={{
                         fontWeight: 700,
-                        color: revenue > 0 ? '#28A745' : '#AEAEB2',
+                        color: revenue > 0 ? 'var(--c-green)' : 'var(--text-3)',
                         whiteSpace: 'nowrap',
                         fontSize: '13px',
                       }}>
@@ -224,7 +225,7 @@ export default function PacientesPane({ patients }: PacientesPaneProps) {
           </table>
         </div>
         {filtered.length > 0 && (
-          <div style={{ padding: '10px 18px', fontSize: '0.75rem', color: '#86868B', borderTop: '1px solid #F2F2F7' }}>
+          <div style={{ padding: '10px 18px', fontSize: '0.75rem', color: 'var(--text-2)', borderTop: '1px solid var(--fill)' }}>
             {filtered.length} paciente{filtered.length !== 1 ? 's' : ''} exibido{filtered.length !== 1 ? 's' : ''}
             {filterType !== 'all' && ` · ${typeOptions.find(o => o.key === filterType)?.label}`}
             {search && ` · "${search}"`}

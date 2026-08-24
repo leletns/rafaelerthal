@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { Patient, AmigoAttendanceItem } from '@/lib/data-model';
 import { formatCurrency } from '@/lib/dashboard-calculations';
 import WhatsAppButton from './WhatsAppButton';
@@ -12,9 +12,9 @@ interface PatientProfileModalProps {
 }
 
 const MILESTONE_MONTHS = [
-  { months: 3,  label: '3 meses',  color: '#007AFF', bg: '#E5F1FF' },
-  { months: 6,  label: '6 meses',  color: '#5856D6', bg: '#EEECFF' },
-  { months: 12, label: '1 ano',    color: '#28A745', bg: '#E6F7EC' },
+  { months: 3,  label: '3 meses',  color: 'var(--c-blue)', bg: 'var(--tint-blue)' },
+  { months: 6,  label: '6 meses',  color: 'var(--c-purple)', bg: 'var(--tint-purple)' },
+  { months: 12, label: '1 ano',    color: 'var(--c-green)', bg: 'var(--tint-green)' },
 ];
 
 function parseSurgeryDate(d: string, year: number): Date | null {
@@ -39,6 +39,14 @@ function daysBetween(a: Date, b: Date): number {
 
 export default function PatientProfileModal({ patient, onClose, amigoAttendances = [] }: PatientProfileModalProps) {
   const [tab, setTab] = useState<'resumo'|'cirurgias'|'consultas'|'calendario'>('resumo');
+
+  // Esc fecha a ficha
+  useEffect(() => {
+    if (!patient) return;
+    function onKey(e: KeyboardEvent) { if (e.key === 'Escape') onClose(); }
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [patient, onClose]);
 
   if (!patient) return null;
 
@@ -73,8 +81,8 @@ export default function PatientProfileModal({ patient, onClose, amigoAttendances
         style={{
           padding: '6px 14px', border: 'none', cursor: 'pointer', borderRadius: '8px',
           fontFamily: 'inherit', fontSize: '12px', fontWeight: tab === id ? 700 : 500,
-          background: tab === id ? '#007AFF' : 'transparent',
-          color: tab === id ? '#fff' : '#86868B',
+          background: tab === id ? 'var(--c-blue)' : 'transparent',
+          color: tab === id ? 'var(--on-accent)' : 'var(--text-2)',
           transition: 'all .15s',
         }}
       >{label}</button>
@@ -83,66 +91,70 @@ export default function PatientProfileModal({ patient, onClose, amigoAttendances
 
   return (
     <>
-      <div style={{ position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',zIndex:100,backdropFilter:'blur(4px)' }} onClick={onClose} />
-      <div style={{
+      <div style={{ position:'fixed',inset:0,background:'var(--overlay)',zIndex:100,backdropFilter:'blur(4px)' }} onClick={onClose} />
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={`Ficha de ${patient.name}`}
+        style={{
         position:'fixed',top:'50%',left:'50%',transform:'translate(-50%,-50%)',
-        background:'#fff',borderRadius:'20px',width:'90%',maxWidth:'600px',maxHeight:'88vh',
-        overflow:'hidden',zIndex:110,boxShadow:'0 16px 64px rgba(0,0,0,0.25)',
+        background:'var(--surface)',border:'1px solid var(--border)',borderRadius:'20px',width:'90%',maxWidth:'600px',maxHeight:'88vh',
+        overflow:'hidden',zIndex:110,boxShadow:'var(--shadow-3)',
         display:'flex',flexDirection:'column',
       }}>
         {/* Header */}
-        <div style={{ padding:'20px 24px',background:'linear-gradient(135deg,#007AFF15,#5856D615)',borderBottom:'1px solid #E5E5EA' }}>
+        <div style={{ padding:'20px 24px',background:'var(--surface-2)',borderBottom:'1px solid var(--border)' }}>
           <div style={{ display:'flex',justifyContent:'space-between',alignItems:'flex-start' }}>
             <div style={{ display:'flex',alignItems:'center',gap:'14px' }}>
               <div style={{
                 width:'52px',height:'52px',borderRadius:'50%',
-                background:'linear-gradient(135deg,#007AFF,#5856D6)',
+                background:'var(--c-blue)',
                 display:'flex',alignItems:'center',justifyContent:'center',
-                color:'#fff',fontWeight:800,fontSize:'1.2rem',flexShrink:0,
+                color:'var(--on-accent)',fontWeight:800,fontSize:'1.2rem',flexShrink:0,
               }}>
                 {patient.name.charAt(0)}
               </div>
               <div>
-                <h2 style={{ margin:0,fontSize:'1.05rem',fontWeight:800,color:'#1D1D1F' }}>{patient.name}</h2>
+                <h2 style={{ margin:0,fontSize:'1.05rem',fontWeight:800,color:'var(--text)' }}>{patient.name}</h2>
                 <div style={{ display:'flex',gap:'8px',marginTop:'4px',flexWrap:'wrap' }}>
-                  {patient.age && <span style={{ fontSize:'0.75rem',color:'#86868B' }}>{patient.age} anos</span>}
-                  {patient.city && <span style={{ fontSize:'0.75rem',color:'#86868B' }}>· {patient.city}</span>}
+                  {patient.age && <span style={{ fontSize:'0.75rem',color:'var(--text-2)' }}>{patient.age} anos</span>}
+                  {patient.city && <span style={{ fontSize:'0.75rem',color:'var(--text-2)' }}>· {patient.city}</span>}
                   {patient.canal && (
-                    <span style={{ fontSize:'0.72rem',background:'#E5F1FF',color:'#007AFF',padding:'1px 8px',borderRadius:'6px',fontWeight:600 }}>
+                    <span style={{ fontSize:'0.72rem',background:'var(--tint-blue)',color:'var(--c-blue)',padding:'1px 8px',borderRadius:'6px',fontWeight:600 }}>
                       {patient.canal}
                     </span>
                   )}
                 </div>
                 {patient.phone && (
                   <div style={{ display:'flex',alignItems:'center',gap:'6px',marginTop:'4px' }}>
-                    <span style={{ fontSize:'0.75rem',color:'#86868B' }}>{patient.phone}</span>
+                    <span style={{ fontSize:'0.75rem',color:'var(--text-2)' }}>{patient.phone}</span>
                     <WhatsAppButton phone={patient.phone} size="sm" variant="icon" />
                   </div>
                 )}
               </div>
             </div>
-            <button onClick={onClose} style={{ background:'none',border:'none',cursor:'pointer',color:'#86868B',padding:'4px',borderRadius:'6px',display:'flex',alignItems:'center' }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            <button onClick={onClose} className="icon-btn" aria-label="Fechar ficha da paciente" autoFocus>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
           </div>
 
           {/* Stats row */}
           <div style={{ display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'10px',marginTop:'16px' }}>
             {[
-              { label:'Cirurgias',    value:String(patient.surgeries.length),                        color:'#007AFF' },
-              { label:'Consultas',    value:String(patient.consultations.length),                    color:'#5856D6' },
-              { label:'Faturamento total',value:totalRevenue > 0 ? formatCurrency(totalRevenue) : '—',  color:'#28A745' },
+              { label:'Cirurgias',    value:String(patient.surgeries.length),                        color:'var(--c-blue)' },
+              { label:'Consultas',    value:String(patient.consultations.length),                    color:'var(--c-purple)' },
+              { label:'Faturamento total',value:totalRevenue > 0 ? formatCurrency(totalRevenue) : '—',  color:'var(--c-green)' },
             ].map(({ label,value,color }) => (
-              <div key={label} style={{ background:`${color}10`,borderRadius:'10px',padding:'10px',textAlign:'center',borderTop:`2px solid ${color}` }}>
+              <div key={label} style={{ background:`color-mix(in srgb, ${color} 6%, transparent)`,borderRadius:'10px',padding:'10px',textAlign:'center',borderTop:`2px solid ${color}` }}>
                 <div style={{ fontSize:'1rem',fontWeight:800,color,marginBottom:'2px' }}>{value}</div>
-                <div style={{ fontSize:'0.68rem',color:'#86868B',fontWeight:600 }}>{label}</div>
+                <div style={{ fontSize:'0.68rem',color:'var(--text-2)',fontWeight:600 }}>{label}</div>
               </div>
             ))}
           </div>
         </div>
 
         {/* Tabs */}
-        <div style={{ display:'flex',gap:'4px',padding:'10px 16px',borderBottom:'1px solid #E5E5EA',background:'#F9F9FB' }}>
+        <div style={{ display:'flex',gap:'4px',padding:'10px 16px',borderBottom:'1px solid var(--border)',background:'var(--surface-2)' }}>
           {tabBtn('resumo','Resumo')}
           {tabBtn('cirurgias','Cirurgias')}
           {tabBtn('consultas','Consultas')}
@@ -158,20 +170,20 @@ export default function PatientProfileModal({ patient, onClose, amigoAttendances
               {/* Mesversários */}
               {anniversaries.length > 0 && (
                 <div>
-                  <h4 style={{ fontSize:'0.72rem',fontWeight:700,color:'#86868B',textTransform:'uppercase',letterSpacing:'0.05em',margin:'0 0 8px' }}>
-                    🎂 Mesversários pós-cirurgia
-                  </h4>
+                  <h3 style={{ fontSize:'0.72rem',fontWeight:700,color:'var(--text-2)',textTransform:'uppercase',letterSpacing:'0.05em',margin:'0 0 8px' }}>
+                    Mesversários pós-cirurgia
+                  </h3>
                   <div style={{ display:'flex',flexDirection:'column',gap:'6px' }}>
                     {anniversaries.slice(0,6).map((a,i) => (
-                      <div key={i} style={{ display:'flex',justifyContent:'space-between',alignItems:'center',padding:'10px 12px',background:a.bg,borderRadius:'10px',border:`1px solid ${a.color}30` }}>
+                      <div key={i} style={{ display:'flex',justifyContent:'space-between',alignItems:'center',padding:'10px 12px',background:a.bg,borderRadius:'10px',border:`1px solid color-mix(in srgb, ${a.color} 19%, transparent)` }}>
                         <div>
                           <span style={{ fontWeight:700,fontSize:'0.82rem',color:a.color }}>
                             {a.label} · {fmtDate(a.due)}
                           </span>
-                          <div style={{ fontSize:'0.72rem',color:'#86868B',marginTop:'1px' }}>{a.surgery.c}</div>
+                          <div style={{ fontSize:'0.72rem',color:'var(--text-2)',marginTop:'1px' }}>{a.surgery.c}</div>
                         </div>
-                        <span style={{ fontSize:'0.78rem',fontWeight:700,color:a.days === 0 ? '#FF3B30' : a.days > 0 && a.days <= 7 ? '#FF9500' : a.color }}>
-                          {a.days === 0 ? '🔴 Hoje!' : a.days > 0 ? `em ${a.days}d` : `há ${Math.abs(a.days)}d`}
+                        <span style={{ fontSize:'0.78rem',fontWeight:700,color:a.days === 0 ? 'var(--c-red)' : a.days > 0 && a.days <= 7 ? 'var(--c-orange)' : a.color }}>
+                          {a.days === 0 ? 'Hoje' : a.days > 0 ? `em ${a.days} dia${a.days === 1 ? '' : 's'}` : `há ${Math.abs(a.days)} dia${Math.abs(a.days) === 1 ? '' : 's'}`}
                         </span>
                       </div>
                     ))}
@@ -182,13 +194,13 @@ export default function PatientProfileModal({ patient, onClose, amigoAttendances
               {/* Últimas consultas */}
               {patient.consultations.length > 0 && (
                 <div>
-                  <h4 style={{ fontSize:'0.72rem',fontWeight:700,color:'#86868B',textTransform:'uppercase',letterSpacing:'0.05em',margin:'0 0 8px' }}>
+                  <h3 style={{ fontSize:'0.72rem',fontWeight:700,color:'var(--text-2)',textTransform:'uppercase',letterSpacing:'0.05em',margin:'0 0 8px' }}>
                     Últimas consultas
-                  </h4>
+                  </h3>
                   {patient.consultations.slice(0,3).map((c,i) => (
-                    <div key={i} style={{ display:'flex',justifyContent:'space-between',padding:'8px 12px',background:'#F9F9FB',borderRadius:'8px',marginBottom:'4px' }}>
-                      <span style={{ fontSize:'0.82rem',color:'#1D1D1F',fontWeight:600 }}>{c.d}</span>
-                      <span style={{ fontSize:'0.78rem',color:'#86868B' }}>{c.canal || '—'}</span>
+                    <div key={i} style={{ display:'flex',justifyContent:'space-between',padding:'8px 12px',background:'var(--surface-2)',borderRadius:'8px',marginBottom:'4px' }}>
+                      <span style={{ fontSize:'0.82rem',color:'var(--text)',fontWeight:600 }}>{c.d}</span>
+                      <span style={{ fontSize:'0.78rem',color:'var(--text-2)' }}>{c.canal || '—'}</span>
                     </div>
                   ))}
                 </div>
@@ -200,19 +212,19 @@ export default function PatientProfileModal({ patient, onClose, amigoAttendances
           {tab === 'cirurgias' && (
             <div>
               {patient.surgeries.length === 0 ? (
-                <p style={{ textAlign:'center',color:'#86868B',padding:'32px 0' }}>Nenhuma cirurgia</p>
+                <p style={{ textAlign:'center',color:'var(--text-2)',padding:'32px 0' }}>Nenhuma cirurgia</p>
               ) : (
                 <div style={{ display:'flex',flexDirection:'column',gap:'8px' }}>
                   {patient.surgeries.map((s,i) => {
                     const yr = (s.ano) ? s.ano : 2025;
                     const surgDate = parseSurgeryDate(s.d.split('/').slice(0,2).join('/'), yr);
                     return (
-                      <div key={i} style={{ padding:'12px 14px',background:'#F9F9FB',borderRadius:'10px',borderLeft:'3px solid #007AFF' }}>
+                      <div key={i} style={{ padding:'12px 14px',background:'var(--surface-2)',borderRadius:'10px',borderLeft:'3px solid var(--c-blue)' }}>
                         <div style={{ display:'flex',justifyContent:'space-between',marginBottom:'4px' }}>
-                          <span style={{ fontWeight:700,fontSize:'0.875rem',color:'#1D1D1F' }}>{s.c}</span>
-                          <span style={{ fontWeight:800,color:'#28A745',fontSize:'0.875rem' }}>{s.v > 0 ? formatCurrency(s.v) : '—'}</span>
+                          <span style={{ fontWeight:700,fontSize:'0.875rem',color:'var(--text)' }}>{s.c}</span>
+                          <span style={{ fontWeight:800,color:'var(--c-green)',fontSize:'0.875rem' }}>{s.v > 0 ? formatCurrency(s.v) : '—'}</span>
                         </div>
-                        <div style={{ fontSize:'0.75rem',color:'#86868B' }}>{s.d} · {s.mes} · {s.cl}</div>
+                        <div style={{ fontSize:'0.75rem',color:'var(--text-2)' }}>{s.d} · {s.mes} · {s.cl}</div>
                         {surgDate && (
                           <div style={{ display:'flex',gap:'8px',marginTop:'8px',flexWrap:'wrap' }}>
                             {MILESTONE_MONTHS.map(ms => {
@@ -238,15 +250,15 @@ export default function PatientProfileModal({ patient, onClose, amigoAttendances
           {tab === 'consultas' && (
             <div style={{ display:'flex',flexDirection:'column',gap:'6px' }}>
               {patient.consultations.length === 0 ? (
-                <p style={{ textAlign:'center',color:'#86868B',padding:'32px 0' }}>Nenhuma consulta</p>
+                <p style={{ textAlign:'center',color:'var(--text-2)',padding:'32px 0' }}>Nenhuma consulta</p>
               ) : (
                 patient.consultations.map((c,i) => (
-                  <div key={i} style={{ display:'flex',justifyContent:'space-between',alignItems:'center',padding:'10px 12px',background:'#F9F9FB',borderRadius:'8px' }}>
+                  <div key={i} style={{ display:'flex',justifyContent:'space-between',alignItems:'center',padding:'10px 12px',background:'var(--surface-2)',borderRadius:'8px' }}>
                     <div>
-                      <span style={{ fontWeight:600,fontSize:'0.82rem',color:'#1D1D1F' }}>{c.d}</span>
-                      <span style={{ color:'#86868B',marginLeft:'8px',fontSize:'0.78rem' }}>{c.canal || '—'}</span>
+                      <span style={{ fontWeight:600,fontSize:'0.82rem',color:'var(--text)' }}>{c.d}</span>
+                      <span style={{ color:'var(--text-2)',marginLeft:'8px',fontSize:'0.78rem' }}>{c.canal || '—'}</span>
                     </div>
-                    <span style={{ color:'#5856D6',fontWeight:600,fontSize:'0.75rem' }}>{c.idade > 0 ? `${c.idade}a` : '—'}</span>
+                    <span style={{ color:'var(--c-purple)',fontWeight:600,fontSize:'0.75rem' }}>{c.idade > 0 ? `${c.idade}a` : '—'}</span>
                   </div>
                 ))
               )}
@@ -256,30 +268,29 @@ export default function PatientProfileModal({ patient, onClose, amigoAttendances
           {/* ── CALENDÁRIO ── */}
           {tab === 'calendario' && (
             <div>
-              <h4 style={{ fontSize:'0.72rem',fontWeight:700,color:'#86868B',textTransform:'uppercase',letterSpacing:'0.05em',margin:'0 0 12px' }}>
-                Atendimentos (AmigoClinic)
-              </h4>
+              <h3 style={{ fontSize:'0.72rem',fontWeight:700,color:'var(--text-2)',textTransform:'uppercase',letterSpacing:'0.05em',margin:'0 0 12px' }}>
+                Atendimentos
+              </h3>
               {myAttendances.length === 0 ? (
-                <div style={{ textAlign:'center',padding:'32px 0',color:'#86868B',fontSize:'0.85rem' }}>
-                  <div style={{ fontSize:'2rem',marginBottom:'8px' }}>📅</div>
-                  Nenhum atendimento encontrado no AmigoClinic
+                <div style={{ textAlign:'center',padding:'32px 0',color:'var(--text-2)',fontSize:'0.85rem' }}>
+                  Nenhum atendimento registrado
                 </div>
               ) : (
                 <div style={{ display:'flex',flexDirection:'column',gap:'8px' }}>
                   {myAttendances.map((a,i) => (
-                    <div key={i} style={{ padding:'10px 12px',background:'#F9F9FB',borderRadius:'10px',borderLeft:'3px solid #FF9500' }}>
+                    <div key={i} style={{ padding:'10px 12px',background:'var(--surface-2)',borderRadius:'10px',borderLeft:'3px solid var(--c-orange)' }}>
                       <div style={{ display:'flex',justifyContent:'space-between' }}>
-                        <span style={{ fontWeight:700,fontSize:'0.82rem',color:'#1D1D1F' }}>
+                        <span style={{ fontWeight:700,fontSize:'0.82rem',color:'var(--text)' }}>
                           {a.date} {a.time && `· ${a.time}`}
                         </span>
                         {a.status && (
-                          <span style={{ fontSize:'0.68rem',padding:'2px 8px',borderRadius:'6px',background:'#FFF3E0',color:'#FF9500',fontWeight:600 }}>
+                          <span style={{ fontSize:'0.68rem',padding:'2px 8px',borderRadius:'6px',background:'var(--tint-orange)',color:'var(--c-orange)',fontWeight:600 }}>
                             {a.status}
                           </span>
                         )}
                       </div>
-                      {a.procedure && <div style={{ fontSize:'0.75rem',color:'#86868B',marginTop:'2px' }}>{a.procedure}</div>}
-                      {a.doctorName && <div style={{ fontSize:'0.72rem',color:'#86868B' }}>Dr(a). {a.doctorName}</div>}
+                      {a.procedure && <div style={{ fontSize:'0.75rem',color:'var(--text-2)',marginTop:'2px' }}>{a.procedure}</div>}
+                      {a.doctorName && <div style={{ fontSize:'0.72rem',color:'var(--text-2)' }}>Dr(a). {a.doctorName}</div>}
                     </div>
                   ))}
                 </div>
@@ -288,11 +299,11 @@ export default function PatientProfileModal({ patient, onClose, amigoAttendances
               {/* Upcoming anniversaries */}
               {anniversaries.filter(a => a.days >= 0 && a.days <= 60).length > 0 && (
                 <div style={{ marginTop:'16px' }}>
-                  <h4 style={{ fontSize:'0.72rem',fontWeight:700,color:'#86868B',textTransform:'uppercase',letterSpacing:'0.05em',margin:'0 0 8px' }}>
-                    📅 Próximos mesversários
-                  </h4>
+                  <h3 style={{ fontSize:'0.72rem',fontWeight:700,color:'var(--text-2)',textTransform:'uppercase',letterSpacing:'0.05em',margin:'0 0 8px' }}>
+                    Próximos mesversários
+                  </h3>
                   {anniversaries.filter(a => a.days >= 0 && a.days <= 60).map((a,i) => (
-                    <div key={i} style={{ display:'flex',justifyContent:'space-between',padding:'8px 12px',background:a.bg,borderRadius:'8px',marginBottom:'4px',border:`1px solid ${a.color}25` }}>
+                    <div key={i} style={{ display:'flex',justifyContent:'space-between',padding:'8px 12px',background:a.bg,borderRadius:'8px',marginBottom:'4px',border:`1px solid color-mix(in srgb, ${a.color} 15%, transparent)` }}>
                       <span style={{ fontSize:'0.82rem',fontWeight:600,color:a.color }}>{a.label} — {fmtDate(a.due)}</span>
                       <span style={{ fontSize:'0.78rem',color:a.color,fontWeight:700 }}>em {a.days}d</span>
                     </div>
@@ -304,8 +315,8 @@ export default function PatientProfileModal({ patient, onClose, amigoAttendances
         </div>
 
         {/* Footer */}
-        <div style={{ padding:'14px 20px',borderTop:'1px solid #E5E5EA',background:'#F9F9FB' }}>
-          <button onClick={onClose} style={{ width:'100%',padding:'10px',borderRadius:'10px',border:'none',background:'#007AFF',color:'#fff',fontWeight:700,fontSize:'0.875rem',cursor:'pointer',fontFamily:'inherit' }}>
+        <div style={{ padding:'14px 20px',borderTop:'1px solid var(--border)',background:'var(--surface-2)' }}>
+          <button onClick={onClose} style={{ width:'100%',padding:'10px',borderRadius:'10px',border:'none',background:'var(--c-blue)',color:'var(--on-accent)',fontWeight:700,fontSize:'0.875rem',cursor:'pointer',fontFamily:'inherit' }}>
             Fechar
           </button>
         </div>

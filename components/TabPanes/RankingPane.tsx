@@ -23,7 +23,7 @@ interface PatientRank {
   lastProc: string;
 }
 
-const COLORS = ['#007AFF','#5856D6','#FF9500','#28A745','#FF3B30','#AF52DE','#FF6B35','#00C7BE'];
+const COLORS = ['var(--c-blue)','var(--c-purple)','var(--c-orange)','var(--c-green)','var(--c-red)','var(--c-magenta)','var(--c-coral)','var(--c-teal)'];
 
 
 export default function RankingPane({ cir25, cir26, cons25, cons26 }: RankingPaneProps) {
@@ -138,62 +138,62 @@ export default function RankingPane({ cir25, cir26, cons25, cons26 }: RankingPan
             <div className="card-ttl" style={{ margin: 0 }}>
               Top {byRevenue.length} · maior valor por cirurgia
             </div>
-            <span style={{ fontSize: '11px', color: '#86868B' }}>ordenado pela cirurgia mais cara</span>
+            <span style={{ fontSize: '11px', color: 'var(--text-2)' }}>ordenado pela cirurgia mais cara</span>
           </div>
           {byRevenue.length === 0 ? (
-            <p style={{ textAlign: 'center', color: '#86868B', padding: '32px 0', margin: 0 }}>Sem dados para o período</p>
+            <p style={{ textAlign: 'center', color: 'var(--text-2)', padding: '32px 0', margin: 0 }}>Sem dados para o período</p>
           ) : (
             byRevenue.map((p, i) => (
               <div key={p.name} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 {/* Medal */}
                 <div style={{
                   width: '28px', height: '28px', borderRadius: '50%', flexShrink: 0,
-                  background: i === 0 ? '#FFD700' : i === 1 ? '#C0C0C0' : i === 2 ? '#CD7F32' : '#F2F2F7',
+                  background: i === 0 ? 'var(--c-gold)' : i === 1 ? 'var(--text-3)' : i === 2 ? 'var(--c-coral)' : 'var(--fill)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: '0.72rem', fontWeight: 800, color: i < 3 ? '#1D1D1F' : '#86868B',
+                  fontSize: '0.72rem', fontWeight: 800, color: i < 3 ? 'var(--text)' : 'var(--text-2)',
                 }}>
                   {i + 1}
                 </div>
                 {/* Bar */}
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                    <span style={{ fontWeight: 700, fontSize: '0.85rem', color: '#1D1D1F', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <span style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {p.name}
                     </span>
                     <div style={{ display: 'flex', gap: '8px', flexShrink: 0, marginLeft: '8px', alignItems: 'center' }}>
                       {p.maxSurgery > 0 && (
-                        <span style={{ fontWeight: 800, fontSize: '0.875rem', color: '#28A745' }}>
+                        <span style={{ fontWeight: 800, fontSize: '0.875rem', color: 'var(--c-green)' }}>
                           {formatCurrency(p.maxSurgery)}
                         </span>
                       )}
                       {p.revenue !== p.maxSurgery && p.revenue > 0 && (
-                        <span style={{ fontSize: '0.72rem', color: '#86868B' }}>
+                        <span style={{ fontSize: '0.72rem', color: 'var(--text-2)' }}>
                           total {formatCurrency(p.revenue)}
                         </span>
                       )}
                     </div>
                   </div>
-                  <div style={{ height: '6px', background: '#F2F2F7', borderRadius: '3px', overflow: 'hidden' }}>
+                  <div style={{ height: '6px', background: 'var(--fill)', borderRadius: '3px', overflow: 'hidden' }}>
                     <div style={{
                       height: '100%',
                       width: `${Math.max((p.maxSurgery / maxRev) * 100, p.maxSurgery === 0 ? 6 : 0)}%`,
                       background: i === 0
-                        ? 'linear-gradient(90deg,#FFD700,#FF9500)'
-                        : `linear-gradient(90deg,${COLORS[i % COLORS.length]},${COLORS[(i+1) % COLORS.length]})`,
+                        ? 'var(--c-gold)'
+                        : COLORS[i % COLORS.length],
                       borderRadius: '3px', transition: 'width 0.5s ease',
                     }} />
                   </div>
                   <div style={{ display: 'flex', gap: '12px', marginTop: '3px' }}>
-                    <span style={{ fontSize: '0.68rem', color: '#86868B' }}>
+                    <span style={{ fontSize: '0.68rem', color: 'var(--text-2)' }}>
                       {p.surgeries} cirurgia{p.surgeries !== 1 ? 's' : ''}
                     </span>
                     {p.consultations > 0 && (
-                      <span style={{ fontSize: '0.68rem', color: '#86868B' }}>
+                      <span style={{ fontSize: '0.68rem', color: 'var(--text-2)' }}>
                         {p.consultations} consulta{p.consultations !== 1 ? 's' : ''}
                       </span>
                     )}
                     {p.maxSurgery === 0 && (
-                      <span style={{ fontSize: '0.68rem', color: '#FF9500', fontWeight: 600 }}>valor pendente</span>
+                      <span style={{ fontSize: '0.68rem', color: 'var(--c-orange)', fontWeight: 600 }}>valor pendente</span>
                     )}
                   </div>
                 </div>
@@ -208,7 +208,7 @@ export default function RankingPane({ cir25, cir26, cons25, cons26 }: RankingPan
         <div className="card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
           <div className="card-ttl">Top {byProc.length} procedimentos</div>
           {byProc.length === 0 ? (
-            <p style={{ textAlign: 'center', color: '#86868B', padding: '32px 0', margin: 0 }}>Sem dados</p>
+            <p style={{ textAlign: 'center', color: 'var(--text-2)', padding: '32px 0', margin: 0 }}>Sem dados</p>
           ) : (
             byProc.map((p, i) => (
               <div key={p.procedure} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -222,21 +222,21 @@ export default function RankingPane({ cir25, cir26, cons25, cons26 }: RankingPan
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                    <span style={{ fontWeight: 700, fontSize: '0.85rem', color: '#1D1D1F', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <span style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {p.procedure}
                     </span>
                     <span style={{ fontWeight: 800, fontSize: '0.875rem', color: COLORS[i % COLORS.length], flexShrink: 0, marginLeft: '8px' }}>
                       {p.count}×
                     </span>
                   </div>
-                  <div style={{ height: '6px', background: '#F2F2F7', borderRadius: '3px', overflow: 'hidden' }}>
+                  <div style={{ height: '6px', background: 'var(--fill)', borderRadius: '3px', overflow: 'hidden' }}>
                     <div style={{
                       height: '100%', width: `${(p.count / maxProc) * 100}%`,
-                      background: `linear-gradient(90deg,${COLORS[i % COLORS.length]},${COLORS[(i+1) % COLORS.length]})`,
+                      background: COLORS[i % COLORS.length],
                       borderRadius: '3px', transition: 'width 0.5s ease',
                     }} />
                   </div>
-                  <span style={{ fontSize: '0.68rem', color: '#86868B' }}>{formatCurrency(p.revenue)}</span>
+                  <span style={{ fontSize: '0.68rem', color: 'var(--text-2)' }}>{formatCurrency(p.revenue)}</span>
                 </div>
               </div>
             ))
@@ -261,18 +261,18 @@ export default function RankingPane({ cir25, cir26, cons25, cons26 }: RankingPan
               </thead>
               <tbody>
                 {recentCir.length === 0 ? (
-                  <tr><td colSpan={6} style={{ textAlign: 'center', color: '#86868B', padding: '32px' }}>Sem dados</td></tr>
+                  <tr><td colSpan={6} style={{ textAlign: 'center', color: 'var(--text-2)', padding: '32px' }}>Sem dados</td></tr>
                 ) : (
                   recentCir.map((s, i) => (
                     <tr key={i}>
-                      <td style={{ color: '#86868B', fontSize: '11px', fontWeight: 600 }}>{i + 1}</td>
-                      <td style={{ fontWeight: 700, color: '#1D1D1F' }}>{s.p}</td>
-                      <td style={{ whiteSpace: 'nowrap', color: '#86868B', fontSize: '12px' }}>{s.d}/{s.year}</td>
-                      <td style={{ fontSize: '12px', color: '#3A3A3C', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.c}</td>
+                      <td style={{ color: 'var(--text-2)', fontSize: '11px', fontWeight: 600 }}>{i + 1}</td>
+                      <td style={{ fontWeight: 700, color: 'var(--text)' }}>{s.p}</td>
+                      <td style={{ whiteSpace: 'nowrap', color: 'var(--text-2)', fontSize: '12px' }}>{s.d}/{s.year}</td>
+                      <td style={{ fontSize: '12px', color: 'var(--text-2)', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.c}</td>
                       <td>
                         <span className="badge badge-blue" style={{ fontSize: '10px' }}>{s.cl}</span>
                       </td>
-                      <td style={{ fontWeight: 700, color: s.v > 0 ? '#28A745' : '#86868B', whiteSpace: 'nowrap' }}>
+                      <td style={{ fontWeight: 700, color: s.v > 0 ? 'var(--c-green)' : 'var(--text-2)', whiteSpace: 'nowrap' }}>
                         {s.v > 0 ? formatCurrency(s.v) : '—'}
                       </td>
                     </tr>

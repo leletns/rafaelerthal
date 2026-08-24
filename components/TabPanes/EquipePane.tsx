@@ -9,8 +9,9 @@ interface TeamMember {
   key: string;
   name: string;
   role: string;
-  color: string;
-  emoji: string;
+  color: string;      // usada na tela (acompanha o tema)
+  print: string;      // usada no relatório impresso (documento à parte)
+  initials: string;
   bank?: string;
   agency?: string;
   account?: string;
@@ -25,8 +26,9 @@ const TEAM: TeamMember[] = [
     key: 'blue',
     name: 'Blue Clínica',
     role: 'Clínica médica e cirúrgica',
-    color: '#007AFF',
-    emoji: '🏥',
+    color: 'var(--c-blue)',
+    print: '#0B63CE',
+    initials: 'BC',
     bank: 'C6 Bank — 336',
     agency: '0001',
     account: '27520102-3',
@@ -39,8 +41,9 @@ const TEAM: TeamMember[] = [
     key: 'anest',
     name: 'Anestesista',
     role: 'EP Serviços Médicos Ltda',
-    color: '#5856D6',
-    emoji: '💉',
+    color: 'var(--c-purple)',
+    print: '#4A45C4',
+    initials: 'AN',
     pix: '44856036000147',
     pixType: 'cnpj',
     favored: 'EP Serviços Médicos Ltda',
@@ -50,8 +53,9 @@ const TEAM: TeamMember[] = [
     key: 'leo',
     name: 'Leonardo Valadão Pinto',
     role: 'Cirurgião Auxiliar',
-    color: '#28A745',
-    emoji: '👨‍⚕️',
+    color: 'var(--c-green)',
+    print: '#167A3A',
+    initials: 'LV',
     bank: 'Santander',
     agency: '3977',
     account: '01061191-1',
@@ -64,8 +68,9 @@ const TEAM: TeamMember[] = [
     key: 'magda',
     name: 'Magda Pires dos Santos',
     role: 'Instrumentadora 1',
-    color: '#FF9500',
-    emoji: '🔬',
+    color: 'var(--c-orange)',
+    print: '#A85B00',
+    initials: 'MP',
     pix: '21995892783',
     pixType: 'phone',
     favored: 'Magda Pires dos Santos',
@@ -75,8 +80,9 @@ const TEAM: TeamMember[] = [
     key: 'adrielle',
     name: 'Adrielle Lopes Alves Gualberto',
     role: 'Instrumentadora 2',
-    color: '#FF6B35',
-    emoji: '🔬',
+    color: 'var(--c-coral)',
+    print: '#B24A1E',
+    initials: 'AL',
     pix: 'adriellelopesinstrumentacao@gmail.com',
     pixType: 'email',
     favored: 'Adrielle Lopes Alves Gualberto',
@@ -86,8 +92,9 @@ const TEAM: TeamMember[] = [
     key: 'fisio',
     name: 'Fisioterapia — Cintya',
     role: 'Perfeita Saúde Fisioterapia Ltda',
-    color: '#00C7BE',
-    emoji: '🏃‍♀️',
+    color: 'var(--c-teal)',
+    print: '#0E7490',
+    initials: 'CF',
     pix: 'cintyafisiorj@gmail.com',
     pixType: 'email',
     favored: 'Perfeita Saúde Fisioterapia Ltda',
@@ -123,7 +130,7 @@ export default function EquipePane() {
   const [selected, setSelected] = useState<string | null>(null);
   const [receipts, setReceipts] = useState<Receipt[]>(loadReceipts);
   const [uploading, setUploading] = useState(false);
-  const [uploadMsg, setUploadMsg] = useState('');
+  const [uploadMsg, setUploadMsg] = useState<{ tone: 'ok' | 'warn' | 'error'; text: string } | null>(null);
   const [copied, setCopied] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -140,7 +147,7 @@ export default function EquipePane() {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploading(true);
-    setUploadMsg('Lendo comprovante com IA…');
+    setUploadMsg({ tone: 'warn', text: 'Lendo o comprovante…' });
 
     try {
       const base64 = await new Promise<string>((res, rej) => {
@@ -168,7 +175,7 @@ export default function EquipePane() {
       if (!memberKey && json.detectedMember) memberKey = json.detectedMember;
 
       if (!memberKey) {
-        setUploadMsg(`⚠️ Não foi possível identificar o profissional. Selecione uma pasta primeiro.`);
+        setUploadMsg({ tone: 'warn', text: 'Não deu para identificar o profissional. Escolha a pasta e tente de novo.' });
         setUploading(false);
         return;
       }
@@ -189,10 +196,10 @@ export default function EquipePane() {
       saveReceipts(updated);
 
       const member = TEAM.find(t => t.key === memberKey);
-      setUploadMsg(`✅ Comprovante salvo na pasta de ${member?.name ?? memberKey}${ext.valor ? ` · ${ext.valor}` : ''}`);
+      setUploadMsg({ tone: 'ok', text: `Comprovante salvo na pasta de ${member?.name ?? memberKey}${ext.valor ? ` · ${ext.valor}` : ''}` });
       if (!selected && memberKey) setSelected(memberKey);
     } catch (err) {
-      setUploadMsg(`❌ Erro: ${String(err)}`);
+      setUploadMsg({ tone: 'error', text: 'Não foi possível ler o comprovante. Tente outro arquivo.' });
     } finally {
       setUploading(false);
       if (fileRef.current) fileRef.current.value = '';
@@ -235,9 +242,9 @@ export default function EquipePane() {
     .logo { font-size: 48px; font-weight: 200; color: #007AFF; letter-spacing: -4px; font-family: 'Montserrat', sans-serif; }
     .clinic-name { font-size: 20px; font-weight: 800; color: #1D1D1F; }
     .clinic-sub { font-size: 12px; color: #86868B; margin-top: 2px; }
-    .member-box { background: ${member.color}10; border-left: 4px solid ${member.color}; padding: 14px 18px; border-radius: 0 10px 10px 0; margin-bottom: 24px; }
+    .member-box { background: ${member.print}10; border-left: 4px solid ${member.print}; padding: 14px 18px; border-radius: 0 10px 10px 0; margin-bottom: 24px; }
     .member-name { font-size: 18px; font-weight: 800; color: #1D1D1F; }
-    .member-role { font-size: 12px; color: ${member.color}; font-weight: 600; margin-top: 2px; }
+    .member-role { font-size: 12px; color: ${member.print}; font-weight: 600; margin-top: 2px; }
     .member-month { font-size: 13px; color: #86868B; margin-top: 4px; }
     table { width: 100%; border-collapse: collapse; margin-bottom: 24px; }
     thead { background: #F5F5F7; }
@@ -265,7 +272,7 @@ export default function EquipePane() {
   </div>
 
   <div class="member-box">
-    <div class="member-name">${member.emoji} ${member.name}</div>
+    <div class="member-name">${member.name}</div>
     <div class="member-role">${member.role}</div>
     <div class="member-month">Período: ${month}</div>
   </div>
@@ -312,28 +319,36 @@ export default function EquipePane() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-      {/* Upload banner */}
-      <div style={{ background: 'linear-gradient(135deg, #007AFF, #5856D6)', borderRadius: '18px', padding: '18px 22px', color: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+      {/* Importação de comprovantes */}
+      <div className="card" style={{
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        flexWrap: 'wrap', gap: '16px',
+      }}>
         <div>
-          <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', opacity: 0.85 }}>
-            Clínica Blue · Gestão de Pagamentos
-          </div>
-          <div style={{ fontSize: '1.05rem', fontWeight: 800, marginTop: '4px' }}>📎 Comprovantes da Equipe</div>
-          <div style={{ fontSize: '0.8rem', opacity: 0.85, marginTop: '2px' }}>
-            Importe o comprovante e a IA identifica automaticamente o profissional
-          </div>
+          <h2 className="sec-ttl">Comprovantes da equipe</h2>
+          <p style={{ fontSize: '13px', color: 'var(--text-2)', marginTop: '4px', maxWidth: '46ch' }}>
+            Importe o comprovante e o painel identifica sozinho de quem é, guardando na pasta certa.
+          </p>
         </div>
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-          <label style={{ background: 'rgba(255,255,255,0.2)', border: '1.5px solid rgba(255,255,255,0.4)', borderRadius: '10px', padding: '8px 16px', fontSize: '13px', fontWeight: 700, color: '#fff', cursor: 'pointer', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-            {uploading ? '⏳ Lendo…' : '📎 Importar comprovante'}
-            <input ref={fileRef} type="file" accept="image/*,.pdf,.xlsx,.xls,.csv" style={{ display: 'none' }} onChange={handleFileUpload} disabled={uploading} />
-          </label>
-        </div>
+        <label className="btn-primary" style={{ cursor: uploading ? 'wait' : 'pointer' }}>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" />
+          </svg>
+          {uploading ? 'Lendo…' : 'Importar comprovante'}
+          <input ref={fileRef} type="file" accept="image/*,.pdf,.xlsx,.xls,.csv" style={{ display: 'none' }} onChange={handleFileUpload} disabled={uploading} />
+        </label>
       </div>
 
       {uploadMsg && (
-        <div style={{ padding: '10px 14px', borderRadius: '10px', background: uploadMsg.startsWith('✅') ? '#E6F7EC' : uploadMsg.startsWith('⚠️') ? '#FFF3E0' : '#FFE5E3', color: uploadMsg.startsWith('✅') ? '#28A745' : uploadMsg.startsWith('⚠️') ? '#FF9500' : '#FF3B30', fontWeight: 600, fontSize: '13px' }}>
-          {uploadMsg}
+        <div
+          role="status"
+          style={{
+            padding: '11px 15px', borderRadius: '10px', fontWeight: 600, fontSize: '13.5px',
+            background: uploadMsg.tone === 'ok' ? 'var(--tint-green)' : uploadMsg.tone === 'warn' ? 'var(--tint-orange)' : 'var(--tint-red)',
+            color: uploadMsg.tone === 'ok' ? 'var(--c-green)' : uploadMsg.tone === 'warn' ? 'var(--c-orange)' : 'var(--c-red)',
+          }}
+        >
+          {uploadMsg.text}
         </div>
       )}
 
@@ -347,28 +362,31 @@ export default function EquipePane() {
               key={m.key}
               onClick={() => setSelected(isSelected ? null : m.key)}
               style={{
-                background: '#fff',
+                background: 'var(--surface)',
+                border: '1px solid var(--border)',
+                borderTop: `3px solid ${m.color}`,
                 borderRadius: '16px',
                 padding: '16px',
-                boxShadow: isSelected ? `0 0 0 2px ${m.color}, 0 4px 24px rgba(0,0,0,0.1)` : '0 2px 12px rgba(0,0,0,0.06)',
-                borderTop: `3px solid ${m.color}`,
+                boxShadow: isSelected ? `0 0 0 2px ${m.color}, var(--shadow-2)` : 'var(--shadow-1)',
                 cursor: 'pointer',
-                transition: 'all .2s',
+                transition: 'box-shadow .2s ease',
                 position: 'relative',
+                textAlign: 'left',
+                width: '100%',
               }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: `${m.color}15`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem' }}>
-                    {m.emoji}
+                  <div aria-hidden="true" style={{ width: '42px', height: '42px', borderRadius: '12px', background: `color-mix(in srgb, ${m.color} 14%, transparent)`, color: m.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: 800, letterSpacing: '.5px' }}>
+                    {m.initials}
                   </div>
                   <div>
-                    <div style={{ fontWeight: 800, fontSize: '0.875rem', color: '#1D1D1F' }}>{m.name}</div>
+                    <div style={{ fontWeight: 800, fontSize: '0.875rem', color: 'var(--text)' }}>{m.name}</div>
                     <div style={{ fontSize: '0.72rem', color: m.color, fontWeight: 600 }}>{m.role}</div>
                   </div>
                 </div>
                 {mReceipts.length > 0 && (
-                  <span style={{ background: m.color, color: '#fff', borderRadius: '99px', padding: '2px 8px', fontSize: '11px', fontWeight: 700 }}>
+                  <span style={{ background: m.color, color: 'var(--on-accent)', borderRadius: '99px', padding: '2px 8px', fontSize: '11px', fontWeight: 700 }}>
                     {mReceipts.length}
                   </span>
                 )}
@@ -377,20 +395,20 @@ export default function EquipePane() {
               {/* Bank/PIX info */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                 {m.bank && (
-                  <div style={{ fontSize: '0.72rem', color: '#86868B' }}>
+                  <div style={{ fontSize: '0.72rem', color: 'var(--text-2)' }}>
                     <span style={{ fontWeight: 600 }}>Banco:</span> {m.bank}
                     {m.agency && ` · Ag: ${m.agency}`}
                     {m.account && ` · Conta: ${m.account}`}
                   </div>
                 )}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span style={{ fontSize: '0.72rem', color: '#86868B', fontWeight: 600 }}>PIX:</span>
-                  <span style={{ fontSize: '0.72rem', color: '#1D1D1F', fontFamily: 'monospace', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.pix}</span>
+                  <span style={{ fontSize: '0.72rem', color: 'var(--text-2)', fontWeight: 600 }}>PIX:</span>
+                  <span style={{ fontSize: '0.72rem', color: 'var(--text)', fontFamily: 'monospace', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.pix}</span>
                   <button
                     onClick={(e) => { e.stopPropagation(); handleCopy(m.pix, m.key); }}
-                    style={{ border: 'none', background: copied === m.key ? '#E6F7EC' : '#F2F2F7', borderRadius: '6px', padding: '2px 6px', fontSize: '10px', fontWeight: 700, color: copied === m.key ? '#28A745' : '#86868B', cursor: 'pointer', flexShrink: 0 }}
+                    style={{ border: 'none', background: copied === m.key ? 'var(--tint-green)' : 'var(--fill)', borderRadius: '6px', padding: '2px 6px', fontSize: '10px', fontWeight: 700, color: copied === m.key ? 'var(--c-green)' : 'var(--text-2)', cursor: 'pointer', flexShrink: 0 }}
                   >
-                    {copied === m.key ? '✓' : 'Copiar'}
+                    {copied === m.key ? 'Copiado' : 'Copiar'}
                   </button>
                 </div>
                 {m.fixedValue && (
@@ -401,16 +419,16 @@ export default function EquipePane() {
               {/* Actions */}
               {isSelected && (
                 <div style={{ marginTop: '12px', display: 'flex', gap: '6px' }}>
-                  <label style={{ flex: 1, textAlign: 'center', background: `${m.color}15`, border: `1.5px solid ${m.color}40`, borderRadius: '8px', padding: '6px', fontSize: '11px', fontWeight: 700, color: m.color, cursor: 'pointer' }}>
-                    📎 Adicionar comprovante
+                  <label style={{ flex: 1, textAlign: 'center', background: `color-mix(in srgb, ${m.color} 8%, transparent)`, border: `1.5px solid color-mix(in srgb, ${m.color} 25%, transparent)`, borderRadius: '8px', padding: '6px', fontSize: '11px', fontWeight: 700, color: m.color, cursor: 'pointer' }}>
+                    Adicionar comprovante
                     <input type="file" accept="image/*,.pdf,.xlsx" style={{ display: 'none' }} onChange={handleFileUpload} disabled={uploading} />
                   </label>
                   {mReceipts.length > 0 && (
                     <button
                       onClick={(e) => { e.stopPropagation(); handleExportExcel(m.key); }}
-                      style={{ flex: 1, background: '#F2F2F7', border: 'none', borderRadius: '8px', padding: '6px', fontSize: '11px', fontWeight: 700, color: '#1D1D1F', cursor: 'pointer' }}
+                      style={{ flex: 1, background: 'var(--fill)', border: 'none', borderRadius: '8px', padding: '6px', fontSize: '11px', fontWeight: 700, color: 'var(--text)', cursor: 'pointer' }}
                     >
-                      🖨️ Imprimir / PDF
+                      Imprimir / PDF
                     </button>
                   )}
                 </div>
@@ -425,22 +443,21 @@ export default function EquipePane() {
         <div className="card">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
             <div className="card-ttl" style={{ margin: 0 }}>
-              {selectedMember.emoji} Pasta de {selectedMember.name}
+              Pasta de {selectedMember.name}
             </div>
             {memberReceipts.length > 0 && (
               <button
                 onClick={() => handleExportExcel(selected!)}
-                style={{ background: selectedMember.color, color: '#fff', border: 'none', borderRadius: '8px', padding: '6px 14px', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}
+                style={{ background: selectedMember.color, color: 'var(--on-accent)', border: 'none', borderRadius: '8px', padding: '6px 14px', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}
               >
-                🖨️ Imprimir / PDF
+                Imprimir / PDF
               </button>
             )}
           </div>
 
           {memberReceipts.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '24px', color: '#86868B', fontSize: '13px' }}>
-              <div style={{ fontSize: '1.8rem', marginBottom: '8px' }}>📂</div>
-              Nenhum comprovante. Clique em &quot;Importar comprovante&quot; acima.
+            <div style={{ textAlign: 'center', padding: '24px', color: 'var(--text-2)', fontSize: '13px' }}>
+              Nenhum comprovante nesta pasta ainda. Use &quot;Importar comprovante&quot; acima.
             </div>
           ) : (
             <div className="ts">
@@ -452,21 +469,21 @@ export default function EquipePane() {
                     <th>Data</th>
                     <th>Paciente</th>
                     <th>Importado</th>
-                    <th></th>
+                    <th><span className="sr-only">Ações</span></th>
                   </tr>
                 </thead>
                 <tbody>
                   {memberReceipts.map(r => (
                     <tr key={r.id}>
-                      <td style={{ fontSize: '12px', color: '#1D1D1F', fontWeight: 600 }}>{r.filename}</td>
-                      <td style={{ fontWeight: 800, color: '#28A745', whiteSpace: 'nowrap' }}>{r.valor ?? '—'}</td>
-                      <td style={{ color: '#86868B', fontSize: '12px', whiteSpace: 'nowrap' }}>{r.data ?? '—'}</td>
-                      <td style={{ fontSize: '12px', color: '#86868B' }}>{r.pagador ?? '—'}</td>
-                      <td style={{ fontSize: '11px', color: '#86868B' }}>{new Date(r.uploadedAt).toLocaleDateString('pt-BR')}</td>
+                      <td style={{ fontSize: '12px', color: 'var(--text)', fontWeight: 600 }}>{r.filename}</td>
+                      <td style={{ fontWeight: 800, color: 'var(--c-green)', whiteSpace: 'nowrap' }}>{r.valor ?? '—'}</td>
+                      <td style={{ color: 'var(--text-2)', fontSize: '12px', whiteSpace: 'nowrap' }}>{r.data ?? '—'}</td>
+                      <td style={{ fontSize: '12px', color: 'var(--text-2)' }}>{r.pagador ?? '—'}</td>
+                      <td style={{ fontSize: '11px', color: 'var(--text-2)' }}>{new Date(r.uploadedAt).toLocaleDateString('pt-BR')}</td>
                       <td>
                         <button
                           onClick={() => handleDeleteReceipt(r.id)}
-                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#FF3B30', fontSize: '14px', padding: '2px' }}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--c-red)', fontSize: '14px', padding: '2px' }}
                         >
                           ×
                         </button>
