@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useId } from 'react';
 import { useRouter } from 'next/navigation';
 import { setAuthToken, isAuthenticated } from '@/lib/safe-storage';
 
@@ -9,6 +9,8 @@ export default function LoginPage() {
   const [token, setToken] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const fieldId = useId();
+  const errorId = `${fieldId}-erro`;
 
   useEffect(() => {
     if (isAuthenticated()) {
@@ -19,7 +21,7 @@ export default function LoginPage() {
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
     if (!token.trim()) {
-      setError('Informe o token de acesso.');
+      setError('Digite a senha de acesso.');
       return;
     }
 
@@ -37,135 +39,115 @@ export default function LoginPage() {
         setAuthToken(token.trim());
         router.replace('/dashboard');
       } else {
-        setError('Token inválido. Tente novamente.');
+        setError('Senha incorreta. Tente novamente.');
         setToken('');
       }
     } catch {
-      setError('Erro de conexão. Verifique sua internet.');
+      setError('Não foi possível conectar. Verifique sua internet.');
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div
+    <main
       style={{
         minHeight: '100vh',
-        background: 'linear-gradient(135deg, #0A2540 0%, #1A3A5C 40%, #0D47A1 100%)',
+        background: 'var(--bg)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        fontFamily: "'Montserrat', sans-serif",
-        padding: '1rem',
+        padding: '24px',
       }}
     >
       <div
         style={{
-          background: 'rgba(255,255,255,0.97)',
+          background: 'var(--surface)',
+          border: '1px solid var(--border)',
           borderRadius: '24px',
-          padding: '3rem',
+          padding: '44px 40px',
           width: '100%',
-          maxWidth: '420px',
-          boxShadow: '0 24px 80px rgba(0,0,0,0.35)',
-          textAlign: 'center',
+          maxWidth: '400px',
+          boxShadow: 'var(--shadow-2)',
         }}
       >
-        {/* Logo */}
-        <div
-          style={{
-            width: '72px',
-            height: '72px',
-            borderRadius: '18px',
-            background: 'linear-gradient(135deg, #007AFF, #0051D5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            margin: '0 auto 1.5rem',
-            boxShadow: '0 8px 24px rgba(0,122,255,0.35)',
-          }}
-        >
-          <span style={{ fontSize: '2rem', fontWeight: 800, color: '#fff', letterSpacing: '-2px' }}>b.</span>
+        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+          <div
+            aria-hidden="true"
+            style={{
+              fontSize: '56px',
+              fontWeight: 200,
+              color: 'var(--brand)',
+              letterSpacing: '-4px',
+              lineHeight: 1,
+              marginBottom: '18px',
+            }}
+          >
+            b.
+          </div>
+          <h1 style={{ fontSize: '22px', fontWeight: 700, color: 'var(--text)', letterSpacing: '-.4px' }}>
+            Clínica Blue
+          </h1>
+          <p style={{ fontSize: '14px', color: 'var(--text-2)', marginTop: '6px' }}>
+            Painel de gestão · Dr. Rafael Erthal
+          </p>
         </div>
 
-        <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#1D1D1F', marginBottom: '0.25rem' }}>
-          Clínica Blue
-        </h1>
-        <p style={{ fontSize: '0.875rem', color: '#86868B', marginBottom: '2rem' }}>
-          Dashboard interno — Dr. Rafael Erthal
-        </p>
-
-        <form onSubmit={handleLogin}>
-          <div style={{ marginBottom: '1rem', textAlign: 'left' }}>
-            <label
-              htmlFor="token"
-              style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: '#86868B', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.05em' }}
-            >
-              Token de acesso
+        <form onSubmit={handleLogin} noValidate>
+          <div style={{ marginBottom: '16px', textAlign: 'left' }}>
+            <label htmlFor={fieldId} className="field-lbl">
+              Senha de acesso
             </label>
             <input
-              id="token"
+              id={fieldId}
               type="password"
+              autoComplete="current-password"
               value={token}
               onChange={(e) => setToken(e.target.value)}
+              aria-invalid={error ? true : undefined}
+              aria-describedby={error ? errorId : undefined}
               placeholder="••••••••"
-              autoComplete="current-password"
               style={{
                 width: '100%',
-                padding: '12px 16px',
-                borderRadius: '10px',
-                border: `2px solid ${error ? '#FF3B30' : '#E5E5EA'}`,
-                fontSize: '1rem',
-                fontFamily: 'inherit',
-                outline: 'none',
-                transition: 'border-color 0.15s ease',
-                background: '#F9F9FB',
+                padding: '13px 16px',
+                fontSize: '16px',
+                borderColor: error ? 'var(--c-red)' : 'var(--border)',
               }}
             />
           </div>
 
           {error && (
-            <div
+            <p
+              id={errorId}
+              role="alert"
               style={{
-                background: '#FFE5E3',
-                color: '#FF3B30',
-                borderRadius: '8px',
-                padding: '10px 14px',
-                fontSize: '0.85rem',
-                marginBottom: '1rem',
-                fontWeight: 500,
+                background: 'var(--tint-red)',
+                color: 'var(--c-red)',
+                borderRadius: '10px',
+                padding: '11px 14px',
+                fontSize: '13.5px',
+                marginBottom: '16px',
+                fontWeight: 600,
               }}
             >
               {error}
-            </div>
+            </p>
           )}
 
           <button
             type="submit"
             disabled={loading}
-            style={{
-              width: '100%',
-              padding: '14px',
-              borderRadius: '10px',
-              background: loading ? '#99C9FF' : 'linear-gradient(135deg, #007AFF, #0051D5)',
-              color: '#fff',
-              fontWeight: 700,
-              fontSize: '0.95rem',
-              border: 'none',
-              cursor: loading ? 'not-allowed' : 'pointer',
-              fontFamily: 'inherit',
-              letterSpacing: '0.01em',
-              transition: 'all 0.15s ease',
-              boxShadow: loading ? 'none' : '0 4px 16px rgba(0,122,255,0.3)',
-            }}
+            className="btn-primary"
+            style={{ width: '100%', justifyContent: 'center', padding: '14px', fontSize: '15px' }}
           >
-            {loading ? 'Entrando...' : 'Acessar Dashboard'}
+            {loading ? 'Entrando…' : 'Entrar'}
           </button>
         </form>
 
-        <p style={{ marginTop: '2rem', fontSize: '0.75rem', color: '#C7C7CC' }}>
-          Acesso restrito — uso interno
+        <p style={{ marginTop: '28px', fontSize: '12.5px', color: 'var(--text-3)', textAlign: 'center' }}>
+          Acesso restrito à equipe da clínica
         </p>
       </div>
-    </div>
+    </main>
   );
 }

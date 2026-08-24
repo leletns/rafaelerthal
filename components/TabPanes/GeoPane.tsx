@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import type { Surgery, Consultation, CanalStats, FxStats, CidadeStats, IntlStats } from '@/lib/data-model';
+import { limparRotulo } from '@/lib/labels';
 
 interface GeoPaneProps {
   cir25: Surgery[];
@@ -18,7 +19,7 @@ interface GeoPaneProps {
   intl26: IntlStats;
 }
 
-const COLORS = ['#007AFF', '#5856D6', '#FF9500', '#28A745', '#FF3B30', '#AF52DE', '#FF6B35', '#00C7BE'];
+const COLORS = ['var(--c-blue)', 'var(--c-purple)', 'var(--c-orange)', 'var(--c-green)', 'var(--c-red)', 'var(--c-magenta)', 'var(--c-coral)', 'var(--c-teal)'];
 
 function BarList({ entries, total }: { entries: [string, number][]; total: number }) {
   const max = entries[0]?.[1] || 1;
@@ -32,17 +33,17 @@ function BarList({ entries, total }: { entries: [string, number][]; total: numbe
           <div key={key}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3px', fontSize: '0.8rem' }}>
               <span style={{
-                fontWeight: 600, color: '#1D1D1F',
+                fontWeight: 600, color: 'var(--text)',
                 maxWidth: '68%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
               }}>
                 {key}
               </span>
               <div style={{ display: 'flex', gap: '8px', alignItems: 'baseline' }}>
                 <span style={{ fontWeight: 800, color }}>{val}</span>
-                <span style={{ color: '#86868B', fontSize: '0.75rem' }}>{pct}%</span>
+                <span style={{ color: 'var(--text-2)', fontSize: '0.75rem' }}>{pct}%</span>
               </div>
             </div>
-            <div style={{ height: '6px', background: '#F2F2F7', borderRadius: '3px', overflow: 'hidden' }}>
+            <div style={{ height: '6px', background: 'var(--fill)', borderRadius: '3px', overflow: 'hidden' }}>
               <div style={{ height: '100%', width: `${barW}%`, background: color, borderRadius: '3px', transition: 'width 0.5s ease' }} />
             </div>
           </div>
@@ -54,8 +55,8 @@ function BarList({ entries, total }: { entries: [string, number][]; total: numbe
 
 function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div style={{ background: '#fff', borderRadius: '18px', padding: '20px', boxShadow: '0 2px 16px rgba(0,0,0,0.07)' }}>
-      <h4 style={{ margin: '0 0 16px', fontSize: '0.875rem', fontWeight: 700, color: '#1D1D1F' }}>{title}</h4>
+    <div style={{ background: 'var(--surface)', borderRadius: '18px', padding: '20px', boxShadow: '0 2px 16px rgba(0,0,0,0.07)' }}>
+      <h4 style={{ margin: '0 0 16px', fontSize: '0.875rem', fontWeight: 700, color: 'var(--text)' }}>{title}</h4>
       {children}
     </div>
   );
@@ -115,7 +116,7 @@ export default function GeoPane({
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: '#1D1D1F' }}>
+        <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: 'var(--text)' }}>
           Origem, Canais &amp; Perfil
         </h3>
         <div className="seg">
@@ -171,9 +172,9 @@ export default function GeoPane({
                 key={country}
                 style={{
                   padding: '10px 16px',
-                  background: '#F0F7FF',
+                  background: 'var(--tint-blue)',
                   borderRadius: '12px',
-                  border: '1.5px solid #007AFF25',
+                  border: '1.5px solid color-mix(in srgb, var(--c-blue) 15%, transparent)',
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
@@ -184,8 +185,8 @@ export default function GeoPane({
                 <span style={{ fontWeight: 800, fontSize: '1.25rem', color: COLORS[i % COLORS.length], lineHeight: 1 }}>
                   {count}
                 </span>
-                <span style={{ fontWeight: 600, fontSize: '0.78rem', color: '#1D1D1F', textAlign: 'center' }}>
-                  {country}
+                <span style={{ fontWeight: 600, fontSize: '0.78rem', color: 'var(--text)', textAlign: 'center' }}>
+                  {limparRotulo(country)}
                 </span>
               </div>
             ))}

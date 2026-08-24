@@ -38,23 +38,25 @@ export default function ConsultasPane({ cons25, cons26 }: ConsultasPaneProps) {
         </div>
 
         <input
-          type="text"
+          type="search"
+          aria-label="Buscar consulta por paciente, telefone ou canal"
           placeholder="Buscar paciente, telefone, canal…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           style={{
             flex: 1, minWidth: '200px', padding: '8px 14px',
-            borderRadius: '10px', border: '1.5px solid #E5E5EA',
-            fontSize: '13px', fontFamily: 'inherit', background: '#F9F9FB',
+            borderRadius: '10px', border: '1.5px solid var(--border)',
+            fontSize: '13px', fontFamily: 'inherit', background: 'var(--surface-2)',
           }}
         />
 
         <select
+          aria-label="Filtrar por mês"
           value={filterMonth}
           onChange={(e) => setFilterMonth(e.target.value)}
           style={{
-            padding: '8px 12px', borderRadius: '10px', border: '1.5px solid #E5E5EA',
-            fontSize: '13px', fontFamily: 'inherit', background: '#F9F9FB',
+            padding: '8px 12px', borderRadius: '10px', border: '1.5px solid var(--border)',
+            fontSize: '13px', fontFamily: 'inherit', background: 'var(--surface-2)',
           }}
         >
           <option value="">Todos os meses</option>
@@ -63,9 +65,9 @@ export default function ConsultasPane({ cons25, cons26 }: ConsultasPaneProps) {
       </div>
 
       {/* Count */}
-      <div style={{ fontSize: '12px', color: '#86868B', marginBottom: '12px', fontWeight: 500 }}>
+      <div style={{ fontSize: '12px', color: 'var(--text-2)', marginBottom: '12px', fontWeight: 500 }}>
         {filtered.length} consulta{filtered.length !== 1 ? 's' : ''} encontrada{filtered.length !== 1 ? 's' : ''}
-        <span style={{ color: '#D2D2D7', margin: '0 8px' }}>·</span>
+        <span style={{ color: 'var(--border-strong)', margin: '0 8px' }}>·</span>
         total {list.length} em {year}
       </div>
 
@@ -87,22 +89,22 @@ export default function ConsultasPane({ cons25, cons26 }: ConsultasPaneProps) {
             <tbody>
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={7} style={{ textAlign: 'center', color: '#86868B', padding: '40px' }}>
+                  <td colSpan={7} style={{ textAlign: 'center', color: 'var(--text-2)', padding: '40px' }}>
                     Nenhuma consulta encontrada
                   </td>
                 </tr>
               ) : (
                 filtered.map((c, i) => (
                   <tr key={i}>
-                    <td style={{ color: '#86868B', fontSize: '11px', fontWeight: 600 }}>{i + 1}</td>
-                    <td style={{ fontWeight: 600, color: '#1D1D1F' }}>{c.p}</td>
-                    <td style={{ whiteSpace: 'nowrap', color: '#1D1D1F', fontWeight: 600 }}>{c.d}</td>
-                    <td style={{ color: '#86868B', fontSize: '12px', whiteSpace: 'nowrap' }}>{c.tel}</td>
-                    <td style={{ fontWeight: 600, color: '#5856D6', fontSize: '12px' }}>
+                    <td style={{ color: 'var(--text-2)', fontSize: '11px', fontWeight: 600 }}>{i + 1}</td>
+                    <td style={{ fontWeight: 600, color: 'var(--text)' }}>{c.p}</td>
+                    <td style={{ whiteSpace: 'nowrap', color: 'var(--text)', fontWeight: 600 }}>{c.d}</td>
+                    <td style={{ color: 'var(--text-2)', fontSize: '12px', whiteSpace: 'nowrap' }}>{c.tel}</td>
+                    <td style={{ fontWeight: 600, color: 'var(--c-purple)', fontSize: '12px' }}>
                       {c.idade > 0 ? `${c.idade}a` : '—'}
                     </td>
-                    <td style={{ fontSize: '11px', color: '#3A3A3C', maxWidth: '140px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {c.canal || <span style={{ color: '#C7C7CC' }}>—</span>}
+                    <td style={{ fontSize: '11px', color: 'var(--text-2)', maxWidth: '140px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {c.canal || <span style={{ color: 'var(--border-strong)' }}>—</span>}
                     </td>
                     <td>
                       {c.tel && <WhatsAppButton phone={c.tel} size="sm" variant="icon" />}

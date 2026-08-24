@@ -26,10 +26,14 @@ export async function POST(req: NextRequest) {
   try {
     const payload = await req.json();
 
+    // A planilha exige o token em TODA escrita — sem ele o Apps Script
+    // devolve 200 com { error }, e a gravação falhava em silêncio.
+    const appsScriptToken = process.env.APPS_SCRIPT_TOKEN || '';
+
     const res = await fetch(sheetsUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'push', ...payload }),
+      body: JSON.stringify({ action: 'push', token: appsScriptToken, ...payload }),
     });
 
     if (!res.ok) {
@@ -40,6 +44,12 @@ export async function POST(req: NextRequest) {
     }
 
     const data = await res.json();
+
+    // O Apps Script responde 200 mesmo quando recusa a escrita.
+    if (data && typeof data === 'object' && 'error' in data && data.error) {
+      return NextResponse.json({ success: false, error: String(data.error) }, { status: 502 });
+    }
+
     return NextResponse.json({ success: true, ...data });
   } catch (err) {
     return NextResponse.json(

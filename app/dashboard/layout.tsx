@@ -28,17 +28,16 @@ export default function DashboardLayout({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: '#F5F5F7',
-          fontFamily: "'Montserrat', sans-serif",
+          background: 'var(--bg)',
         }}
       >
-        <div style={{ textAlign: 'center' }}>
+        <div style={{ textAlign: 'center' }} role="status">
           <div
             style={{
               width: '40px',
               height: '40px',
               borderRadius: '10px',
-              background: 'linear-gradient(135deg, #007AFF, #0051D5)',
+              background: 'var(--c-blue)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -46,9 +45,9 @@ export default function DashboardLayout({
               animation: 'pulse 1s infinite',
             }}
           >
-            <span style={{ fontSize: '1.2rem', fontWeight: 800, color: '#fff' }}>b.</span>
+            <span style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--on-accent)' }}>b.</span>
           </div>
-          <p style={{ color: '#86868B', fontSize: '0.875rem' }}>Carregando...</p>
+          <p style={{ color: 'var(--text-2)', fontSize: '14px' }}>Carregando o painel…</p>
         </div>
       </div>
     );

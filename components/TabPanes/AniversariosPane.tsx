@@ -17,7 +17,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
-        <h4 style={{ margin: 0, fontSize: '13px', fontWeight: 700, color: '#1D1D1F' }}>{title}</h4>
+        <h4 style={{ margin: 0, fontSize: '13px', fontWeight: 700, color: 'var(--text)' }}>{title}</h4>
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>{children}</div>
     </div>
@@ -25,9 +25,9 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 const MS_COLORS: Record<number, { color: string; bg: string }> = {
-  3:  { color: '#007AFF', bg: '#E5F1FF' },
-  6:  { color: '#5856D6', bg: '#EEECFF' },
-  12: { color: '#28A745', bg: '#E6F7EC' },
+  3:  { color: 'var(--c-blue)', bg: 'var(--tint-blue)' },
+  6:  { color: 'var(--c-purple)', bg: 'var(--tint-purple)' },
+  12: { color: 'var(--c-green)', bg: 'var(--tint-green)' },
 };
 
 // ── Fuzzy name matching (≥2 significant tokens in common) ─────────────────
@@ -117,13 +117,13 @@ export default function AniversariosPane({ cir25, cir26, amigoData, patients = [
       const perm = await Notification.requestPermission();
       if (perm !== 'granted') return;
       for (const a of tomorrow) {
-        new Notification(`🎂 Amanhã: ${a.milestoneLabel} de ${a.patientName}`, {
+        new Notification(`Amanhã: ${a.milestoneLabel} de ${a.patientName}`, {
           body: `${a.procedure} · Cirurgia: ${a.surgeryDate}/${a.surgeryYear}`,
           tag: `anniv_${a.patientName}_${a.milestoneMonths}`,
         });
       }
       for (const b of bdayTomorrow) {
-        new Notification(`🎂 Amanhã: Aniversário de ${b.name}`, {
+        new Notification(`Amanhã: aniversário de ${b.name}`, {
           body: `Paciente da Clínica Blue`,
           tag: `bday_${b.id}`,
         });
@@ -134,24 +134,24 @@ export default function AniversariosPane({ cir25, cir26, amigoData, patients = [
   }, []);
 
   function AnnivCard({ a }: { a: ReturnType<typeof computeAnniversaries>[0] }) {
-    const pal = MS_COLORS[a.milestoneMonths] ?? { color: '#86868B', bg: '#F2F2F7' };
+    const pal = MS_COLORS[a.milestoneMonths] ?? { color: 'var(--text-2)', bg: 'var(--fill)' };
     const urgent = a.daysUntil >= 0 && a.daysUntil <= 3;
     const phone = getPhone(a.patientName);
     return (
       <div style={{
         padding: '12px 14px', borderRadius: '12px',
-        background: urgent ? pal.bg : '#F9F9FB',
-        border: `1.5px solid ${urgent ? pal.color + '50' : '#E5E5EA'}`,
+        background: urgent ? pal.bg : 'var(--surface-2)',
+        border: `1.5px solid ${urgent ? pal.color + '50' : 'var(--border)'}`,
         display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px',
       }}>
         <div style={{ minWidth: 0, flex: 1 }}>
-          <div style={{ fontWeight: 700, fontSize: '0.85rem', color: '#1D1D1F', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <div style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {a.patientName}
           </div>
-          <div style={{ fontSize: '0.72rem', color: '#86868B', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <div style={{ fontSize: '0.72rem', color: 'var(--text-2)', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {a.procedure} · {a.milestoneLabel} pós-op
           </div>
-          <div style={{ fontSize: '0.7rem', color: '#86868B', marginTop: '1px' }}>
+          <div style={{ fontSize: '0.7rem', color: 'var(--text-2)', marginTop: '1px' }}>
             Cirurgia: {a.surgeryDate}/{a.surgeryYear}
           </div>
           <div style={{ display: 'flex', gap: '6px', alignItems: 'center', marginTop: '6px' }}>
@@ -163,7 +163,7 @@ export default function AniversariosPane({ cir25, cir26, amigoData, patients = [
           <span style={{ display: 'inline-block', padding: '3px 10px', borderRadius: '99px', background: pal.bg, color: pal.color, fontSize: '0.72rem', fontWeight: 800 }}>
             {a.milestoneLabel}
           </span>
-          <div style={{ fontSize: '0.75rem', fontWeight: 700, color: a.daysUntil === 0 ? '#FF3B30' : a.daysUntil > 0 && a.daysUntil <= 7 ? '#FF9500' : pal.color }}>
+          <div style={{ fontSize: '0.75rem', fontWeight: 700, color: a.daysUntil === 0 ? 'var(--c-red)' : a.daysUntil > 0 && a.daysUntil <= 7 ? 'var(--c-orange)' : pal.color }}>
             {formatDue(a.daysUntil)}
           </div>
         </div>
@@ -178,21 +178,20 @@ export default function AniversariosPane({ cir25, cir26, amigoData, patients = [
       <div style={{
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         padding: '12px 14px', borderRadius: '12px',
-        background: isToday ? '#FFF3E0' : '#F9F9FB',
-        border: `1.5px solid ${isToday ? '#FF950040' : '#E5E5EA'}`,
+        background: isToday ? 'var(--tint-orange)' : 'var(--surface-2)',
+        border: `1.5px solid ${isToday ? 'color-mix(in srgb, var(--c-orange) 25%, transparent)' : 'var(--border)'}`,
       }}>
         <div>
-          <div style={{ fontWeight: 700, fontSize: '0.85rem', color: '#1D1D1F', display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <div style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--text)', display: 'flex', alignItems: 'center', gap: '6px' }}>
             {b.name}
-            {operated && <span style={{ fontSize: '0.65rem', background: '#E6F7EC', color: '#28A745', padding: '2px 6px', borderRadius: '6px', fontWeight: 700 }}>✂️ operou</span>}
+            {operated && <span className="badge badge-green" style={{ fontSize: '11px' }}>já operou</span>}
           </div>
-          {b.birthDate && <div style={{ fontSize: '0.72rem', color: '#86868B' }}>Nascimento: {b.birthDate}</div>}
+          {b.birthDate && <div style={{ fontSize: '0.72rem', color: 'var(--text-2)' }}>Nascimento: {b.birthDate}</div>}
           {b.birthdayDate && !isToday && (
-            <div style={{ fontSize: '0.72rem', color: '#FF9500', fontWeight: 600 }}>{formatDue(daysUntil)}</div>
+            <div style={{ fontSize: '0.72rem', color: 'var(--c-orange)', fontWeight: 600 }}>{formatDue(daysUntil)}</div>
           )}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {isToday && <span style={{ fontSize: '1.4rem' }}>🎂</span>}
           {b.phone && <WhatsAppButton phone={b.phone} size="sm" variant="icon" />}
           <FollowUpScheduler patientName={b.name} phone={b.phone ?? ''} />
         </div>
@@ -205,31 +204,29 @@ export default function AniversariosPane({ cir25, cir26, amigoData, patients = [
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
       {/* Header */}
-      <div style={{
-        background: 'linear-gradient(135deg, #FF9500, #FF3B30)',
-        borderRadius: '18px', padding: '18px 22px', color: '#fff',
-        display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px',
+      <div className="card" style={{
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        flexWrap: 'wrap', gap: '16px',
       }}>
         <div>
-          <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', opacity: 0.85 }}>
-            Clínica Blue · Aniversários &amp; Follow-up
-          </div>
-          <div style={{ fontSize: '1.1rem', fontWeight: 800, marginTop: '4px' }}>
-            🎂 Aniversários &amp; Mesversários
-          </div>
-          <div style={{ fontSize: '0.8rem', opacity: 0.9, marginTop: '2px' }}>
+          <h2 className="sec-ttl">Aniversários e mesversários</h2>
+          <p style={{ fontSize: '13px', color: 'var(--text-2)', marginTop: '4px' }}>
             {today.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-          </div>
+          </p>
         </div>
         <div style={{ textAlign: 'right' }}>
-          <div style={{ fontSize: '1.8rem', fontWeight: 800 }}>{todayAnivs.length + birthdays.length}</div>
-          <div style={{ fontSize: '0.72rem', opacity: 0.85 }}>eventos hoje</div>
+          <div style={{ fontSize: '30px', fontWeight: 800, color: 'var(--c-orange)', lineHeight: 1 }}>
+            {todayAnivs.length + birthdays.length}
+          </div>
+          <div style={{ fontSize: '12.5px', color: 'var(--text-2)', marginTop: '4px' }}>
+            {todayAnivs.length + birthdays.length === 1 ? 'motivo para ligar hoje' : 'motivos para ligar hoje'}
+          </div>
         </div>
       </div>
 
       {/* Today birthdays */}
       {birthdays.length > 0 && (
-        <Section title={`🎂 Aniversariantes hoje (${birthdays.length})`}>
+        <Section title={`Aniversariantes hoje (${birthdays.length})`}>
           {birthdays.map((b, i) => (
             <BirthdayCard key={i} b={b} daysUntil={0} />
           ))}
@@ -238,7 +235,7 @@ export default function AniversariosPane({ cir25, cir26, amigoData, patients = [
 
       {/* Upcoming birthdays — next 14 days */}
       {upcomingBirthdays.length > 0 && (
-        <Section title={`🎁 Aniversários nos próximos 14 dias (${upcomingBirthdays.length})`}>
+        <Section title={`Aniversários nos próximos 14 dias (${upcomingBirthdays.length})`}>
           {upcomingBirthdays
             .sort((a, b) => daysUntilBirthday(a.birthdayDate!) - daysUntilBirthday(b.birthdayDate!))
             .map((b, i) => (
@@ -249,40 +246,39 @@ export default function AniversariosPane({ cir25, cir26, amigoData, patients = [
 
       {/* Today surgery anniversaries */}
       {todayAnivs.length > 0 && (
-        <Section title={`🎉 Mesversários hoje (${todayAnivs.length})`}>
+        <Section title={`Mesversários de cirurgia hoje (${todayAnivs.length})`}>
           {todayAnivs.map((a, i) => <AnnivCard key={i} a={a} />)}
         </Section>
       )}
 
       {weekAnivs.length > 0 && (
-        <Section title={`📆 Esta semana (${weekAnivs.length})`}>
+        <Section title={`Esta semana (${weekAnivs.length})`}>
           {weekAnivs.map((a, i) => <AnnivCard key={i} a={a} />)}
         </Section>
       )}
 
       {monthAnivs.length > 0 && (
-        <Section title={`📅 Este mês (${monthAnivs.length})`}>
+        <Section title={`Este mês (${monthAnivs.length})`}>
           {monthAnivs.map((a, i) => <AnnivCard key={i} a={a} />)}
         </Section>
       )}
 
       {upcomingAnivs.length > 0 && (
-        <Section title={`🔮 Próximos 90 dias (${upcomingAnivs.length})`}>
+        <Section title={`Próximos 90 dias (${upcomingAnivs.length})`}>
           {upcomingAnivs.slice(0, 15).map((a, i) => <AnnivCard key={i} a={a} />)}
         </Section>
       )}
 
       {pastAnivs.length > 0 && (
-        <Section title={`✅ Últimos 30 dias (${pastAnivs.length})`}>
+        <Section title={`Últimos 30 dias (${pastAnivs.length})`}>
           {pastAnivs.slice(0, 10).map((a, i) => <AnnivCard key={i} a={a} />)}
         </Section>
       )}
 
       {!hasAnything && (
-        <div style={{ textAlign: 'center', padding: '48px 0', color: '#86868B' }}>
-          <div style={{ fontSize: '2rem', marginBottom: '8px' }}>🎂</div>
+        <div style={{ textAlign: 'center', padding: '48px 0', color: 'var(--text-2)' }}>
           <div style={{ fontWeight: 600 }}>Nenhum aniversário ou mesversário nos próximos 90 dias</div>
-          <div style={{ fontSize: '0.82rem', marginTop: '4px' }}>Os dados serão atualizados automaticamente ao sincronizar com o AmigoClinic</div>
+          <div style={{ fontSize: '0.82rem', marginTop: '4px' }}>A lista se atualiza sozinha várias vezes ao dia.</div>
         </div>
       )}
     </div>

@@ -15,21 +15,24 @@ function generateId(): string {
   return `card_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
 }
 
-/** Migrate old pipeline stage values to new 4-stage model. */
+/** Converte etapas antigas para o modelo atual de 5 colunas.
+ *  Uma etapa já válida passa intacta — antes, mover para Follow-up
+ *  voltava sozinho para "Orçamento enviado" no recarregamento. */
+const ETAPAS_VALIDAS = new Set<PipelineStage>([
+  'orc_enviado', 'sinal_pago', 'followup', 'cirurgia_agendada', 'perdida',
+]);
+
 function migrateStage(old: string): PipelineStage {
+  if (ETAPAS_VALIDAS.has(old as PipelineStage)) return old as PipelineStage;
   const map: Record<string, PipelineStage> = {
     consulta_agendada:  'orc_enviado',
     compareceu:         'orc_enviado',
     orc_pendente:       'orc_enviado',
     orc_apresentado:    'orc_enviado',
-    followup_agendado:  'orc_enviado',
-    retomada:           'orc_enviado',
+    followup_agendado:  'followup',
+    retomada:           'followup',
     nao_fechou:         'perdida',
-    sinal_pago:         'sinal_pago',
     avista_pago:        'cirurgia_agendada',
-    cirurgia_agendada:  'cirurgia_agendada',
-    perdida:            'perdida',
-    orc_enviado:        'orc_enviado',
   };
   return map[old] ?? 'orc_enviado';
 }
@@ -75,7 +78,7 @@ function autoPopulateCards(cons26: Consultation[], cir26: Surgery[]): PipelineCa
       stage: 'orc_enviado' as PipelineStage,
       createdAt: now,
       updatedAt: now,
-      notes: `Consulta: ${c.d} · ${c.canal || ''}`,
+      notes: [`Consulta: ${c.d}`, c.canal].filter(Boolean).join(' · '),
     });
   }
 
@@ -85,26 +88,26 @@ function autoPopulateCards(cons26: Consultation[], cir26: Surgery[]): PipelineCa
 /** Push all pipeline cards to Sheets (debounced). */
 async function pushPipelineToSheets(cards: PipelineCard[]): Promise<void> {
   const token = getAuthToken();
-  if (!token) return;
+  if (!token) throw new Error('sem sessão');
 
-  const sheetsUrl = '/api/sheets/push';
-  await fetch(sheetsUrl, {
+  const res = await fetch('/api/sheets/push', {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({
-      acao: 'pipeline_bulk',
-      cards,
-    }),
+    body: JSON.stringify({ acao: 'pipeline_bulk', cards }),
   });
+
+  if (!res.ok) throw new Error('falha ao gravar');
+  const json = await res.json().catch(() => null);
+  if (json && json.success === false) throw new Error('falha ao gravar');
 }
 
 export default function PipelinePane({ initialCards, cons26 = [], cir26 = [] }: PipelinePaneProps) {
   const [cards, setCards]   = useState<PipelineCard[]>([]);
   const [loaded, setLoaded] = useState(false);
-  const [syncing, setSyncing] = useState(false);
+  const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'offline'>('idle');
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Load order: initialCards (from Sheets) → localStorage → auto-populate
@@ -157,15 +160,16 @@ export default function PipelinePane({ initialCards, cons26 = [], cir26 = [] }: 
   const scheduleSheetsSave = useCallback((updatedCards: PipelineCard[]) => {
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(async () => {
-      setSyncing(true);
+      setSaveState('saving');
       try {
         await pushPipelineToSheets(updatedCards);
+        setSaveState('saved');
+        setTimeout(() => setSaveState('idle'), 2500);
       } catch {
-        // Sheets unavailable — data is safe in localStorage
-      } finally {
-        setSyncing(false);
+        // Nada se perde: as alterações continuam guardadas neste aparelho.
+        setSaveState('offline');
       }
-    }, 2000); // 2-second debounce
+    }, 1200);
   }, []);
 
   function saveCards(updated: PipelineCard[]) {
@@ -189,17 +193,33 @@ export default function PipelinePane({ initialCards, cons26 = [], cir26 = [] }: 
 
   return (
     <div style={{ position: 'relative' }}>
-      {syncing && (
-        <div style={{
-          position: 'absolute', top: 0, right: 0, zIndex: 10,
-          fontSize: '11px', color: '#007AFF', fontWeight: 600,
-          background: '#E5F1FF', padding: '4px 10px', borderRadius: '0 0 0 8px',
-          display: 'flex', alignItems: 'center', gap: '4px',
-        }}>
-          <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: '#007AFF', animation: 'pulse 1s infinite' }} />
-          Salvando no Sheets…
+      {saveState !== 'idle' && (
+        <div
+          role="status"
+          style={{
+            position: 'fixed', left: '24px', bottom: '24px', zIndex: 30,
+            boxShadow: 'var(--shadow-2)',
+            fontSize: '12px', fontWeight: 600,
+            display: 'flex', alignItems: 'center', gap: '6px',
+            padding: '5px 12px', borderRadius: '999px',
+            background: saveState === 'offline' ? 'var(--tint-orange)' : 'var(--tint-green)',
+            color: saveState === 'offline' ? 'var(--c-orange)' : 'var(--c-green)',
+          }}
+        >
+          <span
+            aria-hidden="true"
+            style={{
+              width: '7px', height: '7px', borderRadius: '50%',
+              background: 'currentColor',
+              animation: saveState === 'saving' ? 'pulse 1s infinite' : undefined,
+            }}
+          />
+          {saveState === 'saving' ? 'Salvando…'
+            : saveState === 'saved' ? 'Alterações salvas'
+            : 'Salvo neste aparelho — sincroniza assim que a conexão voltar'}
         </div>
       )}
+
       <MayraPipeline
         cards={cards}
         onUpdateCard={handleUpdateCard}

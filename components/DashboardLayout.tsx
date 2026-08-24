@@ -3,11 +3,11 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { clearAuthToken } from '@/lib/safe-storage';
-import { getStoredTheme, applyTheme } from '@/lib/theme';
+import { getStoredTheme, applyTheme, type Theme } from '@/lib/theme';
 import NotificationBell from './NotificationBell';
 import GlobalSearch from './GlobalSearch';
 import type { Notification, Patient } from '@/lib/data-model';
-import type { SyncState, ConnStatus } from '@/app/dashboard/page';
+import type { SyncState } from '@/app/dashboard/page';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -16,89 +16,33 @@ interface DashboardLayoutProps {
   onMarkAllRead: () => void;
   syncing?: boolean;
   syncState?: SyncState;
-  lastSync?: string;
+  lastSyncAt?: string | null;
+  onRefresh?: () => void;
   patients?: Patient[];
 }
 
-// ── Status pill helper ────────────────────────────────────────────────────────
-const STATUS_STYLE: Record<ConnStatus, { dot: string; bg: string; text: string; border: string }> = {
-  pending:      { dot: '#AEAEB2', bg: '#F2F2F7',   text: '#86868B', border: '#E5E5EA' },
-  syncing:      { dot: '#007AFF', bg: '#E5F1FF',   text: '#007AFF', border: '#007AFF30' },
-  ok:           { dot: '#28A745', bg: '#E6F7EC',   text: '#1D7A33', border: '#28A74530' },
-  error:        { dot: '#FF3B30', bg: '#FFE5E3',   text: '#CC0000', border: '#FF3B3030' },
-  unconfigured: { dot: '#FF9500', bg: '#FFF3E0',   text: '#B85C00', border: '#FF950030' },
-};
+/** Traduz o estado técnico da sincronização para uma frase de clínica. */
+function describeSync(syncState: SyncState | undefined, lastSyncAt: string | null | undefined) {
+  const working = !syncState || syncState.dados === 'syncing' || syncState.agenda === 'syncing';
+  if (working) return { tone: 'busy' as const, text: 'Atualizando dados…' };
 
-function StatusPill({
-  label, status, msg, pulse,
-}: {
-  label: string;
-  status: ConnStatus;
-  msg: string;
-  pulse?: boolean;
-}) {
-  const s = STATUS_STYLE[status];
-  const [expanded, setExpanded] = useState(false);
+  const hora = lastSyncAt
+    ? new Date(lastSyncAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+    : null;
 
-  // Inline sub-text to show next to the label
-  let sub: string | null = null;
-  if (status === 'syncing') sub = 'sincronizando…';
-  else if (status === 'ok' && msg) sub = msg;
-  else if ((status === 'error' || status === 'unconfigured') && msg) {
-    // Truncate long error messages for the pill; full text on tap/click
-    sub = msg.length > 28 ? msg.slice(0, 28) + '…' : msg;
+  if (syncState.dados === 'ok') {
+    return {
+      tone: 'ok' as const,
+      text: hora ? `Atualizado às ${hora}` : 'Dados atualizados',
+      detail: syncState.dadosMsg,
+    };
   }
 
-  return (
-    <div style={{ position: 'relative', display: 'inline-flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-      <div
-        onClick={() => msg && (status === 'error' || status === 'unconfigured') && setExpanded(e => !e)}
-        style={{
-          display: 'flex', alignItems: 'center', gap: '5px',
-          padding: '3px 8px', borderRadius: '20px',
-          background: s.bg, border: `1.5px solid ${s.border}`,
-          cursor: (status === 'error' || status === 'unconfigured') && msg ? 'pointer' : 'default',
-        }}
-      >
-        <div style={{
-          width: 7, height: 7, borderRadius: '50%', background: s.dot, flexShrink: 0,
-          ...(pulse && status === 'syncing' ? { animation: 'pulse 1.2s ease-in-out infinite' } : {}),
-        }} />
-        <span style={{ fontSize: '11px', fontWeight: 600, color: s.text, whiteSpace: 'nowrap' }}>
-          {label}
-          {sub && (
-            <span style={{ fontWeight: 400, marginLeft: '4px', opacity: 0.8 }}>· {sub}</span>
-          )}
-        </span>
-      </div>
-
-      {/* Expanded error panel — shown on tap/click (works on mobile too) */}
-      {expanded && msg && (
-        <>
-          <div
-            style={{ position: 'fixed', inset: 0, zIndex: 199 }}
-            onClick={() => setExpanded(false)}
-          />
-          <div style={{
-            position: 'absolute', top: 'calc(100% + 6px)', right: 0, zIndex: 200,
-            background: '#1D1D1F', color: '#fff', borderRadius: '10px',
-            padding: '10px 14px', fontSize: '11px', lineHeight: 1.5,
-            boxShadow: '0 4px 20px rgba(0,0,0,0.28)',
-            maxWidth: '300px', wordBreak: 'break-word',
-            whiteSpace: 'pre-wrap',
-          }}>
-            <div style={{ fontWeight: 700, marginBottom: '4px', color: STATUS_STYLE[status].dot }}>
-              {label} — {status === 'error' ? 'Erro' : 'Não configurado'}
-            </div>
-            {msg}
-            <div style={{ marginTop: '6px', opacity: 0.6, fontSize: '10px' }}>
-              Toque fora para fechar
-            </div>
-          </div>
-        </>
-      )}
-    </div>
-  );
+  return {
+    tone: 'stale' as const,
+    text: hora ? `Sem conexão desde ${hora}` : 'Mostrando os últimos dados salvos',
+    detail: 'Os números continuam disponíveis. A atualização volta sozinha assim que a conexão retornar.',
+  };
 }
 
 export default function DashboardLayout({
@@ -108,10 +52,12 @@ export default function DashboardLayout({
   onMarkAllRead,
   syncing,
   syncState,
+  lastSyncAt,
+  onRefresh,
   patients,
 }: DashboardLayoutProps) {
   const router = useRouter();
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const [theme, setTheme] = useState<Theme>('light');
 
   useEffect(() => {
     const stored = getStoredTheme();
@@ -120,7 +66,7 @@ export default function DashboardLayout({
   }, []);
 
   function toggleTheme() {
-    const next = theme === 'light' ? 'dark' : 'light';
+    const next: Theme = theme === 'light' ? 'dark' : 'light';
     setTheme(next);
     applyTheme(next);
   }
@@ -130,90 +76,103 @@ export default function DashboardLayout({
     router.replace('/login');
   }
 
-  const sheetsPill = syncState
-    ? { status: syncState.sheets, msg: syncState.sheetsMsg }
-    : { status: (syncing ? 'syncing' : 'pending') as ConnStatus, msg: '' };
-
-  const amigoPill = syncState
-    ? { status: syncState.amigo, msg: syncState.amigoMsg }
-    : { status: 'pending' as ConnStatus, msg: '' };
+  const sync = describeSync(syncState, lastSyncAt);
+  const busy = sync.tone === 'busy' || Boolean(syncing);
+  const dotColor = sync.tone === 'ok' ? 'var(--c-green)' : sync.tone === 'busy' ? 'var(--c-blue)' : 'var(--c-orange)';
 
   return (
-    <div style={{ minHeight: '100vh', background: '#F5F5F7' }}>
-      {/* Header */}
-      <header style={{
-        background: '#fff',
-        borderBottom: '1px solid #E5E5EA',
-        position: 'sticky',
-        top: 0,
-        zIndex: 20,
-        boxShadow: '0 1px 8px rgba(0,0,0,0.04)',
-      }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
+      <a href="#conteudo" className="skip-link">Ir direto para o conteúdo</a>
+
+      <header
+        style={{
+          background: 'var(--surface)',
+          borderBottom: '1px solid var(--border)',
+          position: 'sticky',
+          top: 0,
+          zIndex: 20,
+        }}
+      >
         <div style={{
-          maxWidth: '1180px',
-          margin: '0 auto',
-          padding: '0 28px',
-          height: '64px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '16px',
+          maxWidth: '1180px', margin: '0 auto', padding: '0 28px',
+          minHeight: '68px', display: 'flex', alignItems: 'center', gap: '16px',
         }}>
-          {/* Logo */}
+          {/* Identidade */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexShrink: 0 }}>
-            <div style={{
-              width: '52px', height: '52px',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '42px', fontWeight: 200, color: '#007AFF',
-              letterSpacing: '-3px', lineHeight: 1, userSelect: 'none',
-              fontFamily: "'Montserrat', sans-serif", paddingBottom: '4px',
-            }}>
+            <span
+              aria-hidden="true"
+              style={{
+                fontSize: '40px', fontWeight: 200, color: 'var(--brand)',
+                letterSpacing: '-3px', lineHeight: 1, userSelect: 'none', paddingBottom: '6px',
+              }}
+            >
               b.
-            </div>
+            </span>
             <div>
-              <h1 style={{ fontSize: '17px', fontWeight: 700, letterSpacing: '-.3px', lineHeight: 1.2, color: '#1D1D1F' }}>
+              <h1 style={{ fontSize: '17px', fontWeight: 700, letterSpacing: '-.3px', lineHeight: 1.2, color: 'var(--text)' }}>
                 Mydash
               </h1>
-              <p style={{ fontSize: '12px', fontWeight: 400, color: '#86868B', marginTop: '2px' }}>
+              <p className="header-sub" style={{ fontSize: '12.5px', color: 'var(--text-2)', marginTop: '2px' }}>
                 Clínica Blue · Dr. Rafael Erthal
               </p>
             </div>
           </div>
 
-          {/* Connection status pills — hidden on very small screens */}
-          <div style={{
-            display: 'flex', gap: '6px', alignItems: 'center',
-            marginLeft: '12px',
-            // hide on very small viewports
-            overflow: 'hidden',
-          }}
-            className="sync-pills"
+          {/* Estado da atualização — uma frase, sem termos técnicos */}
+          <button
+            type="button"
+            onClick={onRefresh}
+            disabled={busy || !onRefresh}
+            title={sync.detail || 'Atualizar agora'}
+            className="sync-chip"
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: '7px',
+              marginLeft: '10px', padding: '6px 12px', borderRadius: '999px',
+              background: 'var(--surface-2)', border: '1px solid var(--border)',
+              color: 'var(--text-2)', fontSize: '12.5px', fontWeight: 600,
+              cursor: busy || !onRefresh ? 'default' : 'pointer',
+              whiteSpace: 'nowrap',
+            }}
           >
-            <StatusPill label="Sheets"      status={sheetsPill.status} msg={sheetsPill.msg} pulse />
-            <StatusPill label="AmigoClinic" status={amigoPill.status}  msg={amigoPill.msg}  pulse />
-          </div>
-
-          {/* Right side */}
-          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
-            {/* Global search */}
-            {patients && patients.length > 0 && (
-              <GlobalSearch patients={patients} />
+            <span
+              aria-hidden="true"
+              style={{
+                width: '8px', height: '8px', borderRadius: '50%', background: dotColor,
+                animation: busy ? 'pulse 1.2s ease-in-out infinite' : undefined,
+              }}
+            />
+            <span>{sync.text}</span>
+            {!busy && onRefresh && (
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" aria-hidden="true">
+                <polyline points="23 4 23 10 17 10" />
+                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+              </svg>
             )}
+            <span className="sr-only">
+              {busy ? 'Atualizando os dados' : 'Atualizar os dados agora'}
+            </span>
+          </button>
 
-            {/* Dark / Light toggle */}
+          {/* Ações */}
+          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
+            {patients && patients.length > 0 && <GlobalSearch patients={patients} />}
+
             <button
               onClick={toggleTheme}
+              className="icon-btn"
+              aria-label={theme === 'dark' ? 'Mudar para o modo claro' : 'Mudar para o modo escuro'}
               title={theme === 'dark' ? 'Modo claro' : 'Modo escuro'}
-              style={{
-                background: 'none', border: 'none', cursor: 'pointer',
-                padding: '6px', borderRadius: '8px', color: '#86868B',
-                display: 'flex', alignItems: 'center',
-                fontSize: '16px',
-                transition: 'color 0.15s, background 0.15s',
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = '#F2F2F7'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = 'none'; }}
             >
-              {theme === 'dark' ? '☀️' : '🌙'}
+              {theme === 'dark' ? (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                  <circle cx="12" cy="12" r="4.2" />
+                  <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
+                </svg>
+              ) : (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                  <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" />
+                </svg>
+              )}
             </button>
 
             <NotificationBell
@@ -222,19 +181,8 @@ export default function DashboardLayout({
               onMarkAllRead={onMarkAllRead}
             />
 
-            <button
-              onClick={handleLogout}
-              title="Sair"
-              style={{
-                background: 'none', border: 'none', cursor: 'pointer',
-                padding: '6px', borderRadius: '8px', color: '#86868B',
-                display: 'flex', alignItems: 'center',
-                transition: 'color 0.15s, background 0.15s',
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.color = '#FF3B30'; e.currentTarget.style.background = '#FFE5E3'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.color = '#86868B'; e.currentTarget.style.background = 'none'; }}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <button onClick={handleLogout} className="icon-btn" aria-label="Sair do painel" title="Sair">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                 <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
                 <polyline points="16 17 21 12 16 7" />
                 <line x1="21" y1="12" x2="9" y2="12" />
@@ -244,23 +192,22 @@ export default function DashboardLayout({
         </div>
       </header>
 
-      {/* Main content */}
-      <main style={{ maxWidth: '1180px', margin: '0 auto', padding: '40px 28px 80px' }}>
+      <main id="conteudo" style={{ maxWidth: '1180px', margin: '0 auto', padding: '36px 28px 80px' }}>
         {children}
       </main>
 
-      {/* Footer */}
-      <footer style={{
-        textAlign: 'center',
-        padding: '20px 28px',
-        fontSize: '11px',
-        color: '#AEAEB2',
-        borderTop: '1px solid #E5E5EA',
-        background: '#fff',
-        letterSpacing: '0.02em',
-      }}>
+      <footer
+        style={{
+          textAlign: 'center',
+          padding: '22px 28px',
+          fontSize: '12px',
+          color: 'var(--text-3)',
+          borderTop: '1px solid var(--border)',
+          background: 'var(--surface)',
+        }}
+      >
         © 2026 Blue Clínica Médica e Cirúrgica · Todos os direitos reservados · Desenvolvido por{' '}
-        <span style={{ fontWeight: 600, color: '#86868B' }}>Letícia Nascimento</span>
+        <span style={{ fontWeight: 600, color: 'var(--text-2)' }}>Letícia Nascimento</span>
       </footer>
     </div>
   );
